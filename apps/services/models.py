@@ -31,7 +31,7 @@ class Service(models.Model):
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
-    background = models.ImageField(upload_to="services/backgrounds", verbose_name=_("Background"))
+    background = models.ImageField(upload_to="services/backgrounds", verbose_name=_("Background"), null=True)
 
     is_active = models.BooleanField(default=False, verbose_name=_("Is Active"))
     active_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Active Until"))
@@ -66,7 +66,7 @@ class ServiceContact(models.Model):
 
 class ServiceImage(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
-    image = models.ImageField(upload_to="services/images", verbose_name=_("Image"))
+    image = models.ImageField(upload_to="services/images", verbose_name=_("Image"), null=True)
 
     class Meta:
         verbose_name = _("Service Image")
@@ -81,7 +81,8 @@ class ServiceVideo(models.Model):
     file = models.FileField(
         upload_to="services/videos/",
         verbose_name=_("Video file"),
-        validators=[FileExtensionValidator(allowed_extensions=["mp4", "mov", "webm", "mkv"]), validate_file_size]
+        validators=[FileExtensionValidator(allowed_extensions=["mp4", "mov", "webm", "mkv"]), validate_file_size],
+        null=True,
     )
 
     class Meta:
