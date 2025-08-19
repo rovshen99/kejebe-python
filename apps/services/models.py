@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from apps.categories.models import Category
+from apps.regions.models import Region, City
 from apps.users.models import User
 
 
@@ -11,6 +12,8 @@ class Service(models.Model):
     avatar = models.ImageField(
         upload_to="services/avatars", verbose_name=_("Avatar"), null=True, default=None, blank=True
     )
+    regions = models.ManyToManyField(Region, related_name='services', verbose_name=_("Regions"))
+    cities = models.ManyToManyField(City, related_name='services', verbose_name=_("Cities"))
 
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))

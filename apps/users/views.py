@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema
 
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, UserUpdateSerializer
 
 
 @extend_schema(
@@ -31,3 +31,18 @@ class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+@extend_schema(
+    request=UserUpdateSerializer,
+    responses={200: UserSerializer},
+    tags=["Auth"],
+    summary="Обновление имени и email текущего пользователя",
+    description="Позволяет авторизованному пользователю изменить только имя и email."
+)
+class MeUpdateView(generics.UpdateAPIView):
+    serializer_class = UserUpdateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user

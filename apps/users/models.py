@@ -16,6 +16,7 @@ class RoleEnum(models.TextChoices):
 class User(AbstractBaseUser, PermissionsMixin):
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, verbose_name=_("UUID"))
     name = models.CharField(max_length=255, verbose_name=_("Name"))
+    surname = models.CharField(max_length=255, verbose_name=_("Surname"), blank=True, null=True)
     email = models.EmailField(unique=True, verbose_name=_("Email"))
     password = models.CharField(max_length=255, verbose_name=_("Password"))
     phone = models.CharField(

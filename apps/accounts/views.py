@@ -31,7 +31,7 @@ class InboundSMSWebhookView(APIView):
     def post(self, request):
         data = request.data
         from_number = normalize_phone(data.get('From') or data.get('from') or '')
-        to_number   = normalize_phone(data.get('To')   or data.get('to')   or settings.SMS_SERVICE_NUMBER)
+        to_number = normalize_phone(data.get('To') or data.get('to') or settings.SMS_SERVICE_NUMBER)
         body = data.get('Body') or data.get('body') or ''
         msg_id = data.get('MessageSid') or data.get('message_id') or ''
         if not from_number or not to_number:
@@ -62,7 +62,11 @@ class InitReverseSMSView(APIView):
         from_number = normalize_phone(s.validated_data["phone"])
         to_number = normalize_phone(getattr(settings, "SMS_SERVICE_NUMBER", ""))
         ch = SMSChallenge.create(from_number, to_number, s.validated_data["ttl_seconds"])
-        return Response({"challenge_id": str(ch.id), "expires_at": ch.expires_at}, status=201)
+        return Response({
+            "challenge_id": str(ch.id),
+            "expires_at": ch.expires_at,
+            "phone_number": settings.SMS_SERVICE_NUMBER
+        }, status=201)
 
 
 @extend_schema(
@@ -101,9 +105,14 @@ class ConfirmReverseSMSView(APIView):
                 }
             )
             tokens = issue_tokens(user)
-            payload = {"uuid": str(getattr(user, "uuid", "")), "phone": user.phone, "name": getattr(user, "name", ""),
-                       "email": getattr(user, "email", None), "role": getattr(user, "role", None)}
-            return Response({"verified": True, "user": payload, "tokens": tokens}, status=200)
+            payload = {
+                "uuid": str(getattr(user, "uuid", "")),
+                "phone": user.phone,
+                "name": getattr(user, "name", ""),
+                "email": getattr(user, "email", None),
+                "role": getattr(user, "role", None)
+            }
+            return Response({"verified": True, "created": created, "user": payload, "tokens": tokens}, status=200)
 
         if ch.is_expired:
             return Response({"verified": False, "detail": "expired"}, status=200)
@@ -133,5 +142,11 @@ class ConfirmReverseSMSView(APIView):
 
         tokens = issue_tokens(user)
 
-        user_payload = {"uuid": str(getattr(user, "uuid", "")), "phone": user.phone, "name": getattr(user, "name", ""), "email": getattr(user, "email", None), "role": getattr(user, "role", None)}
-        return Response({"verified": True, "user": user_payload, "tokens": tokens}, status=200)
+        payload = {
+            "uuid": str(getattr(user, "uuid", "")),
+            "phone": user.phone,
+            "name": getattr(user, "name", ""),
+            "email": getattr(user, "email", None),
+            "role": getattr(user, "role", None)
+        }
+        return Response({"verified": True, "created": created, "user": payload, "tokens": tokens}, status=200)

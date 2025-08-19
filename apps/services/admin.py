@@ -43,6 +43,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_filter = ('category', 'is_active')
     search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
+    filter_horizontal = ('cities', 'regions')
     inlines = [ServiceContactInline, ServiceImageInline, ServiceVideoInline, ServiceAttributeValueInline]
 
 
