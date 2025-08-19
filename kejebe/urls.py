@@ -22,12 +22,13 @@ from rest_framework.routers import DefaultRouter
 from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
+from apps.services.views import ServiceViewSet
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'regions', RegionViewSet, basename='region')
 router.register(r'cities', CityViewSet, basename='city')
-router.register(r'services', CityViewSet, basename='service')
+router.register(r'services', ServiceViewSet, basename='service')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
