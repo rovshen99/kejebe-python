@@ -5,13 +5,13 @@ from .models import Service, ServiceImage, ServiceVideo
 class ServiceImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceImage
-        fields = ['url']
+        fields = ['image']
 
 
 class ServiceVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceVideo
-        fields = ['url']
+        fields = ['file']
 
 
 class ServiceSerializer(serializers.ModelSerializer):

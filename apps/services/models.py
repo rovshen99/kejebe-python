@@ -1,8 +1,10 @@
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from apps.categories.models import Category
 from apps.regions.models import Region, City
+from apps.services.validators import validate_file_size
 from apps.users.models import User
 
 
@@ -29,6 +31,7 @@ class Service(models.Model):
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
+    background = models.ImageField(upload_to="services/backgrounds", verbose_name=_("Background"))
 
     is_active = models.BooleanField(default=False, verbose_name=_("Is Active"))
     active_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Active Until"))
@@ -63,26 +66,30 @@ class ServiceContact(models.Model):
 
 class ServiceImage(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
-    url = models.URLField(verbose_name=_("Image URL"))
+    image = models.ImageField(upload_to="services/images", verbose_name=_("Image"))
 
     class Meta:
         verbose_name = _("Service Image")
         verbose_name_plural = _("Service Images")
 
     def __str__(self):
-        return self.url
+        return self.image
 
 
 class ServiceVideo(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
-    url = models.URLField(verbose_name=_("Video URL"))
+    file = models.FileField(
+        upload_to="services/videos/",
+        verbose_name=_("Video file"),
+        validators=[FileExtensionValidator(allowed_extensions=["mp4", "mov", "webm", "mkv"]), validate_file_size]
+    )
 
     class Meta:
         verbose_name = _("Service Video")
         verbose_name_plural = _("Service Videos")
 
     def __str__(self):
-        return self.url
+        return self.file
 
 
 class Review(models.Model):

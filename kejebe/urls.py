@@ -23,6 +23,8 @@ from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
 from apps.services.views import ServiceViewSet
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -42,3 +44,6 @@ urlpatterns = [
     path("auth/sms/init/", InitReverseSMSView.as_view(), name="auth-sms-init"),
     path("auth/sms/confirm/", ConfirmReverseSMSView.as_view(), name="auth-sms-confirm"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
