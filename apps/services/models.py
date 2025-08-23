@@ -73,7 +73,7 @@ class ServiceImage(models.Model):
         verbose_name_plural = _("Service Images")
 
     def __str__(self):
-        return self.image
+        return self.service.title_tm
 
 
 class ServiceVideo(models.Model):

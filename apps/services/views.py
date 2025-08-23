@@ -10,7 +10,7 @@ from .serializers import ServiceSerializer
 
 
 @extend_schema(tags=["Services"])
-class ServiceViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class ServiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Service.objects.select_related('vendor', 'category').prefetch_related('tags')
     serializer_class = ServiceSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
