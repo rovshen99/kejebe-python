@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from datetime import timedelta
 import uuid
 
@@ -28,7 +27,7 @@ class SMSChallenge(models.Model):
     @property
     def is_verified(self): return self.verified_at is not None
     @property
-    def is_expired(self):  return timezone.now() >= self.expires_at
+    def is_expired(self): return timezone.now() >= self.expires_at
 
     @classmethod
     def create(cls, from_number:str, to_number:str, ttl_sec:int=600):

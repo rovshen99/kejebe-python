@@ -7,6 +7,8 @@ from apps.regions.models import Region, City
 from apps.services.validators import validate_file_size
 from apps.users.models import User
 
+from slugify import slugify
+
 
 class Service(models.Model):
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Vendor"))
@@ -51,17 +53,44 @@ class Service(models.Model):
         return self.title_tm
 
 
+class ContactType(models.Model):
+    slug = models.SlugField(max_length=50, unique=True, verbose_name=_("Slug"))
+    name_tm = models.CharField(max_length=100, verbose_name=_("Name (TM)"))
+    name_ru = models.CharField(max_length=100, verbose_name=_("Name (RU)"))
+    name_en = models.CharField(max_length=100, verbose_name=_("Name (EN)"))
+    icon = models.ImageField(
+        upload_to='contact_type_icons/',
+        verbose_name=_("Icon"),
+        null=True,
+        blank=True,
+        help_text=_("Upload an icon image (SVG/PNG recommended)")
+    )
+
+    class Meta:
+        verbose_name = _("Contact Type")
+        verbose_name_plural = _("Contact Types")
+        ordering = ['slug']
+
+    def __str__(self):
+        return self.slug
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name_tm)
+        super().save(*args, **kwargs)
+
+
 class ServiceContact(models.Model):
     service = models.ForeignKey(Service, related_name='contacts', on_delete=models.CASCADE, verbose_name=_("Service"))
-    contact_type = models.CharField(max_length=50, verbose_name=_("Contact Type"))
-    value = models.CharField(max_length=255, verbose_name=_("Value"))
+    type = models.ForeignKey(ContactType, on_delete=models.CASCADE, verbose_name=_("Contact Type"), null=True, blank=True)
+    value = models.CharField(max_length=255, verbose_name=_("Contact Value"))
 
     class Meta:
         verbose_name = _("Service Contact")
         verbose_name_plural = _("Service Contacts")
 
     def __str__(self):
-        return f"{self.contact_type}: {self.value}"
+        return f"{self.type.slug}: {self.value}"
 
 
 class ServiceImage(models.Model):
@@ -98,6 +127,7 @@ class Review(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
     rating = models.PositiveSmallIntegerField(verbose_name=_("Rating"))
     comment = models.TextField(verbose_name=_("Comment"))
+    is_approved = models.BooleanField(default=True, verbose_name=_("Approved"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
 
     class Meta:

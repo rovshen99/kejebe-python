@@ -22,7 +22,7 @@ from rest_framework.routers import DefaultRouter
 from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
-from apps.services.views import ServiceViewSet
+from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -31,6 +31,8 @@ router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'regions', RegionViewSet, basename='region')
 router.register(r'cities', CityViewSet, basename='city')
 router.register(r'services', ServiceViewSet, basename='service')
+router.register(r'reviews', ReviewViewSet, basename='review')
+router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

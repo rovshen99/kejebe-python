@@ -8,7 +8,7 @@ from .models import (
     Favorite,
     ServiceTag,
     ServiceAttribute,
-    ServiceAttributeValue
+    ServiceAttributeValue, ContactType
 )
 
 
@@ -83,3 +83,16 @@ class ServiceAttributeValueAdmin(admin.ModelAdmin):
     def get_display_value(self, obj):
         return obj.value
     get_display_value.short_description = "Value"
+
+
+@admin.register(ContactType)
+class ContactTypeAdmin(admin.ModelAdmin):
+    list_display = ('slug', 'name_tm', 'name_ru', 'name_en', 'icon_preview')
+    search_fields = ('slug', 'name_tm', 'name_ru', 'name_en')
+
+    def icon_preview(self, obj):
+        if obj.icon:
+            return f'<img src="{obj.icon.url}" width="32" height="32" style="object-fit:contain;" />'
+        return "-"
+    icon_preview.short_description = "Icon"
+    icon_preview.allow_tags = True

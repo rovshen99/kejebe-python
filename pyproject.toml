@@ -14,5 +14,6 @@ dependencies = [
     "pillow>=11.3.0",
     "psycopg[binary]>=3.2.9",
     "python-dotenv>=1.1.1",
+    "python-slugify>=8.0.4",
     "whitenoise>=6.9.0",
 ]
