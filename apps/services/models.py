@@ -258,3 +258,45 @@ class ServiceAttributeValue(models.Model):
             self.value_number = float(val)
         elif input_type == 'boolean':
             self.value_boolean = bool(val)
+
+
+class ServiceProduct(models.Model):
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='products', verbose_name=_("Service"))
+
+    title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
+    title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
+    title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
+
+    description_tm = models.TextField(null=True, blank=True, verbose_name=_("Description (TM)"))
+    description_ru = models.TextField(null=True, blank=True, verbose_name=_("Description (RU)"))
+    description_en = models.TextField(null=True, blank=True, verbose_name=_("Description (EN)"))
+
+    price = models.FloatField(verbose_name=_("Price"))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
+
+    class Meta:
+        verbose_name = _("Service Product")
+        verbose_name_plural = _("Service Products")
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title_tm
+
+
+class ServiceProductImage(models.Model):
+    product = models.ForeignKey(
+        ServiceProduct,
+        on_delete=models.CASCADE,
+        related_name="images",
+        verbose_name=_("Product")
+    )
+    image = models.ImageField(upload_to="services/product_images", verbose_name=_("Image"))
+
+    class Meta:
+        verbose_name = _("Service Product Image")
+        verbose_name_plural = _("Service Product Images")
+
+    def __str__(self):
+        return self.image.url if self.image else str(self.pk)

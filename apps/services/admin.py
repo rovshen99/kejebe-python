@@ -10,28 +10,30 @@ from .models import (
     Favorite,
     ServiceTag,
     ServiceAttribute,
-    ServiceAttributeValue, ContactType
+    ServiceAttributeValue, ContactType, ServiceProductImage, ServiceProduct
 )
 
+import nested_admin
 
-class ServiceContactInline(admin.TabularInline):
+
+class ServiceContactInline(nested_admin.NestedTabularInline):
     model = ServiceContact
     extra = 1
 
 
-class ServiceImageInline(admin.TabularInline):
+class ServiceImageInline(nested_admin.NestedTabularInline):
     model = ServiceImage
     extra = 1
 
 
-class ServiceVideoInline(admin.TabularInline):
+class ServiceVideoInline(nested_admin.NestedTabularInline):
     model = ServiceVideo
     extra = 1
 
 
-class ServiceAttributeValueInline(admin.TabularInline):
+class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
     model = ServiceAttributeValue
-    extra = 1
+    extra = 0
     fields = (
         'attribute',
         'value_text_tm', 'value_text_ru', 'value_text_en',
@@ -39,14 +41,31 @@ class ServiceAttributeValueInline(admin.TabularInline):
     )
 
 
+class ServiceProductImageInline(nested_admin.NestedTabularInline):
+    model = ServiceProductImage
+    extra = 0
+
+
+class ServiceProductInline(nested_admin.NestedStackedInline):
+    model = ServiceProduct
+    extra = 0
+    inlines = [ServiceProductImageInline]
+
+
 @admin.register(Service)
-class ServiceAdmin(admin.ModelAdmin):
+class ServiceAdmin(nested_admin.NestedModelAdmin):
     list_display = ('title_tm', 'vendor', 'category', 'is_active', 'priority')
     list_filter = ('category', 'is_active')
     search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
     filter_horizontal = ('cities', 'regions')
-    inlines = [ServiceContactInline, ServiceImageInline, ServiceVideoInline, ServiceAttributeValueInline]
+    inlines = [
+        ServiceContactInline,
+        ServiceImageInline,
+        ServiceVideoInline,
+        ServiceAttributeValueInline,
+        ServiceProductInline,
+    ]
 
 
 @admin.register(Review)

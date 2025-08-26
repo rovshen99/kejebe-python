@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact
+from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
+    ServiceProductImage
 
 
 class ServiceImageSerializer(serializers.ModelSerializer):
@@ -38,10 +39,28 @@ class ServiceContactSerializer(serializers.ModelSerializer):
         fields = ['type', 'value']
 
 
+class ServiceProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceProductImage
+        fields = ['image']
+
+
+class ServiceProductSerializer(serializers.ModelSerializer):
+    images = ServiceProductImageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ServiceProduct
+        fields = [
+            'id', 'title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en', 'price',
+            'images',
+        ]
+
+
 class ServiceSerializer(serializers.ModelSerializer):
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
+    products = ServiceProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
@@ -52,7 +71,7 @@ class ServiceSerializer(serializers.ModelSerializer):
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
-            'images', 'videos', 'contacts',
+            'images', 'videos', 'contacts', 'products'
         ]
 
 

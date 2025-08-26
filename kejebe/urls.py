@@ -26,6 +26,7 @@ from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'regions', RegionViewSet, basename='region')
@@ -45,6 +46,7 @@ urlpatterns = [
     path("sms/inbound/", InboundSMSWebhookView.as_view(), name="sms-inbound"),
     path("auth/sms/init/", InitReverseSMSView.as_view(), name="auth-sms-init"),
     path("auth/sms/confirm/", ConfirmReverseSMSView.as_view(), name="auth-sms-confirm"),
+
 ]
 
 if settings.DEBUG:

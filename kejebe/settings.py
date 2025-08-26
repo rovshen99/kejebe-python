@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.regions',
     'apps.accounts',
     'mptt',
+    'nested_admin',
 ]
 
 REST_FRAMEWORK = {

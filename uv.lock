@@ -71,6 +71,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-nested-admin"
+version = "4.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "python-monkey-business" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f2/a2/b608b29ebf329fccb045da31875c9988bd66dc1a890e009d2abd8be21a25/django_nested_admin-4.1.4.tar.gz", hash = "sha256:a47dc97652d694be3a9c8cd698f85a5d5192fdad383e6efca5fb5eff87cd53e1", size = 425567 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/a9/584eab484aa5bd953e11e2ee961c9b2a1f5d3ee130f4244c3ce5a88d50e6/django_nested_admin-4.1.4-py3-none-any.whl", hash = "sha256:5c6ba4b85ba93d838bd42d55aed998923909e864fb18c7a3d4e2c5289771037f", size = 473774 },
+]
+
+[[package]]
 name = "djangorestframework"
 version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -157,6 +169,7 @@ dependencies = [
     { name = "django" },
     { name = "django-filter" },
     { name = "django-mptt" },
+    { name = "django-nested-admin" },
     { name = "djangorestframework" },
     { name = "djangorestframework-simplejwt" },
     { name = "drf-spectacular" },
@@ -172,6 +185,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2.2" },
     { name = "django-filter", specifier = ">=25.1" },
     { name = "django-mptt", specifier = ">=0.17.0" },
+    { name = "django-nested-admin", specifier = ">=4.1.4" },
     { name = "djangorestframework", specifier = ">=3.16.1" },
     { name = "djangorestframework-simplejwt", specifier = ">=5.5.1" },
     { name = "drf-spectacular", specifier = ">=0.28.0" },
@@ -311,6 +325,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f6/b0/4bc07ccd3572a2f9df7e6782f52b0c6c90dcbb803ac4a167702d7d0dfe1e/python_dotenv-1.1.1.tar.gz", hash = "sha256:a8a6399716257f45be6a007360200409fce5cda2661e3dec71d23dc15f6189ab", size = 41978 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5f/ed/539768cf28c661b5b068d66d96a2f155c4971a5d55684a514c1a0e0dec2f/python_dotenv-1.1.1-py3-none-any.whl", hash = "sha256:31f23644fe2602f88ff55e1f5c79ba497e01224ee7737937930c448e4d0e24dc", size = 20556 },
+]
+
+[[package]]
+name = "python-monkey-business"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/21/bc/a6182bb30701d0df25ad336f2dd74343447032e0995025ba82079a94f745/python-monkey-business-1.1.0.tar.gz", hash = "sha256:8393839cc741415ed5ddc2bd58e2d4ce07f966a7d26b7aebff19dcec64818edc", size = 4270 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/a2/b6a5cbd5822b4d049adfedf496ce0908480e5a41722fda7b7ffaacb086d6/python_monkey_business-1.1.0-py2.py3-none-any.whl", hash = "sha256:15b4f603c749ba9a7b4f1acd36af023a6c5ba0f7e591c945f8253f0ef44bf389", size = 4670 },
 ]
 
 [[package]]
