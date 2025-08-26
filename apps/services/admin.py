@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from core.mixins import IconPreviewMixin
 from .models import (
     Service,
     ServiceContact,
@@ -86,13 +88,8 @@ class ServiceAttributeValueAdmin(admin.ModelAdmin):
 
 
 @admin.register(ContactType)
-class ContactTypeAdmin(admin.ModelAdmin):
-    list_display = ('slug', 'name_tm', 'name_ru', 'name_en', 'icon_preview')
-    search_fields = ('slug', 'name_tm', 'name_ru', 'name_en')
+class ContactTypeAdmin(IconPreviewMixin, admin.ModelAdmin):
+    list_display = ('name_tm', 'name_ru', 'name_en', 'icon_preview')
+    search_fields = ('name_tm', 'name_ru', 'name_en')
+    readonly_fields = ('slug',)
 
-    def icon_preview(self, obj):
-        if obj.icon:
-            return f'<img src="{obj.icon.url}" width="32" height="32" style="object-fit:contain;" />'
-        return "-"
-    icon_preview.short_description = "Icon"
-    icon_preview.allow_tags = True
