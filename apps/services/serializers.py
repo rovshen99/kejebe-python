@@ -15,7 +15,15 @@ class ServiceVideoSerializer(serializers.ModelSerializer):
         fields = ['file']
 
 
+class ServiceProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceProductImage
+        fields = ['image']
+
+
 class ServiceLightSerializer(serializers.ModelSerializer):
+    images = ServiceProductImageSerializer(many=True, read_only=True)
+
     class Meta:
         model = Service
         fields = [
@@ -37,12 +45,6 @@ class ServiceContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceContact
         fields = ['type', 'value']
-
-
-class ServiceProductImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ServiceProductImage
-        fields = ['image']
 
 
 class ServiceProductSerializer(serializers.ModelSerializer):
