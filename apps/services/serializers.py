@@ -32,7 +32,8 @@ class ServiceLightSerializer(serializers.ModelSerializer):
             'id', 'vendor', 'category', 'avatar',
             'title_tm', 'title_ru', 'title_en',
             'price_min', 'price_max', 'tags', 'images',
-            'is_favorite', 'reviews_count',
+            'is_favorite', 'reviews_count', 'description_en',
+            'description_ru', 'description_tm',
         ]
 
     def get_is_favorite(self, obj):
