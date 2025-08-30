@@ -31,7 +31,8 @@ class ServiceLightSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'vendor', 'category', 'avatar',
             'title_tm', 'title_ru', 'title_en',
-            'price_min', 'price_max', 'tags', 'images'
+            'price_min', 'price_max', 'tags', 'images',
+            'is_favorite', 'reviews_count',
         ]
 
     def get_is_favorite(self, obj):
