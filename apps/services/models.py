@@ -123,8 +123,8 @@ class ServiceVideo(models.Model):
 
 
 class Review(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"), related_name="reviews")
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"), related_name="reviews")
     rating = models.PositiveSmallIntegerField(verbose_name=_("Rating"))
     comment = models.TextField(verbose_name=_("Comment"))
     is_approved = models.BooleanField(default=True, verbose_name=_("Approved"))
@@ -141,7 +141,7 @@ class Review(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
+    service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"), related_name="favorites")
 
     class Meta:
         verbose_name = _("Favorite")
