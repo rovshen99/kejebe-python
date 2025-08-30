@@ -30,6 +30,11 @@ class ServiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             .prefetch_related('tags') \
             .order_by('priority', '-created_at')
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
 
 @extend_schema(tags=["Reviews"])
 class ReviewViewSet(mixins.ListModelMixin,

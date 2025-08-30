@@ -23,14 +23,22 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
 
 class ServiceLightSerializer(serializers.ModelSerializer):
     images = ServiceProductImageSerializer(many=True, read_only=True)
+    reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
         fields = [
             'id', 'vendor', 'category', 'avatar',
             'title_tm', 'title_ru', 'title_en',
-            'price_min', 'price_max', 'tags',
+            'price_min', 'price_max', 'tags', 'images'
         ]
+
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            return obj.favorites.filter(user=request.user).exists()
+        return False
 
 
 class ContactTypeSerializer(serializers.ModelSerializer):
