@@ -31,6 +31,7 @@ class ServiceLightSerializer(serializers.ModelSerializer):
     images = ServiceProductImageSerializer(many=True, read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     is_favorite = serializers.SerializerMethodField()
+    tags = ServiceTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
@@ -79,6 +80,7 @@ class ServiceSerializer(serializers.ModelSerializer):
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
     products = ServiceProductSerializer(many=True, read_only=True)
+    tags = ServiceTagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
