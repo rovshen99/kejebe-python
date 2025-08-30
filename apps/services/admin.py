@@ -82,10 +82,16 @@ class FavoriteAdmin(admin.ModelAdmin):
     search_fields = ('user__name', 'service__title_tm')
 
 
+class ServiceInline(admin.TabularInline):
+    model = Service.tags.through
+    extra = 1
+
+
 @admin.register(ServiceTag)
 class ServiceTagAdmin(admin.ModelAdmin):
     list_display = ('name_tm', 'name_ru', 'name_en')
     search_fields = ('name_tm', 'name_ru', 'name_en')
+    inlines = [ServiceInline]
 
 
 @admin.register(ServiceAttribute)

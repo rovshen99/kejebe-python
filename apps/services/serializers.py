@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage
+    ServiceProductImage, ServiceTag
 
 
 class ServiceImageSerializer(serializers.ModelSerializer):
@@ -21,6 +21,12 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
         fields = ['image']
 
 
+class ServiceTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceTag
+        fields = ['id', 'name_en', 'name_tm', 'name_ru']
+
+
 class ServiceLightSerializer(serializers.ModelSerializer):
     images = ServiceProductImageSerializer(many=True, read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
@@ -29,11 +35,10 @@ class ServiceLightSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id', 'vendor', 'category', 'avatar',
-            'title_tm', 'title_ru', 'title_en',
-            'price_min', 'price_max', 'tags', 'images',
-            'is_favorite', 'reviews_count', 'description_en',
-            'description_ru', 'description_tm',
+            'id', 'category', 'avatar', 'images',
+            'title_tm', 'title_ru', 'title_en', 'is_favorite',
+            'price_min', 'price_max', 'tags', 'reviews_count',
+            'description_en', 'description_ru', 'description_tm',
         ]
 
     def get_is_favorite(self, obj):
@@ -44,6 +49,7 @@ class ServiceLightSerializer(serializers.ModelSerializer):
 
 
 class ContactTypeSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = ContactType
         fields = ['slug', 'name_tm', 'name_ru', 'name_en', 'icon']
