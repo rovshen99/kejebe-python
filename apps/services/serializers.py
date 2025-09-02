@@ -28,7 +28,7 @@ class ServiceTagSerializer(serializers.ModelSerializer):
 
 
 class ServiceLightSerializer(serializers.ModelSerializer):
-    images = ServiceProductImageSerializer(many=True, read_only=True)
+    images = ServiceImageSerializer(many=True, read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     is_favorite = serializers.SerializerMethodField()
     tags = ServiceTagSerializer(many=True, read_only=True)
@@ -81,6 +81,8 @@ class ServiceSerializer(serializers.ModelSerializer):
     contacts = ServiceContactSerializer(many=True, read_only=True)
     products = ServiceProductSerializer(many=True, read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
+    reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
+    is_favorite = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
@@ -91,8 +93,14 @@ class ServiceSerializer(serializers.ModelSerializer):
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
-            'images', 'videos', 'contacts', 'products'
+            'images', 'videos', 'contacts', 'products', 'reviews_count', 'is_favorite'
         ]
+
+    def get_is_favorite(self, obj):
+        request = self.context.get('request')
+        if request and request.user and request.user.is_authenticated:
+            return obj.favorites.filter(user=request.user).exists()
+        return False
 
 
 class ReviewSerializer(serializers.ModelSerializer):
