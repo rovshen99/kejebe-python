@@ -28,7 +28,8 @@ class ServiceTagSerializer(serializers.ModelSerializer):
 
 
 class ServiceLightSerializer(serializers.ModelSerializer):
-    images = ServiceImageSerializer(many=True, read_only=True)
+    images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
+    videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     is_favorite = serializers.SerializerMethodField()
     tags = ServiceTagSerializer(many=True, read_only=True)
@@ -36,7 +37,7 @@ class ServiceLightSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id', 'category', 'avatar', 'images',
+            'id', 'category', 'avatar', 'images', 'videos',
             'title_tm', 'title_ru', 'title_en', 'is_favorite',
             'price_min', 'price_max', 'tags', 'reviews_count',
             'description_en', 'description_ru', 'description_tm',
