@@ -7,6 +7,8 @@ from apps.regions.models import Region, City
 from apps.services.validators import validate_file_size
 from apps.users.models import User
 
+from froala_editor.fields import FroalaField
+
 from slugify import slugify
 
 
@@ -23,9 +25,9 @@ class Service(models.Model):
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
     title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
-    description_tm = models.TextField(verbose_name=_("Description (TM)"))
-    description_ru = models.TextField(verbose_name=_("Description (RU)"))
-    description_en = models.TextField(verbose_name=_("Description (EN)"))
+    description_tm = FroalaField(verbose_name=_("Description (TM)"))
+    description_ru = FroalaField(verbose_name=_("Description (RU)"))
+    description_en = FroalaField(verbose_name=_("Description (EN)"))
 
     price_min = models.FloatField(null=True, blank=True, verbose_name=_("Minimum Price"))
     price_max = models.FloatField(null=True, blank=True, verbose_name=_("Maximum Price"))

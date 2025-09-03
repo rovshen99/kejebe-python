@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'mptt',
     'nested_admin',
+    'froala_editor',
 ]
 
 REST_FRAMEWORK = {
