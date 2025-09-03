@@ -45,6 +45,7 @@ class ReviewViewSet(mixins.ListModelMixin,
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['service', 'user']
+    pagination_class = CustomPagination
 
     def get_queryset(self):
         return Review.objects.filter(is_approved=True).select_related('user', 'service')
