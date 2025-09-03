@@ -17,17 +17,17 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework.routers import DefaultRouter
+from rest_framework_nested import routers
 
 from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
-from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet
+from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
 
-router = DefaultRouter()
+router = routers.DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'regions', RegionViewSet, basename='region')
 router.register(r'cities', CityViewSet, basename='city')
@@ -35,9 +35,14 @@ router.register(r'services', ServiceViewSet, basename='service')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
+# Nested router: /api/services/{service_pk}/products/
+services_router = routers.NestedDefaultRouter(router, r'services', lookup='service')
+services_router.register(r'products', ServiceProductViewSet, basename='service-products')
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/', include(services_router.urls)),
     path('api/auth/', include('apps.users.urls')),
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

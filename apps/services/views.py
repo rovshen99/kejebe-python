@@ -1,13 +1,13 @@
 from django.core.exceptions import PermissionDenied
 from rest_framework import mixins, viewsets, permissions
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 
 from core.pagination import CustomPagination
-from .filters import ServiceFilter
-from .models import Service, Review, Favorite
-from .serializers import ServiceSerializer, ReviewSerializer, FavoriteSerializer, ServiceLightSerializer
+from .filters import ServiceFilter, ServiceProductFilter
+from .models import Service, Review, Favorite, ServiceProduct
+from .serializers import ServiceSerializer, ReviewSerializer, FavoriteSerializer, ServiceLightSerializer, ServiceProductSerializer
 
 
 @extend_schema(tags=["Services"])
@@ -73,3 +73,24 @@ class FavoriteViewSet(mixins.ListModelMixin,
         if instance.user != self.request.user:
             raise PermissionDenied("You can only delete your own favorites.")
         instance.delete()
+
+
+@extend_schema(tags=["Service Products"])
+class ServiceProductViewSet(mixins.ListModelMixin,
+                            mixins.RetrieveModelMixin,
+                            viewsets.GenericViewSet):
+    queryset = ServiceProduct.objects.select_related('service').prefetch_related('images')
+    serializer_class = ServiceProductSerializer
+    pagination_class = CustomPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_class = ServiceProductFilter
+    ordering_fields = ['price', 'created_at', 'priority']
+    ordering = ['priority', '-created_at']
+    search_fields = ['title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en']
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        service_id = self.kwargs.get('service_id') or self.kwargs.get('service_pk')
+        if service_id is not None:
+            qs = qs.filter(service_id=service_id)
+        return qs

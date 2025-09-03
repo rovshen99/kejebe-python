@@ -274,6 +274,7 @@ class ServiceProduct(models.Model):
     description_en = models.TextField(null=True, blank=True, verbose_name=_("Description (EN)"))
 
     price = models.FloatField(verbose_name=_("Price"))
+    priority = models.PositiveIntegerField(default=100, verbose_name=_("Priority"))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
@@ -281,7 +282,7 @@ class ServiceProduct(models.Model):
     class Meta:
         verbose_name = _("Service Product")
         verbose_name_plural = _("Service Products")
-        ordering = ['-created_at']
+        ordering = ['priority', '-created_at']
 
     def __str__(self):
         return self.title_tm

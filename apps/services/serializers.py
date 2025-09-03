@@ -72,6 +72,7 @@ class ServiceProductSerializer(serializers.ModelSerializer):
         model = ServiceProduct
         fields = [
             'id', 'title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en', 'price',
+            'priority',
             'images',
         ]
 
