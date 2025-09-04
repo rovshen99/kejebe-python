@@ -7,6 +7,7 @@ from apps.regions.models import Region, City
 from apps.services.validators import validate_file_size
 from apps.users.models import User
 from core.fields import WebPImageField
+from django.conf import settings
 
 from froala_editor.fields import FroalaField
 
@@ -116,6 +117,25 @@ class ServiceVideo(models.Model):
         validators=[FileExtensionValidator(allowed_extensions=["mp4", "mov", "webm", "mkv"]), validate_file_size],
         null=True,
     )
+    class TranscodeStatus(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        PROCESSING = "processing", _("Processing")
+        READY = "ready", _("Ready")
+        FAILED = "failed", _("Failed")
+
+    hls_master = models.FileField(
+        upload_to="services/hls/",
+        verbose_name=_("HLS master playlist"),
+        null=True,
+        blank=True,
+    )
+    transcode_status = models.CharField(
+        max_length=16,
+        choices=TranscodeStatus.choices,
+        default=TranscodeStatus.PENDING,
+        verbose_name=_("Transcode Status"),
+    )
+    duration = models.FloatField(null=True, blank=True, verbose_name=_("Duration (sec)"))
 
     class Meta:
         verbose_name = _("Service Video")
@@ -123,6 +143,15 @@ class ServiceVideo(models.Model):
 
     def __str__(self):
         return self.file
+
+    @property
+    def hls_url(self):
+        if self.hls_master:
+            try:
+                return self.hls_master.url
+            except Exception:
+                return None
+        return None
 
 
 class Review(models.Model):

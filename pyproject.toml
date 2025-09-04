@@ -19,4 +19,6 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "python-slugify>=8.0.4",
     "whitenoise>=6.9.0",
+    "celery>=5.4.0",
+    "redis>=5.0.8",
 ]

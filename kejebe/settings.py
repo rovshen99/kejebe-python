@@ -179,3 +179,17 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery (can be overridden via env)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "false").lower() == "true"
+CELERY_TASK_EAGER_PROPAGATES = True
+
+# HLS renditions config (optional). Example override in .env as JSON if needed.
+# Default is defined in core.video.DEFAULT_RENDITIONS. Example structure:
+# HLS_RENDITIONS = [
+#     {"name": "720p", "width": 1280, "v_bitrate": 3000, "a_bitrate": 160},
+#     {"name": "480p", "width": 854, "v_bitrate": 1600, "a_bitrate": 128},
+# ]
+HLS_RENDITIONS = None
