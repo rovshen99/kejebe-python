@@ -6,6 +6,7 @@ from apps.categories.models import Category
 from apps.regions.models import Region, City
 from apps.services.validators import validate_file_size
 from apps.users.models import User
+from core.fields import WebPImageField
 
 from froala_editor.fields import FroalaField
 
@@ -15,7 +16,7 @@ from slugify import slugify
 class Service(models.Model):
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Vendor"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
-    avatar = models.ImageField(
+    avatar = WebPImageField(
         upload_to="services/avatars", verbose_name=_("Avatar"), null=True, default=None, blank=True
     )
     regions = models.ManyToManyField(Region, related_name='services', verbose_name=_("Regions"))
@@ -35,7 +36,7 @@ class Service(models.Model):
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
-    background = models.ImageField(upload_to="services/backgrounds", verbose_name=_("Background"), null=True)
+    background = WebPImageField(upload_to="services/backgrounds", verbose_name=_("Background"), null=True)
 
     is_active = models.BooleanField(default=False, verbose_name=_("Is Active"))
     active_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Active Until"))
@@ -60,7 +61,7 @@ class ContactType(models.Model):
     name_tm = models.CharField(max_length=100, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Name (RU)"))
     name_en = models.CharField(max_length=100, verbose_name=_("Name (EN)"))
-    icon = models.ImageField(
+    icon = WebPImageField(
         upload_to='contact_type_icons/',
         verbose_name=_("Icon"),
         null=True,
@@ -97,7 +98,7 @@ class ServiceContact(models.Model):
 
 class ServiceImage(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
-    image = models.ImageField(upload_to="services/images", verbose_name=_("Image"), null=True)
+    image = WebPImageField(upload_to="services/images", verbose_name=_("Image"), null=True)
 
     class Meta:
         verbose_name = _("Service Image")
@@ -295,7 +296,7 @@ class ServiceProductImage(models.Model):
         related_name="images",
         verbose_name=_("Product")
     )
-    image = models.ImageField(upload_to="services/product_images", verbose_name=_("Image"))
+    image = WebPImageField(upload_to="services/product_images", verbose_name=_("Image"))
 
     class Meta:
         verbose_name = _("Service Product Image")

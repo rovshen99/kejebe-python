@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
+from core.fields import WebPImageField
 
 
 class Category(MPTTModel):
@@ -21,10 +22,10 @@ class Category(MPTTModel):
     slug = models.SlugField(
         max_length=64, unique=True, blank=True, null=True, verbose_name=_("Slug")
     )
-    image = models.ImageField(
+    image = WebPImageField(
         upload_to="category/", verbose_name=_("Image"), null=True, default=None, blank=True
     )
-    icon = models.ImageField(
+    icon = WebPImageField(
         upload_to="category/icons/", verbose_name=_("Icon"), null=True, blank=True, default=None
     )
     priority = models.PositiveIntegerField(default=100, verbose_name=_("Priority"))
