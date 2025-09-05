@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 import uuid
 
 from apps.users.managers import UserManager
+from core.fields import WebPImageField
 
 
 class RoleEnum(models.TextChoices):
@@ -24,6 +25,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         db_index=True,
         verbose_name=_("Phone Number"),
+    )
+
+    avatar = WebPImageField(
+        upload_to="users/avatars",
+        verbose_name=_("Avatar"),
+        null=True,
+        blank=True,
+        default=None,
     )
 
     role = models.CharField(

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
     ServiceProductImage, ServiceTag
+from apps.users.models import User
 
 
 class ServiceImageSerializer(serializers.ModelSerializer):
@@ -105,7 +106,21 @@ class ServiceSerializer(serializers.ModelSerializer):
         return False
 
 
+class ReviewUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            'uuid',
+            'name',
+            'surname',
+            'avatar',
+        ]
+
+
 class ReviewSerializer(serializers.ModelSerializer):
+    user = ReviewUserSerializer(read_only=True)
+
     class Meta:
         model = Review
         fields = ['id', 'user', 'service', 'rating', 'comment', 'created_at']

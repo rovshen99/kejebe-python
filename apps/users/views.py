@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from drf_spectacular.utils import extend_schema
 
 from .models import User
@@ -11,8 +12,8 @@ from .serializers import RegisterSerializer, UserSerializer, UserUpdateSerialize
     request=RegisterSerializer,
     responses={201: UserSerializer},
     tags=["Auth"],
-    summary="Регистрация нового пользователя",
-    description="Создает нового пользователя с указанной ролью и данными."
+    summary="Register a new user",
+    description="Creates a new user with the provided role and details."
 )
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -22,8 +23,8 @@ class RegisterView(generics.CreateAPIView):
 @extend_schema(
     responses={200: UserSerializer},
     tags=["Auth"],
-    summary="Получить данные текущего пользователя",
-    description="Возвращает информацию об авторизованном пользователе (требуется токен)."
+    summary="Get current user",
+    description="Returns information about the authenticated user (requires token)."
 )
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -37,12 +38,13 @@ class MeView(APIView):
     request=UserUpdateSerializer,
     responses={200: UserSerializer},
     tags=["Auth"],
-    summary="Обновление имени и email текущего пользователя",
-    description="Позволяет авторизованному пользователю изменить только имя и email."
+    summary="Update current user's profile",
+    description="Allows the authenticated user to update name, surname, email, role, and avatar."
 )
 class MeUpdateView(generics.UpdateAPIView):
     serializer_class = UserUpdateSerializer
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_object(self):
         return self.request.user

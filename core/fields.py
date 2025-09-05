@@ -29,7 +29,7 @@ class WebPImageFieldFile(ImageFieldFile):
                 img = img.convert("RGB")
 
             buf = io.BytesIO()
-            quality = int(getattr(self.field, "webp_quality", 85))
+            quality = int(getattr(self.field, "webp_quality", 75))
 
             img.save(buf, format="WEBP", quality=quality, method=6)
             buf.seek(0)
@@ -49,7 +49,7 @@ class WebPImageFieldFile(ImageFieldFile):
 class WebPImageField(ImageField):
     attr_class = WebPImageFieldFile
 
-    def __init__(self, *args, webp_quality: int = 85, convert_svg: bool = False, **kwargs):
+    def __init__(self, *args, webp_quality: int = 75, convert_svg: bool = False, **kwargs):
         self.webp_quality = webp_quality
         self.convert_svg = convert_svg
         super().__init__(*args, **kwargs)

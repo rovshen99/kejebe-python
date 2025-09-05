@@ -21,8 +21,9 @@ def issue_tokens(user):
 
 
 @extend_schema(
-    tags=["SMS"], summary="Вебхук входящих SMS",
-    description="Принимает SMS от провайдера (универсально: From/To/Body/MessageSid).",
+    tags=["SMS"],
+    summary="Inbound SMS webhook",
+    description="Accepts SMS from a provider (generic: From/To/Body/MessageSid).",
 )
 class InboundSMSWebhookView(APIView):
     permission_classes = [AllowAny]
@@ -50,7 +51,9 @@ class InboundSMSWebhookView(APIView):
 @extend_schema(
     request=InitChallengeSerializer,
     responses={201: {"type":"object","properties":{"challenge_id":{"type":"string","format":"uuid"},"expires_at":{"type":"string","format":"date-time"}}}},
-    tags=["Auth"], summary="Старт реверс-SMS проверки"
+    tags=["Auth"],
+    summary="Start reverse-SMS verification",
+    description="Initiates a reverse-SMS verification challenge and returns its ID and expiry.",
 )
 class InitReverseSMSView(APIView):
     permission_classes = [AllowAny]
@@ -76,7 +79,9 @@ class InitReverseSMSView(APIView):
         "user":{"type":"object"},
         "tokens":{"type":"object"}
     }}},
-    tags=["Auth"], summary="Подтверждение реверс-SMS и логин/регистрация"
+    tags=["Auth"],
+    summary="Confirm reverse-SMS and login/register",
+    description="Checks the challenge result; on success, logs in or creates a user and returns tokens.",
 )
 class ConfirmReverseSMSView(APIView):
     permission_classes = [AllowAny]
@@ -110,7 +115,8 @@ class ConfirmReverseSMSView(APIView):
                 "phone": user.phone,
                 "name": getattr(user, "name", ""),
                 "email": getattr(user, "email", None),
-                "role": getattr(user, "role", None)
+                "role": getattr(user, "role", None),
+                "avatar": (request.build_absolute_uri(user.avatar.url) if getattr(user, "avatar", None) and user.avatar else None),
             }
             return Response({"verified": True, "created": created, "user": payload, "tokens": tokens}, status=200)
 
@@ -147,6 +153,7 @@ class ConfirmReverseSMSView(APIView):
             "phone": user.phone,
             "name": getattr(user, "name", ""),
             "email": getattr(user, "email", None),
-            "role": getattr(user, "role", None)
+            "role": getattr(user, "role", None),
+            "avatar": (request.build_absolute_uri(user.avatar.url) if getattr(user, "avatar", None) and user.avatar else None),
         }
         return Response({"verified": True, "created": created, "user": payload, "tokens": tokens}, status=200)
