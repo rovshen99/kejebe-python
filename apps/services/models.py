@@ -85,7 +85,13 @@ class ContactType(models.Model):
 
 class ServiceContact(models.Model):
     service = models.ForeignKey(Service, related_name='contacts', on_delete=models.CASCADE, verbose_name=_("Service"))
-    type = models.ForeignKey(ContactType, on_delete=models.CASCADE, verbose_name=_("Contact Type"), null=True, blank=True)
+    type = models.ForeignKey(
+        ContactType,
+        on_delete=models.CASCADE,
+        verbose_name=_("Contact Type"),
+        null=True,
+        blank=True
+    )
     value = models.CharField(max_length=255, verbose_name=_("Contact Value"))
 
     class Meta:
@@ -144,15 +150,49 @@ class Review(models.Model):
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"), related_name="favorites")
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        verbose_name=_("Service"),
+        related_name="favorites",
+        null=True,
+        blank=True,
+    )
+    product = models.ForeignKey(
+        'ServiceProduct',
+        on_delete=models.CASCADE,
+        verbose_name=_("Product"),
+        related_name="favorites",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Favorite")
         verbose_name_plural = _("Favorites")
-        unique_together = ('user', 'service')
+        constraints = [
+            models.CheckConstraint(
+                name="favorite_exactly_one_target",
+                check=(
+                    (models.Q(service__isnull=False) & models.Q(product__isnull=True))
+                    | (models.Q(service__isnull=True) & models.Q(product__isnull=False))
+                ),
+            ),
+            models.UniqueConstraint(
+                fields=["user", "service"],
+                name="unique_user_service_favorite",
+                condition=models.Q(service__isnull=False),
+            ),
+            models.UniqueConstraint(
+                fields=["user", "product"],
+                name="unique_user_product_favorite",
+                condition=models.Q(product__isnull=False),
+            ),
+        ]
 
     def __str__(self):
-        return f"{self.user} ♥ {self.service}"
+        target = self.service or self.product
+        return f"{self.user} ♥ {target}"
 
 
 class ServiceTag(models.Model):

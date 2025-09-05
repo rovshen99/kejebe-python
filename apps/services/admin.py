@@ -78,8 +78,16 @@ class ReviewAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ('user', 'service')
-    search_fields = ('user__name', 'service__title_tm')
+    list_display = ('user', 'get_target')
+    search_fields = (
+        'user__name',
+        'service__title_tm', 'service__title_ru', 'service__title_en',
+        'product__title_tm', 'product__title_ru', 'product__title_en',
+    )
+
+    def get_target(self, obj):
+        return obj.service or obj.product
+    get_target.short_description = 'Target'
 
 
 class ServiceInline(admin.TabularInline):
@@ -117,4 +125,3 @@ class ContactTypeAdmin(IconPreviewMixin, admin.ModelAdmin):
     list_display = ('name_tm', 'name_ru', 'name_en', 'icon_preview')
     search_fields = ('name_tm', 'name_ru', 'name_en')
     readonly_fields = ('slug',)
-

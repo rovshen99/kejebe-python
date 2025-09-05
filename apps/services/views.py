@@ -8,16 +8,18 @@ from core.pagination import CustomPagination
 from .filters import ServiceFilter, ServiceProductFilter
 from .models import Service, Review, Favorite, ServiceProduct
 from .serializers import ServiceSerializer, ReviewSerializer, FavoriteSerializer, ServiceLightSerializer, ServiceProductSerializer
+from .mixins import FavoriteAnnotateMixin
 
 
 @extend_schema(tags=["Services"])
-class ServiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Service.objects.select_related('vendor', 'category').prefetch_related('tags')
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ServiceFilter
     ordering_fields = ['priority', 'created_at', 'price_min']
     ordering = ['priority']
     pagination_class = CustomPagination
+    favorite_field = 'service'
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -25,10 +27,11 @@ class ServiceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         return ServiceSerializer
 
     def get_queryset(self):
-        return Service.objects.filter(is_active=True) \
+        qs = Service.objects.filter(is_active=True) \
             .select_related('vendor', 'category') \
             .prefetch_related('tags') \
             .order_by('priority', '-created_at')
+        return self.annotate_is_favorite(qs)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -61,14 +64,14 @@ class FavoriteViewSet(mixins.ListModelMixin,
                       mixins.CreateModelMixin,
                       mixins.DestroyModelMixin,
                       viewsets.GenericViewSet):
-    queryset = Favorite.objects.select_related('user', 'service')
+    queryset = Favorite.objects.select_related('user', 'service', 'product')
     serializer_class = FavoriteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['service', 'user']
+    filterset_fields = ['service', 'product', 'user']
 
     def get_queryset(self):
-        return Favorite.objects.filter(user=self.request.user).select_related('service')
+        return Favorite.objects.filter(user=self.request.user).select_related('service', 'product')
 
     def perform_destroy(self, instance):
         if instance.user != self.request.user:
@@ -77,7 +80,8 @@ class FavoriteViewSet(mixins.ListModelMixin,
 
 
 @extend_schema(tags=["Service Products"])
-class ServiceProductViewSet(mixins.ListModelMixin,
+class ServiceProductViewSet(FavoriteAnnotateMixin,
+                            mixins.ListModelMixin,
                             mixins.RetrieveModelMixin,
                             viewsets.GenericViewSet):
     queryset = ServiceProduct.objects.select_related('service').prefetch_related('images')
@@ -88,9 +92,11 @@ class ServiceProductViewSet(mixins.ListModelMixin,
     ordering_fields = ['price', 'created_at', 'priority']
     ordering = ['priority', '-created_at']
     search_fields = ['title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en']
+    favorite_field = 'product'
 
     def get_queryset(self):
         qs = super().get_queryset()
+        qs = self.annotate_is_favorite(qs)
         service_id = self.kwargs.get('service_id') or self.kwargs.get('service_pk')
         if service_id is not None:
             qs = qs.filter(service_id=service_id)
