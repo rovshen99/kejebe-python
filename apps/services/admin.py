@@ -104,11 +104,11 @@ class ServiceInline(admin.TabularInline):
 #     inlines = [ServiceInline]
 
 
-# @admin.register(Attribute)
-# class ServiceAttributeAdmin(admin.ModelAdmin):
-#     list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
-#     list_filter = ('category', 'input_type')
-#     search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
+@admin.register(Attribute)
+class ServiceAttributeAdmin(admin.ModelAdmin):
+    list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
+    list_filter = ('category', 'input_type')
+    search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
 #
 #
 # @admin.register(AttributeValue)
