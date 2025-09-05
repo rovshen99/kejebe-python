@@ -208,7 +208,7 @@ class ServiceTag(models.Model):
         return self.name_tm
 
 
-class ServiceAttribute(models.Model):
+class Attribute(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, related_name="attribute_definitions", verbose_name=_("Category")
     )
@@ -239,15 +239,20 @@ class ServiceAttribute(models.Model):
         return f"{self.category.name_tm} → {self.name_tm}"
 
 
-class ServiceAttributeValue(models.Model):
-    service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name="attributes", verbose_name=_("Service"))
+class AttributeValue(models.Model):
+    product = models.ForeignKey(
+        'ServiceProduct',
+        on_delete=models.CASCADE,
+        related_name="values",
+        verbose_name=_("Product"),
+    )
     attribute = models.ForeignKey(
-        ServiceAttribute, on_delete=models.CASCADE, verbose_name=_("Attribute")
+        Attribute, on_delete=models.CASCADE, verbose_name=_("Attribute")
     )
 
-    value_text_tm = models.TextField(null=True, blank=True, verbose_name=_("Text Value (TM)"))
-    value_text_ru = models.TextField(null=True, blank=True, verbose_name=_("Text Value (RU)"))
-    value_text_en = models.TextField(null=True, blank=True, verbose_name=_("Text Value (EN)"))
+    value_text_tm = models.CharField(max_length=100, verbose_name=_("Text Value (TM)"))
+    value_text_ru = models.CharField(max_length=100, verbose_name=_("Text Value (RU)"))
+    value_text_en = models.CharField(max_length=100, verbose_name=_("Text Value (EN)"))
 
     value_number = models.FloatField(null=True, blank=True, verbose_name=_("Number Value"))
     value_boolean = models.BooleanField(null=True, blank=True, verbose_name=_("Boolean Value"))
@@ -255,10 +260,10 @@ class ServiceAttributeValue(models.Model):
     class Meta:
         verbose_name = _("Attribute Value")
         verbose_name_plural = _("Attribute Values")
-        unique_together = ('service', 'attribute')
+        unique_together = ('product', 'attribute')
 
     def __str__(self):
-        return f"{self.service.title_tm} – {self.attribute.name_tm}"
+        return f"{self.product.title_tm} – {self.attribute.name_tm}"
 
     @property
     def value(self):
@@ -314,7 +319,7 @@ class ServiceProduct(models.Model):
     description_ru = models.TextField(null=True, blank=True, verbose_name=_("Description (RU)"))
     description_en = models.TextField(null=True, blank=True, verbose_name=_("Description (EN)"))
 
-    price = models.FloatField(verbose_name=_("Price"))
+    price = models.FloatField(null=True, blank=True, verbose_name=_("Price"))
     priority = models.PositiveIntegerField(default=100, verbose_name=_("Priority"))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))

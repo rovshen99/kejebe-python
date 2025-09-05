@@ -9,8 +9,11 @@ from .models import (
     Review,
     Favorite,
     ServiceTag,
-    ServiceAttribute,
-    ServiceAttributeValue, ContactType, ServiceProductImage, ServiceProduct
+    Attribute,
+    AttributeValue,
+    ContactType,
+    ServiceProductImage,
+    ServiceProduct,
 )
 
 import nested_admin
@@ -32,7 +35,7 @@ class ServiceVideoInline(nested_admin.NestedTabularInline):
 
 
 class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
-    model = ServiceAttributeValue
+    model = AttributeValue
     extra = 0
     fields = (
         'attribute',
@@ -49,7 +52,7 @@ class ServiceProductImageInline(nested_admin.NestedTabularInline):
 class ServiceProductInline(nested_admin.NestedStackedInline):
     model = ServiceProduct
     extra = 0
-    inlines = [ServiceProductImageInline]
+    inlines = [ServiceAttributeValueInline, ServiceProductImageInline]
 
 
 @admin.register(Service)
@@ -63,7 +66,6 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
         ServiceContactInline,
         ServiceImageInline,
         ServiceVideoInline,
-        ServiceAttributeValueInline,
         ServiceProductInline,
     ]
 
@@ -95,29 +97,32 @@ class ServiceInline(admin.TabularInline):
     extra = 1
 
 
-@admin.register(ServiceTag)
-class ServiceTagAdmin(admin.ModelAdmin):
-    list_display = ('name_tm', 'name_ru', 'name_en')
-    search_fields = ('name_tm', 'name_ru', 'name_en')
-    inlines = [ServiceInline]
+# @admin.register(ServiceTag)
+# class ServiceTagAdmin(admin.ModelAdmin):
+#     list_display = ('name_tm', 'name_ru', 'name_en')
+#     search_fields = ('name_tm', 'name_ru', 'name_en')
+#     inlines = [ServiceInline]
 
 
-@admin.register(ServiceAttribute)
-class ServiceAttributeAdmin(admin.ModelAdmin):
-    list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
-    list_filter = ('category', 'input_type')
-    search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
-
-
-@admin.register(ServiceAttributeValue)
-class ServiceAttributeValueAdmin(admin.ModelAdmin):
-    list_display = ('service', 'attribute', 'get_display_value')
-    list_filter = ('attribute__category', 'attribute__input_type')
-    search_fields = ('service__title_tm', 'attribute__name_tm')
-
-    def get_display_value(self, obj):
-        return obj.value
-    get_display_value.short_description = "Value"
+# @admin.register(Attribute)
+# class ServiceAttributeAdmin(admin.ModelAdmin):
+#     list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
+#     list_filter = ('category', 'input_type')
+#     search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
+#
+#
+# @admin.register(AttributeValue)
+# class ServiceAttributeValueAdmin(admin.ModelAdmin):
+#     list_display = ('product', 'attribute', 'get_display_value')
+#     list_filter = ('attribute__category', 'attribute__input_type')
+#     search_fields = (
+#         'product__title_tm', 'product__title_ru', 'product__title_en',
+#         'attribute__name_tm', 'attribute__name_ru', 'attribute__name_en',
+#     )
+#
+#     def get_display_value(self, obj):
+#         return obj.value
+#     get_display_value.short_description = "Value"
 
 
 @admin.register(ContactType)
