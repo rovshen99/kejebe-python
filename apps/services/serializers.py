@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage
+    ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 
@@ -41,6 +41,24 @@ class ServiceTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceTag
         fields = ['id', 'name_en', 'name_tm', 'name_ru']
+
+
+class AttributeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attribute
+        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'slug']
+
+
+class AttributeValueSerializer(serializers.ModelSerializer):
+    attribute = AttributeSerializer(read_only=True)
+    value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AttributeValue
+        fields = ['attribute', 'value']
+
+    def get_value(self, obj):
+        return obj.value
 
 
 class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
@@ -85,6 +103,13 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
             'priority',
             'images', 'is_favorite',
         ]
+
+
+class ServiceProductDetailSerializer(ServiceProductSerializer):
+    values = AttributeValueSerializer(many=True, read_only=True)
+
+    class Meta(ServiceProductSerializer.Meta):
+        fields = ServiceProductSerializer.Meta.fields + ['values']
 
 
 class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):

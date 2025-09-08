@@ -14,6 +14,7 @@ from .serializers import (
     FavoriteSerializer,
     ServiceLightSerializer,
     ServiceProductSerializer,
+    ServiceProductDetailSerializer,
     ServiceApplicationSerializer,
 )
 from .mixins import FavoriteAnnotateMixin
@@ -99,7 +100,7 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
                             mixins.ListModelMixin,
                             mixins.RetrieveModelMixin,
                             viewsets.GenericViewSet):
-    queryset = ServiceProduct.objects.select_related('service').prefetch_related('images')
+    queryset = ServiceProduct.objects.select_related('service').prefetch_related('images', 'values__attribute')
     serializer_class = ServiceProductSerializer
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
@@ -116,6 +117,11 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
         if service_id is not None:
             qs = qs.filter(service_id=service_id)
         return qs
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ServiceProductDetailSerializer
+        return ServiceProductSerializer
 
 
 @extend_schema(tags=["Service Applications"])
