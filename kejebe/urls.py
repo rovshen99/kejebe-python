@@ -22,7 +22,7 @@ from rest_framework_nested import routers
 from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
-from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet
+from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -34,8 +34,9 @@ router.register(r'cities', CityViewSet, basename='city')
 router.register(r'services', ServiceViewSet, basename='service')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
+router.register(r'service-applications', ServiceApplicationViewSet, basename='service-application')
 
-# Nested router: /api/services/{service_pk}/products/
+
 services_router = routers.NestedDefaultRouter(router, r'services', lookup='service')
 services_router.register(r'products', ServiceProductViewSet, basename='service-products')
 

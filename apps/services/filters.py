@@ -4,12 +4,13 @@ from apps.services.models import Service, ServiceProduct
 
 
 class ServiceFilter(FilterSet):
-    region = filters.NumberFilter(field_name="cities__region")
-    city = filters.NumberFilter(field_name="cities")
+    region = filters.NumberFilter(field_name="available_cities__region")
+    city = filters.NumberFilter(field_name="available_cities")
+    main_city = filters.NumberFilter(field_name="city")
 
     class Meta:
         model = Service
-        fields = ['category', 'is_active', 'tags', 'region', 'city']
+        fields = ['category', 'is_active', 'tags', 'region', 'city', 'main_city']
 
 
 class ServiceProductFilter(FilterSet):

@@ -16,11 +16,12 @@ from slugify import slugify
 class Service(models.Model):
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Vendor"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
+    city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("City"))
     avatar = WebPImageField(
         upload_to="services/avatars", verbose_name=_("Avatar"), null=True, default=None, blank=True
     )
     regions = models.ManyToManyField(Region, related_name='services', verbose_name=_("Regions"))
-    cities = models.ManyToManyField(City, related_name='services', verbose_name=_("Cities"))
+    available_cities = models.ManyToManyField(City, related_name='services', verbose_name=_("Available Cities"))
 
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
@@ -34,6 +35,7 @@ class Service(models.Model):
     price_max = models.FloatField(null=True, blank=True, verbose_name=_("Maximum Price"))
 
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
+    address = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Address"))
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
     background = WebPImageField(upload_to="services/backgrounds", verbose_name=_("Background"), null=True)
@@ -346,6 +348,61 @@ class ServiceProductImage(models.Model):
     class Meta:
         verbose_name = _("Service Product Image")
         verbose_name_plural = _("Service Product Images")
+
+    def __str__(self):
+        return self.image.url if self.image else str(self.pk)
+
+
+class ServiceApplication(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
+
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Category")
+    )
+    city = models.ForeignKey(City, on_delete=models.PROTECT, verbose_name=_("City"))
+
+    phone = models.CharField(max_length=32, verbose_name=_("Phone Number"))
+    title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Service Title"))
+    contact_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Contact Name"))
+    description = models.TextField(verbose_name=_("Service Description"))
+
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, verbose_name=_("Status"))
+    admin_note = models.TextField(null=True, blank=True, verbose_name=_("Admin Note"))
+    processed_by = models.ForeignKey(
+        User, null=True, blank=True, on_delete=models.SET_NULL, related_name="processed_applications",
+        verbose_name=_("Processed By")
+    )
+    processed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Processed At"))
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Service Application")
+        verbose_name_plural = _("Service Applications")
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        parts = [self.title or "Service Application", self.phone]
+        return " – ".join([p for p in parts if p])
+
+
+class ServiceApplicationImage(models.Model):
+    application = models.ForeignKey(
+        ServiceApplication,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name=_("Application"),
+    )
+    image = WebPImageField(upload_to="service_applications/images", verbose_name=_("Image"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Service Application Image")
+        verbose_name_plural = _("Service Application Images")
+        ordering = ('created_at',)
 
     def __str__(self):
         return self.image.url if self.image else str(self.pk)

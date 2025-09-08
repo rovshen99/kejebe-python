@@ -1,3 +1,5 @@
+import nested_admin
+
 from django.contrib import admin
 
 from core.mixins import IconPreviewMixin
@@ -14,9 +16,9 @@ from .models import (
     ContactType,
     ServiceProductImage,
     ServiceProduct,
+    ServiceApplication,
+    ServiceApplicationImage,
 )
-
-import nested_admin
 
 
 class ServiceContactInline(nested_admin.NestedTabularInline):
@@ -55,17 +57,28 @@ class ServiceProductInline(nested_admin.NestedStackedInline):
     inlines = [ServiceAttributeValueInline, ServiceProductImageInline]
 
 
+class ServiceAvailableCityInline(admin.TabularInline):
+    model = Service.available_cities.through
+    extra = 0
+    verbose_name = 'Available City'
+    verbose_name_plural = 'Available Cities'
+    autocomplete_fields = ['city']
+    fields = ('city',)
+    can_delete = True
+
+
 @admin.register(Service)
 class ServiceAdmin(nested_admin.NestedModelAdmin):
-    list_display = ('title_tm', 'vendor', 'category', 'is_active', 'priority')
-    list_filter = ('category', 'is_active')
+    list_display = ('title_tm', 'vendor', 'category', 'city', 'is_active', 'priority')
+    list_filter = ('category', 'city', 'is_active')
     search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
-    filter_horizontal = ('cities', 'regions')
+    filter_horizontal = ('regions',)
     inlines = [
         ServiceContactInline,
         ServiceImageInline,
         ServiceVideoInline,
+        ServiceAvailableCityInline,
         ServiceProductInline,
     ]
 
@@ -130,3 +143,22 @@ class ContactTypeAdmin(IconPreviewMixin, admin.ModelAdmin):
     list_display = ('name_tm', 'name_ru', 'name_en', 'icon_preview')
     search_fields = ('name_tm', 'name_ru', 'name_en')
     readonly_fields = ('slug',)
+
+
+class ServiceApplicationImageInline(IconPreviewMixin, admin.TabularInline):
+    model = ServiceApplicationImage
+    extra = 0
+    icon_field_name = 'image'
+    icon_width = 80
+    icon_height = 80
+    readonly_fields = ('icon_preview',)
+    fields = ('icon_preview', 'image',)
+
+
+@admin.register(ServiceApplication)
+class ServiceApplicationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'phone', 'category', 'city', 'status', 'created_at')
+    list_filter = ('status', 'category', 'city')
+    search_fields = ('title', 'phone', 'description', 'contact_name')
+    readonly_fields = ('created_at',)
+    inlines = [ServiceApplicationImageInline]

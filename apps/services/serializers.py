@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceTag
+    ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage
 from apps.users.models import User
+from apps.accounts.services.phone import normalize_phone
 
 
 class FavoriteStatusMixin(serializers.Serializer):
@@ -51,7 +52,8 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id', 'category', 'avatar', 'images', 'videos',
+            'id', 'category', 'city', 'address', 'available_cities',
+            'avatar', 'images', 'videos',
             'title_tm', 'title_ru', 'title_en', 'is_favorite',
             'price_min', 'price_max', 'tags', 'reviews_count',
             'description_en', 'description_ru', 'description_tm',
@@ -96,7 +98,7 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'id', 'vendor', 'category', 'avatar', 'background',
+            'id', 'vendor', 'category', 'city', 'address', 'available_cities', 'avatar', 'background',
             'title_tm', 'title_ru', 'title_en',
             'description_tm', 'description_ru', 'description_en',
             'price_min', 'price_max', 'is_catalog',
@@ -132,10 +134,26 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    type = serializers.SerializerMethodField()
+    object = serializers.SerializerMethodField()
+
     class Meta:
         model = Favorite
-        fields = ['id', 'user', 'service', 'product']
+        fields = ['id', 'user', 'service', 'product', 'type', 'object']
         read_only_fields = ['user']
+
+    def get_type(self, obj):
+        return 'service' if obj.service_id else 'product'
+
+    def get_object(self, obj):
+        request = self.context.get('request')
+        if obj.service_id:
+            serializer = ServiceLightSerializer(obj.service, context={'request': request})
+            return serializer.data
+        if obj.product_id:
+            serializer = ServiceProductSerializer(obj.product, context={'request': request})
+            return serializer.data
+        return None
 
     def validate(self, attrs):
         service = attrs.get('service')
@@ -147,3 +165,48 @@ class FavoriteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class ServiceApplicationSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(
+        child=serializers.ImageField(), write_only=True, required=False, allow_empty=True
+    )
+
+    images_preview = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ServiceApplication
+        fields = [
+            'id', 'category', 'city', 'phone', 'title', 'contact_name', 'description',
+            'images', 'images_preview', 'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+        extra_kwargs = {
+            'category': {'required': False, 'allow_null': True},
+        }
+
+    def validate_phone(self, value: str) -> str:
+        normalized = normalize_phone(value)
+        if not normalized:
+            raise serializers.ValidationError('Invalid phone number')
+        return normalized
+
+    def get_images_preview(self, obj):
+        return [
+            {'image': getattr(img.image, 'url', None)} for img in obj.images.all()
+        ]
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        uploaded = validated_data.pop('images', [])
+        # Also accept multiple files via request.FILES.getlist('images')
+        if request is not None:
+            uploaded += list(request.FILES.getlist('images'))
+
+        application = super().create(validated_data)
+        images_to_create = [
+            ServiceApplicationImage(application=application, image=f) for f in uploaded if f
+        ]
+        if images_to_create:
+            ServiceApplicationImage.objects.bulk_create(images_to_create)
+        return application
