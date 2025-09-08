@@ -57,7 +57,7 @@ class ServiceProductInline(nested_admin.NestedStackedInline):
     inlines = [ServiceAttributeValueInline, ServiceProductImageInline]
 
 
-class ServiceAvailableCityInline(admin.TabularInline):
+class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
     model = Service.available_cities.through
     extra = 0
     verbose_name = 'Available City'
@@ -105,9 +105,9 @@ class FavoriteAdmin(admin.ModelAdmin):
     get_target.short_description = 'Target'
 
 
-class ServiceInline(admin.TabularInline):
-    model = Service.tags.through
-    extra = 1
+# class ServiceInline(admin.TabularInline):
+#     model = Service.tags.through
+#     extra = 1
 
 
 # @admin.register(ServiceTag)
