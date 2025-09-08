@@ -46,19 +46,19 @@ class ServiceTagSerializer(serializers.ModelSerializer):
 class AttributeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attribute
-        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'slug']
+        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'slug', 'input_type']
 
 
 class AttributeValueSerializer(serializers.ModelSerializer):
     attribute = AttributeSerializer(read_only=True)
-    value = serializers.SerializerMethodField()
 
     class Meta:
         model = AttributeValue
-        fields = ['attribute', 'value']
-
-    def get_value(self, obj):
-        return obj.value
+        fields = [
+            'attribute',
+            'value_text_tm', 'value_text_ru', 'value_text_en',
+            'value_number', 'value_boolean',
+        ]
 
 
 class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
