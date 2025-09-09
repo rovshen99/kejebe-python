@@ -107,9 +107,10 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
 
 class ServiceProductDetailSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
+    contacts = ServiceContactSerializer(many=True, source='service.contacts', read_only=True)
 
     class Meta(ServiceProductSerializer.Meta):
-        fields = ServiceProductSerializer.Meta.fields + ['values']
+        fields = ServiceProductSerializer.Meta.fields + ['values', 'contacts']
 
 
 class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):

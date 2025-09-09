@@ -100,7 +100,9 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
                             mixins.ListModelMixin,
                             mixins.RetrieveModelMixin,
                             viewsets.GenericViewSet):
-    queryset = ServiceProduct.objects.select_related('service').prefetch_related('images', 'values__attribute')
+    queryset = ServiceProduct.objects.select_related('service').prefetch_related(
+        'images', 'values__attribute', 'service__contacts__type'
+    )
     serializer_class = ServiceProductSerializer
     pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
