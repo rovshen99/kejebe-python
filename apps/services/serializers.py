@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
     ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
 from apps.users.models import User
@@ -171,6 +172,17 @@ class FavoriteSerializer(serializers.ModelSerializer):
     def get_type(self, obj):
         return 'service' if obj.service_id else 'product'
 
+    @extend_schema_field(
+        PolymorphicProxySerializer(
+            component_name='FavoriteObject',
+            resource_type_field_name='type',
+            serializers=[
+                ServiceLightSerializer,
+                ServiceProductSerializer,
+            ],
+            many=False,
+        )
+    )
     def get_object(self, obj):
         request = self.context.get('request')
         if obj.service_id:
