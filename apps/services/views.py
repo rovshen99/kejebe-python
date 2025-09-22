@@ -2,7 +2,11 @@ from django.core.exceptions import PermissionDenied
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from core.pagination import CustomPagination
@@ -93,6 +97,57 @@ class FavoriteViewSet(mixins.ListModelMixin,
         if instance.user != self.request.user:
             raise PermissionDenied("You can only delete your own favorites.")
         instance.delete()
+
+    @extend_schema(
+        summary='Delete favorite by service/product',
+        description=(
+            'Deletes a favorite for the current user by target identifier. '
+            'Provide either `service` or `product` as a query parameter.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='service',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Service ID to delete from favorites (mutually exclusive with `product`).'
+            ),
+            OpenApiParameter(
+                name='product',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Product ID to delete from favorites (mutually exclusive with `service`).'
+            ),
+        ],
+        responses={
+            204: None,
+            400: OpenApiResponse(description='Provide only one of service or product.'),
+            404: OpenApiResponse(description='Not found.'),
+        },
+    )
+    @action(detail=False, methods=['delete'], url_path='by-target')
+    def delete_by_target(self, request, *args, **kwargs):
+        service_id = request.query_params.get('service') or request.query_params.get('service_id')
+        product_id = request.query_params.get('product') or request.query_params.get('product_id')
+
+        if not service_id and not product_id:
+            return Response({'detail': 'Provide one of service or product.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if service_id and product_id:
+            return Response({'detail': 'Provide only one of service or product.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            if service_id:
+                instance = Favorite.objects.get(user=request.user, service_id=service_id)
+            else:
+                instance = Favorite.objects.get(user=request.user, product_id=product_id)
+        except Favorite.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, instance)
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(tags=["Service Products"])
