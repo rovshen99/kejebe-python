@@ -77,12 +77,30 @@ class FavoriteViewSet(mixins.ListModelMixin,
                       mixins.CreateModelMixin,
                       mixins.DestroyModelMixin,
                       viewsets.GenericViewSet):
-    queryset = Favorite.objects.select_related('user', 'service', 'product')
     serializer_class = FavoriteSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['service', 'product', 'user']
     pagination_class = CustomPagination
+
+    @extend_schema(
+        summary='List favorites',
+        description=(
+            'Returns favorites of the current user. Optional `type` query parameter filters '
+            'by target type.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='type',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                enum=['service', 'product'],
+                description='Filter favorites by type: service or product.'
+            )
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = Favorite.objects.filter(user=self.request.user).select_related('service', 'product')
