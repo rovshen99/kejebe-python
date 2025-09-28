@@ -3,6 +3,20 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+
+    def get_avatar(self, obj):
+        avatar_field = getattr(obj, 'avatar', None)
+        if not avatar_field:
+            return None
+        try:
+            url = avatar_field.url
+        except Exception:
+            return None
+
+        request = self.context.get('request') if hasattr(self, 'context') else None
+        return request.build_absolute_uri(url) if request else url
+
     class Meta:
         model = User
         fields = ['uuid', 'name', 'surname', 'email', 'phone', 'role', 'avatar', 'created_at']
