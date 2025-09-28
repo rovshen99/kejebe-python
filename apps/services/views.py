@@ -51,6 +51,52 @@ class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.Retrie
         context['request'] = self.request
         return context
 
+    @extend_schema(
+        summary='List services',
+        description=(
+            'Supports filtering by multiple cities, regions, and categories. '
+            'For multi-select filters provide comma-separated IDs.'
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='city',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Filter by available cities (comma-separated IDs), e.g. 1,2,3',
+                style='form',
+                explode=False,
+            ),
+            OpenApiParameter(
+                name='region',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Filter by regions (comma-separated IDs), e.g. 4,5',
+                style='form',
+                explode=False,
+            ),
+            OpenApiParameter(
+                name='category',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Filter by categories (comma-separated IDs), e.g. 10,11',
+                style='form',
+                explode=False,
+            ),
+            OpenApiParameter(
+                name='main_city',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Filter by main city (single ID).',
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 @extend_schema(tags=["Reviews"])
 class ReviewViewSet(mixins.ListModelMixin,

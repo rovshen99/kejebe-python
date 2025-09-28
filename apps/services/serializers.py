@@ -4,6 +4,7 @@ from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, Conta
     ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
+from apps.regions.serializers import CitySerializer
 
 
 class FavoriteStatusMixin(serializers.Serializer):
@@ -67,6 +68,7 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
+    available_cities = CitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
@@ -121,6 +123,7 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     products = ServiceProductSerializer(many=True, read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
+    available_cities = CitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
