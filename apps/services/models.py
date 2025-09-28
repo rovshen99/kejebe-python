@@ -39,6 +39,7 @@ class Service(models.Model):
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
     background = WebPImageField(upload_to="services/backgrounds", verbose_name=_("Background"), null=True)
+    is_grid_gallery = models.BooleanField(default=False, verbose_name=_("Display images as grid"))
 
     is_active = models.BooleanField(default=False, verbose_name=_("Is Active"))
     active_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Active Until"))
