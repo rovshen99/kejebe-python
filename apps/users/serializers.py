@@ -1,9 +1,12 @@
 from rest_framework import serializers
 from .models import User
+from apps.regions.models import City
+from apps.regions.serializers import CitySerializer, RegionSerializer
 
 
 class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
+    city = CitySerializer(read_only=True)
 
     def get_avatar(self, obj):
         avatar_field = getattr(obj, 'avatar', None)
@@ -19,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['uuid', 'name', 'surname', 'email', 'phone', 'role', 'avatar', 'created_at']
+        fields = ['uuid', 'name', 'surname', 'email', 'phone', 'role', 'city', 'avatar', 'created_at']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -36,6 +39,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
+    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), allow_null=True, required=False)
+
     class Meta:
         model = User
-        fields = ['name', 'surname', 'email', 'role', 'avatar']
+        fields = ['name', 'surname', 'email', 'role', 'avatar', 'city']

@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 import uuid
 
 from apps.users.managers import UserManager
+from apps.regions.models import City
 from core.fields import WebPImageField
 
 
@@ -25,6 +26,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         db_index=True,
         verbose_name=_("Phone Number"),
+    )
+
+    city = models.ForeignKey(
+        City,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("City"),
+        related_name="users",
     )
 
     avatar = WebPImageField(
