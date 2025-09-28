@@ -27,10 +27,11 @@ from .mixins import FavoriteAnnotateMixin
 @extend_schema(tags=["Services"])
 class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     queryset = Service.objects.select_related('vendor', 'category', 'city').prefetch_related('tags', 'available_cities')
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = ServiceFilter
     ordering_fields = ['priority', 'created_at', 'price_min']
     ordering = ['priority']
+    search_fields = ['title_tm', 'title_ru', 'title_en']
     pagination_class = CustomPagination
     favorite_field = 'service'
 
@@ -91,6 +92,13 @@ class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.Retrie
                 location=OpenApiParameter.QUERY,
                 required=False,
                 description='Filter by main city (single ID).',
+            ),
+            OpenApiParameter(
+                name='search',
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description='Search services by title (all languages).',
             ),
         ]
     )
