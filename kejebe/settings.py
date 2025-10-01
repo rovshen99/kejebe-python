@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.categories',
     'apps.regions',
     'apps.accounts',
+    'apps.banners',
     'mptt',
     'nested_admin',
     'froala_editor',
