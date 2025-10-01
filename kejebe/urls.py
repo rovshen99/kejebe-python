@@ -56,7 +56,6 @@ urlpatterns = [
     path("auth/sms/confirm/", ConfirmReverseSMSView.as_view(), name="auth-sms-confirm"),
 
     path('froala_editor/', include('froala_editor.urls'))
-
 ]
 
 if settings.DEBUG:
