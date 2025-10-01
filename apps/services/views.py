@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from core.pagination import CustomPagination
+from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter
 from .models import Service, Review, Favorite, ServiceProduct
 from .serializers import (
@@ -20,12 +21,18 @@ from .serializers import (
     ServiceProductSerializer,
     ServiceProductDetailSerializer,
     ServiceApplicationSerializer,
+    ServiceUpdateSerializer,
+    ServiceProductUpdateSerializer,
 )
 from .mixins import FavoriteAnnotateMixin
 
 
 @extend_schema(tags=["Services"])
-class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ServiceViewSet(FavoriteAnnotateMixin,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     viewsets.GenericViewSet):
     queryset = Service.objects.select_related('vendor', 'category', 'city').prefetch_related('tags', 'available_cities')
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = ServiceFilter
@@ -34,10 +41,13 @@ class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.Retrie
     search_fields = ['title_tm', 'title_ru', 'title_en']
     pagination_class = CustomPagination
     favorite_field = 'service'
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def get_serializer_class(self):
         if self.action == 'list':
             return ServiceLightSerializer
+        if self.action in ['update', 'partial_update']:
+            return ServiceUpdateSerializer
         return ServiceSerializer
 
     def get_queryset(self):
@@ -51,6 +61,22 @@ class ServiceViewSet(FavoriteAnnotateMixin, mixins.ListModelMixin, mixins.Retrie
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(), IsVendor(), IsServiceVendorOwner()]
+        return [permissions.AllowAny()]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        instance.refresh_from_db()
+        output = ServiceSerializer(instance, context={'request': request})
+        return Response(output.data)
 
     @extend_schema(
         summary='List services',
@@ -226,6 +252,7 @@ class FavoriteViewSet(mixins.ListModelMixin,
 class ServiceProductViewSet(FavoriteAnnotateMixin,
                             mixins.ListModelMixin,
                             mixins.RetrieveModelMixin,
+                            mixins.UpdateModelMixin,
                             viewsets.GenericViewSet):
     queryset = ServiceProduct.objects.select_related('service').prefetch_related(
         'images', 'values__attribute', 'service__contacts__type'
@@ -250,7 +277,25 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ServiceProductDetailSerializer
+        if self.action in ['update', 'partial_update']:
+            return ServiceProductUpdateSerializer
         return ServiceProductSerializer
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update']:
+            return [permissions.IsAuthenticated(), IsVendor(), IsServiceProductVendorOwner()]
+        return [permissions.AllowAny()]
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        instance.refresh_from_db()
+        output = ServiceProductDetailSerializer(instance, context={'request': request})
+        return Response(output.data)
 
 
 @extend_schema(tags=["Service Applications"])

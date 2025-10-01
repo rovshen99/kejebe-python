@@ -5,6 +5,7 @@ from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, Conta
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
+from apps.regions.models import City
 
 
 class FavoriteStatusMixin(serializers.Serializer):
@@ -117,6 +118,16 @@ class ServiceProductDetailSerializer(ServiceProductSerializer):
         fields = ServiceProductSerializer.Meta.fields + ['values', 'contacts']
 
 
+class ServiceProductUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ServiceProduct
+        fields = [
+            'title_tm', 'title_ru', 'title_en',
+            'description_tm', 'description_ru', 'description_en',
+            'price',
+        ]
+
+
 class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
@@ -137,6 +148,19 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             'tags', 'priority', 'created_at', 'updated_at',
             'images', 'videos', 'contacts', 'products', 'reviews_count', 'is_favorite',
             'is_grid_gallery',
+        ]
+
+
+class ServiceUpdateSerializer(serializers.ModelSerializer):
+    available_cities = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), many=True, required=False)
+
+    class Meta:
+        model = Service
+        fields = [
+            'city', 'address', 'available_cities', 'avatar', 'background',
+            'title_tm', 'title_ru', 'title_en',
+            'description_tm', 'description_ru', 'description_en',
+            'price_min', 'price_max'
         ]
 
 
