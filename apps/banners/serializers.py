@@ -9,10 +9,9 @@ class BannerSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'title_tm', 'title_ru', 'title_en',
-            'image', 'link_url',
+            'image', 'link_url', 'service',
             'regions', 'cities',
             'is_active', 'starts_at', 'ends_at',
             'priority', 'created_at', 'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
-

@@ -113,9 +113,15 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
 class ServiceProductDetailSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
     contacts = ServiceContactSerializer(many=True, source='service.contacts', read_only=True)
+    service_title_tm = serializers.CharField(source='service.title_tm', read_only=True)
+    service_title_ru = serializers.CharField(source='service.title_ru', read_only=True)
+    service_title_en = serializers.CharField(source='service.title_en', read_only=True)
 
     class Meta(ServiceProductSerializer.Meta):
-        fields = ServiceProductSerializer.Meta.fields + ['values', 'contacts']
+        fields = ServiceProductSerializer.Meta.fields + [
+            'values', 'contacts',
+            'service', 'service_title_tm', 'service_title_ru', 'service_title_en'
+        ]
 
 
 class ServiceProductUpdateSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from core.fields import WebPImageField
+from apps.services.models import Service
 from apps.regions.models import Region, City
 
 
@@ -30,6 +31,15 @@ class Banner(models.Model):
         blank=True,
         verbose_name=_("Link URL"),
         help_text=_("Optional: internal path or external URL")
+    )
+
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("Service"),
+        related_name='banners'
     )
 
     regions = models.ManyToManyField(Region, related_name='banners', blank=True, verbose_name=_("Regions"))
