@@ -213,7 +213,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
             resource_type_field_name='type',
             serializers=[
                 ServiceLightSerializer,
-                ServiceProductSerializer,
+                ServiceProductDetailSerializer,
             ],
             many=False,
         )
@@ -224,7 +224,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
             serializer = ServiceLightSerializer(obj.service, context={'request': request})
             return serializer.data
         if obj.product_id:
-            serializer = ServiceProductSerializer(obj.product, context={'request': request})
+            serializer = ServiceProductDetailSerializer(obj.product, context={'request': request})
             return serializer.data
         return None
 
