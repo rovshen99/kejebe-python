@@ -23,6 +23,7 @@ from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
 from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
+from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
 from django.conf import settings
 from django.conf.urls.static import static
@@ -37,10 +38,12 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 router.register(r'service-applications', ServiceApplicationViewSet, basename='service-application')
 router.register(r'banners', BannerViewSet, basename='banner')
+router.register(r'stories', ServiceStoryViewSet, basename='service-story')
 
 
 services_router = routers.NestedDefaultRouter(router, r'services', lookup='service')
 services_router.register(r'products', ServiceProductViewSet, basename='service-products')
+services_router.register(r'stories', ServiceStoryViewSet, basename='service-stories')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

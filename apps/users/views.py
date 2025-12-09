@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema
 
 from .models import User
 from .serializers import RegisterSerializer, UserSerializer, UserUpdateSerializer
+from apps.devices.models import Device
 
 
 @extend_schema(
@@ -59,3 +60,32 @@ class MeUpdateView(generics.UpdateAPIView):
         instance.refresh_from_db()
         output = UserSerializer(instance, context={"request": request})
         return Response(output.data)
+
+
+@extend_schema(
+    tags=["Auth"],
+    summary="Logout",
+    description="Clears device binding from the current user for the provided device_id. Tokens are not blacklisted."
+)
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        device_id = (
+            request.headers.get("X-Device-ID")
+            or request.headers.get("X-Device-Id")
+            or request.query_params.get("device_id")
+        )
+        if not device_id:
+            return Response({"detail": "device_id is required"}, status=400)
+
+        try:
+            device = Device.objects.get(device_id=device_id)
+        except Device.DoesNotExist:
+            return Response(status=204)
+
+        if device.user_id == request.user.id:
+            device.user = None
+            device.save(update_fields=["user", "updated_at"])
+
+        return Response(status=204)

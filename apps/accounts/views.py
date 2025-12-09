@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .models import InboundSMS, SMSChallenge
 from .serializers import ConfirmChallengeSerializer, InitChallengeSerializer
 from .services.phone import is_bypass_number, normalize_phone
+from apps.devices.models import Device
 
 User = get_user_model()
 
@@ -196,6 +197,7 @@ class ConfirmReverseSMSView(APIView):
         user, created = get_or_create_user_from_validated(
             phone, serializer.validated_data
         )
+        self._bind_device(request, user)
         tokens = issue_tokens(user)
         payload = build_user_payload(request, user)
         return Response(
@@ -207,3 +209,25 @@ class ConfirmReverseSMSView(APIView):
             },
             status=200,
         )
+
+    def _bind_device(self, request, user):
+        device_id = (
+            request.headers.get("X-Device-ID")
+            or request.headers.get("X-Device-Id")
+            or request.query_params.get("device_id")
+        )
+        platform = (
+            request.headers.get("X-Platform")
+            or request.query_params.get("platform")
+            or Device.Platform.UNKNOWN
+        )
+        if not device_id:
+            return
+
+        device, created = Device.objects.get_or_create(
+            device_id=device_id,
+            defaults={"platform": platform, "user": user},
+        )
+        if not created and device.user_id != user.id:
+            device.user = user
+            device.save(update_fields=["user", "updated_at"])

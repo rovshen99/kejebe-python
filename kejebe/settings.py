@@ -50,10 +50,12 @@ INSTALLED_APPS = [
     'django_filters',
     'apps.users',
     'apps.services',
+    'apps.stories',
     'apps.categories',
     'apps.regions',
     'apps.accounts',
     'apps.banners',
+    'apps.devices',
     'mptt',
     'nested_admin',
     'froala_editor',
@@ -75,6 +77,9 @@ DEFAULT_PHONE_COUNTRY_CODE = "993"
 
 SMS_BYPASS_ENABLED = os.getenv("SMS_BYPASS_ENABLED", "true" if DEBUG else "false").lower() == "true"
 SMS_BYPASS_NUMBERS = [n.strip() for n in os.getenv("SMS_BYPASS_NUMBERS", "").split(",") if n.strip()]
+
+SERVICE_STORY_TTL_HOURS = int(os.getenv("SERVICE_STORY_TTL_HOURS", "24"))
+DEVICE_LAST_SEEN_ENABLED = os.getenv("DEVICE_LAST_SEEN_ENABLED", "true").lower() == "true"
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Kejebe API',
@@ -99,6 +104,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'apps.devices.middleware.DeviceLastSeenMiddleware',
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
