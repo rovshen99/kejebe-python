@@ -39,9 +39,14 @@ class HomeViewSet(viewsets.GenericViewSet):
                     When(locale=lang, then=Value(1)),
                     default=Value(0),
                     output_field=IntegerField(),
-                )
+                ),
+                city_isnull=Case(
+                    When(city__isnull=True, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                ),
             )
-            .order_by("-locale_match", "-city__isnull", "-priority")
+            .order_by("-locale_match", "-city_isnull", "-priority")
         )
         config = config_qs.first()
 
