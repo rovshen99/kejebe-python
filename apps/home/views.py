@@ -66,7 +66,8 @@ class HomeViewSet(viewsets.GenericViewSet):
             }
         )
 
-    def _resolve_language(self, request) -> str:
+    @staticmethod
+    def _resolve_language(request) -> str:
         return get_lang_code(request)
 
     @staticmethod
@@ -105,7 +106,8 @@ class HomeViewSet(viewsets.GenericViewSet):
                 continue
         return cleaned
 
-    def _resolve_city(self, request) -> Optional[City]:
+    @staticmethod
+    def _resolve_city(request) -> Optional[City]:
         city_id = request.query_params.get("city_id")
         if not city_id:
             return None
@@ -118,17 +120,20 @@ class HomeViewSet(viewsets.GenericViewSet):
         self, block: HomeBlock, city: Optional[City], request
     ) -> Tuple[List[Any], Optional[Dict[str, Any]]]:
         if block.type == HomeBlockType.STORIES_ROW:
-            return self._build_stories_row(block, city), None
+            return self._build_stories_row(block, city, request), None
         if block.type == HomeBlockType.BANNER_CAROUSEL:
             return self._build_banner_carousel(block, city, request), None
         if block.type == HomeBlockType.CATEGORY_STRIP:
             items = self._build_category_strip(block, request)
-            return items, {"type": "navigate", "screen": "AllCategories", "params": {}}
+            style = block.style or {}
+            view_all = style.get("view_all") or {"type": "navigate", "screen": "AllCategories", "params": {}}
+            return items, view_all
         if block.type in (HomeBlockType.SERVICE_CAROUSEL, HomeBlockType.SERVICE_LIST):
             return self._build_service_block(block, city, request)
         return [], None
 
-    def _build_stories_row(self, block: HomeBlock, city: Optional[City]) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _build_stories_row(block: HomeBlock, city: Optional[City], request) -> List[Dict[str, Any]]:
         lang = get_lang_code(request)
         now = timezone.now()
         stories_qs = (
@@ -153,7 +158,7 @@ class HomeViewSet(viewsets.GenericViewSet):
                 if service.city_id == city.id:
                     city_match = True
                 else:
-                    city_match = service.available_cities.filter(id=city.id).exists()
+                    city_match = any(c.id == city.id for c in service.available_cities.all())
             data = items_map.get(service.id)
             if data is None:
                 order_counter += 1
@@ -277,15 +282,28 @@ class HomeViewSet(viewsets.GenericViewSet):
             services = list(services_qs[: block.limit])
 
         serializer = HomeServiceSerializer(services, many=True, context={"request": request})
-
-        view_all_params = deepcopy(block.query_params) if block.query_params else {}
-        if city:
-            view_all_params.setdefault("city_ids", [city.id])
-        view_all = {"type": "search", "params": view_all_params} if view_all_params else None
+        view_all = self._build_view_all_for_service_block(block, city)
 
         return serializer.data, view_all
 
-    def _base_service_queryset(self, user, catalog_only: bool = True):
+    @staticmethod
+    def _build_view_all_for_service_block(
+        block: HomeBlock,
+        city: Optional[City],
+    ) -> Optional[Dict[str, Any]]:
+        style = block.style or {}
+        if "view_all" in style:
+            return style.get("view_all")
+
+        params = deepcopy(block.query_params) if block.query_params else {}
+        if city:
+            params.setdefault("city_ids", [city.id])
+        if not params:
+            return None
+        return {"type": "search", "params": params}
+
+    @staticmethod
+    def _base_service_queryset(user, catalog_only: bool = True):
         images_prefetch = Prefetch(
             "serviceimage_set",
             queryset=ServiceImage.objects.order_by("id"),
