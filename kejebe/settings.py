@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.banners',
     'apps.devices',
+    'apps.home',
     'mptt',
     'nested_admin',
     'froala_editor',
@@ -170,7 +171,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGES = [
+    ("tm", "Turkmen"),
+    ("ru", "Russian"),
+    ("en", "English"),
+]
+
+LANGUAGE_CODE = 'en'
 
 TIME_ZONE = 'UTC'
 

@@ -1,0 +1,314 @@
+from copy import deepcopy
+from typing import Any, Dict, Iterable, List, Optional, Tuple
+
+from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value
+from django.utils import timezone, translation
+from rest_framework import permissions, viewsets
+from rest_framework.response import Response
+
+from apps.banners.models import Banner
+from apps.categories.models import Category
+from apps.home.models import HomeBlock, HomeBlockSourceMode, HomeBlockType, HomePageConfig
+from apps.home.serializers import (
+    BannerSerializer,
+    CategoryLightSerializer,
+    HomeBlockSerializer,
+    HomeServiceSerializer,
+    StoriesRowItemSerializer,
+)
+from apps.regions.models import City
+from apps.regions.serializers import CitySerializer
+from apps.services.models import Favorite, Service, ServiceImage
+from apps.stories.models import ServiceStory
+from core.utils import get_lang_code, localized_value
+
+
+class HomeViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        lang = self._resolve_language(request)
+        platform = (request.query_params.get("platform") or "mobile").lower()
+        city = self._resolve_city(request)
+
+        config = (
+            HomePageConfig.objects.filter(is_active=True, locale=lang, platform=platform)
+            .filter(Q(city=city) | Q(city__isnull=True))
+            .order_by("-city__isnull", "-priority")
+            .first()
+        )
+
+        city_payload = CitySerializer(city).data if city else None
+        if not config:
+            return Response({"version": 0, "city": city_payload, "blocks": []})
+
+        blocks_payload: List[Dict[str, Any]] = []
+        blocks = config.blocks.filter(is_active=True).order_by("position", "id").prefetch_related("manual_items")
+        for block in blocks:
+            items, view_all = self._build_block(block, city, request)
+            block_payload = {
+                "id": f"blk_{block.id}",
+                "type": block.type,
+                "title": localized_value(block, "title", lang=lang) or None,
+                "limit": block.limit,
+                "style": block.style or {},
+                "items": items,
+                "view_all": view_all,
+            }
+            serialized_block = HomeBlockSerializer(block_payload).data
+            blocks_payload.append(serialized_block)
+
+        return Response(
+            {
+                "version": config.id,
+                "city": city_payload,
+                "blocks": blocks_payload,
+            }
+        )
+
+    def _resolve_language(self, request) -> str:
+        return get_lang_code(request)
+
+    @staticmethod
+    def _manual_objects(block: HomeBlock, model_cls):
+        objs = [
+            item.content_object
+            for item in block.manual_items.all()
+            if isinstance(item.content_object, model_cls)
+        ]
+        return objs[: block.limit] if block.limit else objs
+
+    @staticmethod
+    def _param_list(params: Dict[str, Any], *keys: str) -> List[int]:
+        raw = None
+        for key in keys:
+            if key in params:
+                raw = params.get(key)
+                break
+        if raw is None:
+            return []
+
+        if isinstance(raw, str):
+            raw = [part.strip() for part in raw.split(",") if part.strip()]
+        elif isinstance(raw, (int, float)):
+            raw = [raw]
+        elif isinstance(raw, (list, tuple)):
+            raw = list(raw)
+        else:
+            return []
+
+        cleaned = []
+        for val in raw:
+            try:
+                cleaned.append(int(val))
+            except (TypeError, ValueError):
+                continue
+        return cleaned
+
+    def _resolve_city(self, request) -> Optional[City]:
+        city_id = request.query_params.get("city_id")
+        if not city_id:
+            return None
+        try:
+            return City.objects.select_related("region").get(id=city_id)
+        except City.DoesNotExist:
+            return None
+
+    def _build_block(
+        self, block: HomeBlock, city: Optional[City], request
+    ) -> Tuple[List[Any], Optional[Dict[str, Any]]]:
+        if block.type == HomeBlockType.STORIES_ROW:
+            return self._build_stories_row(block, city), None
+        if block.type == HomeBlockType.BANNER_CAROUSEL:
+            return self._build_banner_carousel(block, city, request), None
+        if block.type == HomeBlockType.CATEGORY_STRIP:
+            items = self._build_category_strip(block, request)
+            return items, {"type": "navigate", "screen": "AllCategories", "params": {}}
+        if block.type in (HomeBlockType.SERVICE_CAROUSEL, HomeBlockType.SERVICE_LIST):
+            return self._build_service_block(block, city, request)
+        return [], None
+
+    def _build_stories_row(self, block: HomeBlock, city: Optional[City]) -> List[Dict[str, Any]]:
+        lang = get_lang_code(request)
+        now = timezone.now()
+        stories_qs = (
+            ServiceStory.objects.filter(
+                Q(is_active=True),
+                Q(starts_at__isnull=True) | Q(starts_at__lte=now),
+                Q(ends_at__isnull=True) | Q(ends_at__gte=now),
+            )
+            .select_related("service", "service__city__region")
+            .prefetch_related("service__available_cities")
+            .order_by("service_id", "priority", "-starts_at", "-created_at")
+        )
+
+        items_map: Dict[int, Dict[str, Any]] = {}
+        order_counter = 0
+        for story in stories_qs:
+            service = story.service
+            if not service or not service.is_active:
+                continue
+            city_match = False
+            if city:
+                if service.city_id == city.id:
+                    city_match = True
+                else:
+                    city_match = service.available_cities.filter(id=city.id).exists()
+            data = items_map.get(service.id)
+            if data is None:
+                order_counter += 1
+                data = {
+                    "service_id": service.id,
+                    "title": localized_value(service, "title", lang=lang) or "",
+                    "avatar_url": service.avatar.url if service.avatar else None,
+                    "story_cover_url": story.image.url if story.image else None,
+                    "has_unseen": True,
+                    "stories_count": 0,
+                    "city_match": city_match,
+                    "order": order_counter,
+                    "open": {"type": "story", "service_id": service.id},
+                }
+            else:
+                data["city_match"] = data.get("city_match", False) or city_match
+            data["stories_count"] += 1
+            if not data.get("story_cover_url") and story.image:
+                data["story_cover_url"] = story.image.url
+            items_map[service.id] = data
+
+        items = list(items_map.values())
+        items.sort(key=lambda x: (not x.get("city_match", False), x.get("order", 0)))
+        for item in items:
+            item.pop("city_match", None)
+            item.pop("order", None)
+        if block.limit:
+            items = items[: block.limit]
+        return StoriesRowItemSerializer(items, many=True).data
+
+    def _build_banner_carousel(self, block: HomeBlock, city: Optional[City], request) -> List[Dict[str, Any]]:
+        lang = get_lang_code(request)
+        banners: Iterable[Banner]
+        if block.source_mode == HomeBlockSourceMode.MANUAL:
+            banners = self._manual_objects(block, Banner)
+        else:
+            banners_qs = Banner.objects.active_now().prefetch_related("cities", "regions")
+            if city:
+                banners_qs = banners_qs.filter(Q(cities=city) | Q(cities__isnull=True)).filter(
+                    Q(regions=city.region) | Q(regions__isnull=True)
+                )
+
+            params = block.query_params or {}
+            city_ids = self._param_list(params, "city_ids", "cities")
+            region_ids = self._param_list(params, "region_ids", "regions")
+            if city_ids:
+                banners_qs = banners_qs.filter(cities__id__in=city_ids)
+            if region_ids:
+                banners_qs = banners_qs.filter(regions__id__in=region_ids)
+            banners_qs = banners_qs.order_by("priority", "-created_at").distinct()
+            banners = banners_qs if not block.limit else banners_qs[: block.limit]
+
+        serializer = BannerSerializer(banners, many=True, context={"lang": lang, "request": request})
+        return serializer.data
+
+    def _build_category_strip(self, block: HomeBlock, request) -> List[Dict[str, Any]]:
+        lang = get_lang_code(request)
+        categories: Iterable[Category]
+        if block.source_mode == HomeBlockSourceMode.MANUAL:
+            categories = self._manual_objects(block, Category)
+        else:
+            params = block.query_params or {}
+            qs = Category.objects.filter(parent__isnull=True)
+            category_ids = self._param_list(params, "category_ids", "categories")
+            if category_ids:
+                qs = qs.filter(id__in=category_ids)
+            qs = qs.order_by("priority", "id")
+            categories = qs[: block.limit]
+
+        serializer = CategoryLightSerializer(categories, many=True, context={"lang": lang, "request": request})
+        return serializer.data
+
+    def _build_service_block(
+        self, block: HomeBlock, city: Optional[City], request
+    ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+        catalog_only = block.source_mode != HomeBlockSourceMode.MANUAL
+        services_qs = self._base_service_queryset(request.user, catalog_only=catalog_only)
+        manual_order: Optional[List[int]] = None
+
+        if block.source_mode == HomeBlockSourceMode.MANUAL:
+            manual_order = [
+                item.object_id
+                for item in block.manual_items.all()
+                if isinstance(item.content_object, Service)
+            ]
+            services_qs = services_qs.filter(id__in=manual_order)
+        else:
+            params = block.query_params or {}
+            category_ids = self._param_list(params, "category_ids", "categories")
+            tag_ids = self._param_list(params, "tag_ids", "tags")
+            city_ids = self._param_list(params, "city_ids", "cities")
+            region_ids = self._param_list(params, "region_ids", "regions")
+
+            if category_ids:
+                services_qs = services_qs.filter(category_id__in=category_ids)
+            if tag_ids:
+                services_qs = services_qs.filter(tags__id__in=tag_ids)
+            if city_ids:
+                services_qs = services_qs.filter(Q(city_id__in=city_ids) | Q(available_cities__id__in=city_ids))
+            if region_ids:
+                services_qs = services_qs.filter(
+                    Q(city__region_id__in=region_ids) | Q(available_cities__region_id__in=region_ids)
+                )
+
+            order = params.get("ordering")
+            if order:
+                services_qs = services_qs.order_by(order)
+
+        if city:
+            services_qs = services_qs.filter(Q(city=city) | Q(available_cities=city))
+
+        services_qs = services_qs.distinct()
+
+        services: List[Service]
+        if manual_order is not None:
+            services_map = {service.id: service for service in services_qs}
+            services = [services_map[sid] for sid in manual_order if sid in services_map]
+            if block.limit:
+                services = services[: block.limit]
+        else:
+            services = list(services_qs[: block.limit])
+
+        serializer = HomeServiceSerializer(services, many=True, context={"request": request})
+
+        view_all_params = deepcopy(block.query_params) if block.query_params else {}
+        if city:
+            view_all_params.setdefault("city_ids", [city.id])
+        view_all = {"type": "search", "params": view_all_params} if view_all_params else None
+
+        return serializer.data, view_all
+
+    def _base_service_queryset(self, user, catalog_only: bool = True):
+        images_prefetch = Prefetch(
+            "serviceimage_set",
+            queryset=ServiceImage.objects.order_by("id"),
+            to_attr="prefetched_images",
+        )
+        qs = (
+            Service.objects.filter(is_active=True)
+            .select_related("category", "city__region")
+            .prefetch_related("tags", "available_cities", images_prefetch)
+            .annotate(
+                rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
+                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+            )
+            .order_by("priority", "-created_at")
+        )
+        if catalog_only:
+            qs = qs.filter(is_catalog=True)
+        if user and getattr(user, "is_authenticated", False):
+            qs = qs.annotate(
+                is_favorite=Exists(
+                    Favorite.objects.filter(user=user, service_id=OuterRef("pk"))
+                )
+            )
+        else:
+            qs = qs.annotate(is_favorite=Value(False, output_field=BooleanField()))
+        return qs
