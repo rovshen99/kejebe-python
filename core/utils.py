@@ -1,7 +1,7 @@
-from typing import Any, Iterable, Optional, Set
+from typing import Any, Iterable, Optional, Set, Union
 
 from django.utils import translation
-from django.utils.translation import get_language_from_request
+from django.utils.translation import get_language_from_request, gettext as _
 
 SUPPORTED_LANGS: Set[str] = {"tm", "ru", "en"}
 
@@ -53,28 +53,52 @@ def localized_value(obj: Any, prefix: str, lang: Optional[str] = None, default: 
     return getattr(obj, field_name, None)
 
 
-def _format_number(value: Any) -> Optional[str]:
+NumberLike = Union[int, float, str, None]
+
+
+def _format_price_value(value: NumberLike) -> Optional[str]:
     if value is None:
         return None
     try:
         num = float(value)
     except (TypeError, ValueError):
         return None
-    if num.is_integer():
-        return str(int(num))
     return f"{num:.0f}"
 
 
-def format_price_text(price_min: Any, price_max: Any, currency: str = "TMT") -> str:
-    formatted_min = _format_number(price_min)
-    formatted_max = _format_number(price_max)
+def format_price_text(
+    price_min: NumberLike,
+    price_max: NumberLike,
+    currency: str = "TMT",
+    lang: Optional[str] = None,
+) -> str:
+    formatted_min = _format_price_value(price_min)
+    formatted_max = _format_price_value(price_max)
+    lang_code = (lang or get_lang_code(default="tm")).split("-")[0]
 
-    if formatted_min and formatted_max:
-        if formatted_min == formatted_max:
-            return f"{formatted_min} {currency}"
-        return f"{formatted_min}–{formatted_max} {currency}"
-    if formatted_min:
-        return f"от {formatted_min} {currency}"
-    if formatted_max:
-        return f"до {formatted_max} {currency}"
-    return "Цена по запросу"
+    with translation.override(lang_code):
+        if formatted_min is not None and formatted_max is not None:
+            if formatted_min == formatted_max:
+                return _("%(price)s %(currency)s") % {
+                    "price": formatted_min,
+                    "currency": currency,
+                }
+            return _("%(price_min)s–%(price_max)s %(currency)s") % {
+                "price_min": formatted_min,
+                "price_max": formatted_max,
+                "currency": currency,
+            }
+
+        if formatted_min is not None:
+            return _("from %(price)s %(currency)s") % {
+                "price": formatted_min,
+                "currency": currency,
+            }
+
+        if formatted_max is not None:
+            return _("up to %(price)s %(currency)s") % {
+                "price": formatted_max,
+                "currency": currency,
+            }
+
+        return _("Price on request")

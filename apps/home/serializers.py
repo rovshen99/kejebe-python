@@ -153,7 +153,11 @@ class HomeServiceSerializer(serializers.ModelSerializer):
         return self._localized_name(getattr(obj, "category", None), "name")
 
     def get_price_text(self, obj):
-        return format_price_text(getattr(obj, "price_min", None), getattr(obj, "price_max", None))
+        return format_price_text(
+            getattr(obj, "price_min", None),
+            getattr(obj, "price_max", None),
+            lang=self._lang(),
+        )
 
     def get_rating(self, obj):
         rating = getattr(obj, "rating", None)
