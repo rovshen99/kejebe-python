@@ -45,6 +45,7 @@ class HomeBlockType(models.TextChoices):
 class HomeBlockSourceMode(models.TextChoices):
     MANUAL = "manual", _("Manual")
     QUERY = "query", _("Query")
+    PINNED_QUERY = "pinned_query", _("Pinned + query")
 
 
 class HomeBlock(models.Model):

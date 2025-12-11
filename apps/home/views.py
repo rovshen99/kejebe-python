@@ -46,7 +46,7 @@ class HomeViewSet(viewsets.GenericViewSet):
                     output_field=IntegerField(),
                 ),
             )
-            .order_by("-locale_match", "-city_isnull", "-priority")
+            .order_by("-locale_match", "city_isnull", "-priority")
         )
         config = config_qs.first()
 
@@ -249,6 +249,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         catalog_only = block.source_mode != HomeBlockSourceMode.MANUAL
         services_qs = self._base_service_queryset(request.user, catalog_only=catalog_only)
         manual_order: Optional[List[int]] = None
+        pinned_ids: Optional[List[int]] = None
 
         if block.source_mode == HomeBlockSourceMode.MANUAL:
             manual_order = [
@@ -259,6 +260,13 @@ class HomeViewSet(viewsets.GenericViewSet):
             services_qs = services_qs.filter(id__in=manual_order)
         else:
             params = block.query_params or {}
+            if block.source_mode == HomeBlockSourceMode.PINNED_QUERY:
+                pinned_ids = [
+                    item.object_id
+                    for item in block.manual_items.all()
+                    if isinstance(item.content_object, Service)
+                ]
+
             category_ids = self._param_list(params, "category_ids", "categories")
             tag_ids = self._param_list(params, "tag_ids", "tags")
             city_ids = self._param_list(params, "city_ids", "cities")
@@ -290,6 +298,18 @@ class HomeViewSet(viewsets.GenericViewSet):
             services = [services_map[sid] for sid in manual_order if sid in services_map]
             if block.limit:
                 services = services[: block.limit]
+        elif pinned_ids is not None:
+            pinned_qs = services_qs.filter(id__in=pinned_ids)
+            pinned_map = {s.id: s for s in pinned_qs}
+            services = [pinned_map[sid] for sid in pinned_ids if sid in pinned_map]
+            if block.limit:
+                remaining = block.limit - len(services)
+                if remaining > 0:
+                    query_qs = services_qs.exclude(id__in=pinned_ids)[:remaining]
+                    services.extend(list(query_qs))
+            else:
+                query_qs = services_qs.exclude(id__in=pinned_ids)
+                services.extend(list(query_qs))
         else:
             services = list(services_qs[: block.limit])
 
