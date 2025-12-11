@@ -17,8 +17,7 @@ class HomePageConfig(models.Model):
         on_delete=models.SET_NULL,
         related_name="home_configs",
     )
-    locale = models.CharField(max_length=10, default="ru")
-    platform = models.CharField(max_length=16, default="mobile")
+    locale = models.CharField(max_length=10, default=None, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     priority = models.IntegerField(default=0)

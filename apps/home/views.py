@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value
+from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value, Case, When, IntegerField
 from django.utils import timezone, translation
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
@@ -28,15 +28,22 @@ class HomeViewSet(viewsets.GenericViewSet):
 
     def list(self, request, *args, **kwargs):
         lang = self._resolve_language(request)
-        platform = (request.query_params.get("platform") or "mobile").lower()
         city = self._resolve_city(request)
 
-        config = (
-            HomePageConfig.objects.filter(is_active=True, locale=lang, platform=platform)
+        config_qs = (
+            HomePageConfig.objects.filter(is_active=True)
+            .filter(Q(locale=lang) | Q(locale__isnull=True) | Q(locale=""))
             .filter(Q(city=city) | Q(city__isnull=True))
-            .order_by("-city__isnull", "-priority")
-            .first()
+            .annotate(
+                locale_match=Case(
+                    When(locale=lang, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("-locale_match", "-city__isnull", "-priority")
         )
+        config = config_qs.first()
 
         city_payload = CitySerializer(city).data if city else None
         if not config:
