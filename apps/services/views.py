@@ -131,6 +131,11 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List my services",
+        description="Возвращает активные сервисы текущего вендора",
+        responses=ServiceLightSerializer(many=True),
+    )
     @action(
         detail=False,
         methods=["get"],
@@ -316,6 +321,11 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
         output = ServiceProductDetailSerializer(instance, context={'request': request})
         return Response(output.data)
 
+    @extend_schema(
+        summary="List my products",
+        description="Возвращает продукты, принадлежащие активным сервисам текущего вендора",
+        responses=ServiceProductSerializer(many=True),
+    )
     @action(
         detail=False,
         methods=["get"],
