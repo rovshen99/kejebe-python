@@ -81,6 +81,7 @@ SMS_BYPASS_NUMBERS = [n.strip() for n in os.getenv("SMS_BYPASS_NUMBERS", "").spl
 
 SERVICE_STORY_TTL_HOURS = int(os.getenv("SERVICE_STORY_TTL_HOURS", "24"))
 DEVICE_LAST_SEEN_ENABLED = os.getenv("DEVICE_LAST_SEEN_ENABLED", "true").lower() == "true"
+DEFAULT_REGION_ID = int(os.getenv("DEFAULT_REGION_ID", "0")) or None
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Kejebe API',

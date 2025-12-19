@@ -165,6 +165,12 @@ class HomeViewSet(viewsets.GenericViewSet):
     def _resolve_city(request) -> Optional[City]:
         city_id = request.query_params.get("city_id")
         if not city_id:
+            device = getattr(request, "device", None)
+            if device and device.city_id:
+                return device.city
+            user = getattr(request, "user", None)
+            if user and getattr(user, "is_authenticated", False) and getattr(user, "city_id", None):
+                return user.city
             return None
         try:
             return City.objects.select_related("region").get(id=city_id)
@@ -174,12 +180,22 @@ class HomeViewSet(viewsets.GenericViewSet):
     @staticmethod
     def _resolve_region(request) -> Optional[Region]:
         region_id = request.query_params.get("region_id")
-        if not region_id:
-            return None
-        try:
-            return Region.objects.get(id=region_id)
-        except Region.DoesNotExist:
-            return None
+        if region_id:
+            try:
+                return Region.objects.get(id=region_id)
+            except Region.DoesNotExist:
+                return None
+
+        device = getattr(request, "device", None)
+        if device and device.region_id:
+            return device.region
+        if device and device.city_id:
+            return device.city.region
+
+        user = getattr(request, "user", None)
+        if user and getattr(user, "is_authenticated", False) and getattr(user, "city_id", None):
+            return user.city.region
+        return None
 
     def _build_block(
         self, block: HomeBlock, city: Optional[City], region: Optional[Region], request

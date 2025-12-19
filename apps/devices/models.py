@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.users.models import User
-from apps.regions.models import City
+from apps.regions.models import City, Region
 
 
 class Device(models.Model):
@@ -34,6 +34,14 @@ class Device(models.Model):
         blank=True,
         related_name="devices",
         verbose_name=_("City")
+    )
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="devices",
+        verbose_name=_("Region")
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
