@@ -16,7 +16,7 @@ from apps.home.serializers import (
     HomeServiceSerializer,
     StoriesRowItemSerializer,
 )
-from apps.regions.models import City
+from apps.regions.models import City, Region
 from apps.regions.serializers import CitySerializer
 from apps.services.models import Favorite, Service, ServiceImage
 from apps.stories.models import ServiceStory
@@ -29,24 +29,67 @@ class HomeViewSet(viewsets.GenericViewSet):
     def list(self, request, *args, **kwargs):
         lang = self._resolve_language(request)
         city = self._resolve_city(request)
+        region = self._resolve_region(request)
+        if city and city.region and not region:
+            region = city.region
 
         config_qs = (
             HomePageConfig.objects.filter(is_active=True)
             .filter(Q(locale=lang) | Q(locale__isnull=True) | Q(locale=""))
-            .filter(Q(city=city) | Q(city__isnull=True))
-            .annotate(
-                locale_match=Case(
-                    When(locale=lang, then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                ),
-                city_isnull=Case(
-                    When(city__isnull=True, then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                ),
+        )
+        if city:
+            config_qs = config_qs.filter(Q(city=city) | Q(city__isnull=True))
+        else:
+            config_qs = config_qs.filter(Q(city__isnull=True))
+
+        if region:
+            config_qs = config_qs.filter(Q(region=region) | Q(region__isnull=True))
+        else:
+            config_qs = config_qs.filter(Q(region__isnull=True))
+
+        city_match = (
+            Case(
+                When(city=city, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
             )
-            .order_by("-locale_match", "city_isnull", "-priority")
+            if city
+            else Value(0, output_field=IntegerField())
+        )
+        region_match = (
+            Case(
+                When(region=region, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            )
+            if region
+            else Value(0, output_field=IntegerField())
+        )
+        config_qs = config_qs.annotate(
+            locale_match=Case(
+                When(locale=lang, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            city_match=city_match,
+            region_match=region_match,
+            city_isnull=Case(
+                When(city__isnull=True, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+            region_isnull=Case(
+                When(region__isnull=True, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
+            ),
+        ).order_by(
+            "-locale_match",
+            "-city_match",
+            "-region_match",
+            "city_isnull",
+            "region_isnull",
+            "-priority",
         )
         config = config_qs.first()
 
@@ -57,7 +100,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         blocks_payload: List[Dict[str, Any]] = []
         blocks = config.blocks.filter(is_active=True).order_by("position", "id").prefetch_related("manual_items")
         for block in blocks:
-            items, view_all = self._build_block(block, city, request)
+            items, view_all = self._build_block(block, city, region, request)
             block_payload = {
                 "id": f"blk_{block.id}",
                 "type": block.type,
@@ -128,24 +171,36 @@ class HomeViewSet(viewsets.GenericViewSet):
         except City.DoesNotExist:
             return None
 
+    @staticmethod
+    def _resolve_region(request) -> Optional[Region]:
+        region_id = request.query_params.get("region_id")
+        if not region_id:
+            return None
+        try:
+            return Region.objects.get(id=region_id)
+        except Region.DoesNotExist:
+            return None
+
     def _build_block(
-        self, block: HomeBlock, city: Optional[City], request
+        self, block: HomeBlock, city: Optional[City], region: Optional[Region], request
     ) -> Tuple[List[Any], Optional[Dict[str, Any]]]:
         if block.type == HomeBlockType.STORIES_ROW:
-            return self._build_stories_row(block, city, request), None
+            return self._build_stories_row(block, city, region, request), None
         if block.type == HomeBlockType.BANNER_CAROUSEL:
-            return self._build_banner_carousel(block, city, request), None
+            return self._build_banner_carousel(block, city, region, request), None
         if block.type == HomeBlockType.CATEGORY_STRIP:
             items = self._build_category_strip(block, request)
             style = block.style or {}
             view_all = style.get("view_all") or {"type": "navigate", "screen": "AllCategories", "params": {}}
             return items, view_all
         if block.type in (HomeBlockType.SERVICE_CAROUSEL, HomeBlockType.SERVICE_LIST):
-            return self._build_service_block(block, city, request)
+            return self._build_service_block(block, city, region, request)
         return [], None
 
     @staticmethod
-    def _build_stories_row(block: HomeBlock, city: Optional[City], request) -> List[Dict[str, Any]]:
+    def _build_stories_row(
+        block: HomeBlock, city: Optional[City], region: Optional[Region], request
+    ) -> List[Dict[str, Any]]:
         lang = get_lang_code(request)
         now = timezone.now()
         stories_qs = (
@@ -166,6 +221,13 @@ class HomeViewSet(viewsets.GenericViewSet):
             if not service or not service.is_active:
                 continue
             city_match = False
+            if region and not city:
+                if service.city and service.city.region_id == region.id:
+                    region_match = True
+                else:
+                    region_match = any(c.region_id == region.id for c in service.available_cities.all())
+                if not region_match:
+                    continue
             if city:
                 if service.city_id == city.id:
                     city_match = True
@@ -201,7 +263,9 @@ class HomeViewSet(viewsets.GenericViewSet):
             items = items[: block.limit]
         return StoriesRowItemSerializer(items, many=True).data
 
-    def _build_banner_carousel(self, block: HomeBlock, city: Optional[City], request) -> List[Dict[str, Any]]:
+    def _build_banner_carousel(
+        self, block: HomeBlock, city: Optional[City], region: Optional[Region], request
+    ) -> List[Dict[str, Any]]:
         lang = get_lang_code(request)
         banners: Iterable[Banner]
         if block.source_mode == HomeBlockSourceMode.MANUAL:
@@ -211,6 +275,10 @@ class HomeViewSet(viewsets.GenericViewSet):
             if city:
                 banners_qs = banners_qs.filter(Q(cities=city) | Q(cities__isnull=True)).filter(
                     Q(regions=city.region) | Q(regions__isnull=True)
+                )
+            elif region:
+                banners_qs = banners_qs.filter(Q(cities__region=region) | Q(cities__isnull=True)).filter(
+                    Q(regions=region) | Q(regions__isnull=True)
                 )
 
             params = block.query_params or {}
@@ -244,7 +312,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         return serializer.data
 
     def _build_service_block(
-        self, block: HomeBlock, city: Optional[City], request
+        self, block: HomeBlock, city: Optional[City], region: Optional[Region], request
     ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
         catalog_only = block.source_mode != HomeBlockSourceMode.MANUAL
         services_qs = self._base_service_queryset(request.user, catalog_only=catalog_only)
@@ -289,6 +357,8 @@ class HomeViewSet(viewsets.GenericViewSet):
 
         if city:
             services_qs = services_qs.filter(Q(city=city) | Q(available_cities=city))
+        elif region:
+            services_qs = services_qs.filter(Q(city__region=region) | Q(available_cities__region=region))
 
         services_qs = services_qs.distinct()
 
@@ -314,7 +384,7 @@ class HomeViewSet(viewsets.GenericViewSet):
             services = list(services_qs[: block.limit])
 
         serializer = HomeServiceSerializer(services, many=True, context={"request": request})
-        view_all = self._build_view_all_for_service_block(block, city)
+        view_all = self._build_view_all_for_service_block(block, city, region)
 
         return serializer.data, view_all
 
@@ -322,6 +392,7 @@ class HomeViewSet(viewsets.GenericViewSet):
     def _build_view_all_for_service_block(
         block: HomeBlock,
         city: Optional[City],
+        region: Optional[Region],
     ) -> Optional[Dict[str, Any]]:
         style = block.style or {}
         if "view_all" in style:
@@ -330,6 +401,8 @@ class HomeViewSet(viewsets.GenericViewSet):
         params = deepcopy(block.query_params) if block.query_params else {}
         if city:
             params.setdefault("city_ids", [city.id])
+        elif region:
+            params.setdefault("region_ids", [region.id])
         if not params:
             return None
         return {"type": "search", "params": params}

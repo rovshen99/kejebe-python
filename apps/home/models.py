@@ -4,6 +4,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from apps.regions.models import City
+from apps.regions.models import Region
 
 
 class HomePageConfig(models.Model):
@@ -12,6 +13,13 @@ class HomePageConfig(models.Model):
 
     city = models.ForeignKey(
         City,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="home_configs",
+    )
+    region = models.ForeignKey(
+        Region,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,

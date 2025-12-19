@@ -47,8 +47,8 @@ class HomeBlockInline(nested_admin.NestedStackedInline):
 
 @admin.register(HomePageConfig)
 class HomePageConfigAdmin(nested_admin.NestedModelAdmin):
-    list_display = ("slug", "city", "locale", "is_active", "priority")
-    list_filter = ("locale", "is_active", "city")
+    list_display = ("slug", "city", "region", "locale", "is_active", "priority")
+    list_filter = ("locale", "is_active", "city", "region")
     search_fields = ("slug", "title")
     ordering = ("-priority", "id")
     inlines = [HomeBlockInline]
@@ -57,7 +57,7 @@ class HomePageConfigAdmin(nested_admin.NestedModelAdmin):
 @admin.register(HomeBlock)
 class HomeBlockAdmin(admin.ModelAdmin):
     list_display = ("id", "config", "type", "position", "is_active", "source_mode", "limit")
-    list_filter = ("type", "source_mode", "is_active", "config__city", "config__locale")
+    list_filter = ("type", "source_mode", "is_active", "config__city", "config__region", "config__locale")
     search_fields = ("config__slug", "title_tm", "title_ru", "title_en")
     ordering = ("config", "position", "id")
 
