@@ -21,6 +21,7 @@ class City(models.Model):
     name_tm = models.CharField(max_length=255, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=255, verbose_name=_("Name (RU)"))
     name_en = models.CharField(max_length=255, verbose_name=_("Name (EN)"))
+    is_region_level = models.BooleanField(default=False, verbose_name=_("Is region-level city"))
 
     class Meta:
         verbose_name = _("City")
