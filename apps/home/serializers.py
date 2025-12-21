@@ -181,7 +181,10 @@ class HomeServiceSerializer(serializers.ModelSerializer):
         return int(count) if count is not None else 0
 
     def get_tags(self, obj):
-        tags = getattr(obj, "tags", None) or []
+        tags_rel = getattr(obj, "tags", None)
+        if not tags_rel:
+            return []
+        tags = tags_rel.all() if hasattr(tags_rel, "all") else tags_rel
         lang = self._lang()
         names = []
         for tag in tags:
