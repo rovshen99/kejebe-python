@@ -91,13 +91,14 @@ class StoriesRowItemSerializer(serializers.Serializer):
 class HomeServiceSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     cover_url = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     city_title = serializers.SerializerMethodField()
     region_title = serializers.SerializerMethodField()
     category_title = serializers.SerializerMethodField()
     price_text = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
     reviews_count = serializers.SerializerMethodField()
-    badges = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
     has_discount = serializers.SerializerMethodField()
     discount_text = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
@@ -109,13 +110,14 @@ class HomeServiceSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "cover_url",
+            "images",
             "city_title",
             "region_title",
             "category_title",
             "price_text",
             "rating",
             "reviews_count",
-            "badges",
+            "tags",
             "has_discount",
             "discount_text",
             "is_favorite",
@@ -138,6 +140,17 @@ class HomeServiceSerializer(serializers.ModelSerializer):
         if not first_image and hasattr(obj, "serviceimage_set"):
             first_image = obj.serviceimage_set.all().first()
         return first_image.image.url if first_image and getattr(first_image, "image", None) else None
+
+    def get_images(self, obj):
+        images = getattr(obj, "prefetched_images", None) or []
+        if not images and hasattr(obj, "serviceimage_set"):
+            images = obj.serviceimage_set.all()
+        urls = []
+        for image in images:
+            img_field = getattr(image, "image", None)
+            if img_field and getattr(img_field, "url", None):
+                urls.append(img_field.url)
+        return urls
 
     def _localized_name(self, obj, prefix):
         return localized_value(obj, prefix, lang=self._lang())
@@ -167,8 +180,15 @@ class HomeServiceSerializer(serializers.ModelSerializer):
         count = getattr(obj, "reviews_count", None)
         return int(count) if count is not None else 0
 
-    def get_badges(self, obj):
-        return []
+    def get_tags(self, obj):
+        tags = getattr(obj, "tags", None) or []
+        lang = self._lang()
+        names = []
+        for tag in tags:
+            name = localized_value(tag, "name", lang=lang)
+            if name:
+                names.append(name)
+        return names
 
     def get_has_discount(self, obj):
         return bool(self.get_discount_text(obj))
