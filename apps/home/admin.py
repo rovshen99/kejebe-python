@@ -26,6 +26,7 @@ class HomeBlockInline(nested_admin.NestedStackedInline):
     model = HomeBlock
     extra = 0
     sortable_field_name = "position"
+    sortable_options = {"handle": "> h3"}  # allow dragging by the inline header
     inlines = [HomeBlockItemInline]
     fieldsets = (
         (None, {
@@ -43,6 +44,9 @@ class HomeBlockInline(nested_admin.NestedStackedInline):
             "fields": ("query_params", "style"),
         }),
     )
+
+    class Media:
+        css = {"all": ("admin/css/homeblock_sortable.css",)}
 
 
 @admin.register(HomePageConfig)
