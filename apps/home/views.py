@@ -440,8 +440,8 @@ class HomeViewSet(viewsets.GenericViewSet):
             )
             .order_by("priority", "-created_at")
         )
-        if catalog_only:
-            qs = qs.filter(is_catalog=True)
+        # if catalog_only:
+        #     qs = qs.filter(is_catalog=True)
         if user and getattr(user, "is_authenticated", False):
             qs = qs.annotate(
                 is_favorite=Exists(
