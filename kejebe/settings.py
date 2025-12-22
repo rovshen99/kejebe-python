@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'apps.home',
     'mptt',
     'nested_admin',
+    'django_json_widget',
     'froala_editor',
 ]
 

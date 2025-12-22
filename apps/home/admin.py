@@ -1,6 +1,8 @@
 import nested_admin
 from django.contrib import admin
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django_json_widget.widgets import JSONEditorWidget
 
 from apps.banners.models import Banner
 from apps.categories.models import Category
@@ -27,6 +29,9 @@ class HomeBlockInline(nested_admin.NestedStackedInline):
     extra = 0
     sortable_field_name = "position"
     sortable_options = {"handle": "> h3"}  # allow dragging by the inline header
+    formfield_overrides = {
+        models.JSONField: {"widget": JSONEditorWidget},
+    }
     inlines = [HomeBlockItemInline]
     fieldsets = (
         (None, {
@@ -64,6 +69,9 @@ class HomeBlockAdmin(admin.ModelAdmin):
     list_filter = ("type", "source_mode", "is_active", "config__city", "config__region", "config__locale")
     search_fields = ("config__slug", "title_tm", "title_ru", "title_en")
     ordering = ("config", "position", "id")
+    formfield_overrides = {
+        models.JSONField: {"widget": JSONEditorWidget},
+    }
 
 
 @admin.register(HomeBlockItem)

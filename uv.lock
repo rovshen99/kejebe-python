@@ -65,6 +65,15 @@ wheels = [
 ]
 
 [[package]]
+name = "django-json-widget"
+version = "2.1.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f9/30/923ff229ee284bf2fac7a289ca446fb2725d94b2a34c7cb006c4f811e6c0/django_json_widget-2.1.1.tar.gz", hash = "sha256:dc8102e2fa9accd0f661ea1988c9389f8fbbcb8a4bb9cbfb8fa0525b3c1265c1", size = 384026 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/6a/bdbcc079d11d312e463565819089fe83ae6c7f17f274effa4777ca069f64/django_json_widget-2.1.1-py2.py3-none-any.whl", hash = "sha256:2fa3d6fb6dba9436a29ad2cee23fa794381f54a6678ec7d74e990ae081d9800b", size = 293721 },
+]
+
+[[package]]
 name = "django-mptt"
 version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -188,6 +197,7 @@ dependencies = [
     { name = "django" },
     { name = "django-filter" },
     { name = "django-froala-editor" },
+    { name = "django-json-widget" },
     { name = "django-mptt" },
     { name = "django-nested-admin" },
     { name = "djangorestframework" },
@@ -206,6 +216,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2.2" },
     { name = "django-filter", specifier = ">=25.1" },
     { name = "django-froala-editor", specifier = ">=4.6.0" },
+    { name = "django-json-widget", specifier = ">=1.1.1" },
     { name = "django-mptt", specifier = ">=0.17.0" },
     { name = "django-nested-admin", specifier = ">=4.1.4" },
     { name = "djangorestframework", specifier = ">=3.16.1" },
