@@ -126,6 +126,20 @@ class HomeViewSet(viewsets.GenericViewSet):
         return get_lang_code(request)
 
     @staticmethod
+    def _should_filter_by_location(block: HomeBlock, request) -> bool:
+        style = block.style or {}
+        if "location_filter" in style:
+            val = style.get("location_filter")
+            if isinstance(val, bool):
+                return val
+            return str(val).lower() in ("1", "true", "yes", "y", "on")
+
+        raw = request.query_params.get("location_filter")
+        if raw is None:
+            return False
+        return str(raw).lower() in ("1", "true", "yes", "y", "on")
+
+    @staticmethod
     def _manual_objects(block: HomeBlock, model_cls):
         objs = [
             item.content_object
@@ -284,18 +298,20 @@ class HomeViewSet(viewsets.GenericViewSet):
     ) -> List[Dict[str, Any]]:
         lang = get_lang_code(request)
         banners: Iterable[Banner]
+        apply_location_filter = self._should_filter_by_location(block, request)
         if block.source_mode == HomeBlockSourceMode.MANUAL:
             banners = self._manual_objects(block, Banner)
         else:
             banners_qs = Banner.objects.active_now().prefetch_related("cities", "regions")
-            if city:
-                banners_qs = banners_qs.filter(Q(cities=city) | Q(cities__isnull=True)).filter(
-                    Q(regions=city.region) | Q(regions__isnull=True)
-                )
-            elif region:
-                banners_qs = banners_qs.filter(Q(cities__region=region) | Q(cities__isnull=True)).filter(
-                    Q(regions=region) | Q(regions__isnull=True)
-                )
+            if apply_location_filter:
+                if city:
+                    banners_qs = banners_qs.filter(Q(cities=city) | Q(cities__isnull=True)).filter(
+                        Q(regions=city.region) | Q(regions__isnull=True)
+                    )
+                elif region:
+                    banners_qs = banners_qs.filter(Q(cities__region=region) | Q(cities__isnull=True)).filter(
+                        Q(regions=region) | Q(regions__isnull=True)
+                    )
 
             params = block.query_params or {}
             city_ids = self._param_list(params, "city_ids", "cities")
@@ -334,6 +350,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         services_qs = self._base_service_queryset(request.user, catalog_only=catalog_only)
         manual_order: Optional[List[int]] = None
         pinned_ids: Optional[List[int]] = None
+        apply_location_filter = self._should_filter_by_location(block, request)
 
         if block.source_mode == HomeBlockSourceMode.MANUAL:
             manual_order = [
@@ -371,10 +388,11 @@ class HomeViewSet(viewsets.GenericViewSet):
             if order:
                 services_qs = services_qs.order_by(order)
 
-        if city:
-            services_qs = services_qs.filter(Q(city=city) | Q(available_cities=city))
-        elif region:
-            services_qs = services_qs.filter(Q(city__region=region) | Q(available_cities__region=region))
+        if apply_location_filter:
+            if city:
+                services_qs = services_qs.filter(Q(city=city) | Q(available_cities=city))
+            elif region:
+                services_qs = services_qs.filter(Q(city__region=region) | Q(available_cities__region=region))
 
         services_qs = services_qs.distinct()
 
@@ -400,7 +418,9 @@ class HomeViewSet(viewsets.GenericViewSet):
             services = list(services_qs[: block.limit])
 
         serializer = HomeServiceSerializer(services, many=True, context={"request": request})
-        view_all = self._build_view_all_for_service_block(block, city, region)
+        view_all = self._build_view_all_for_service_block(
+            block, city, region, apply_location_filter=apply_location_filter
+        )
 
         return serializer.data, view_all
 
@@ -409,15 +429,16 @@ class HomeViewSet(viewsets.GenericViewSet):
         block: HomeBlock,
         city: Optional[City],
         region: Optional[Region],
+        apply_location_filter: bool = False,
     ) -> Optional[Dict[str, Any]]:
         style = block.style or {}
         if "view_all" in style:
             return style.get("view_all")
 
         params = deepcopy(block.query_params) if block.query_params else {}
-        if city:
+        if apply_location_filter and city:
             params.setdefault("city_ids", [city.id])
-        elif region:
+        elif apply_location_filter and region:
             params.setdefault("region_ids", [region.id])
         if not params:
             return None
