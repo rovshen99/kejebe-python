@@ -43,22 +43,22 @@ class BannerSerializer(serializers.ModelSerializer):
 class CategoryLightSerializer(serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     icon_url = serializers.SerializerMethodField()
+    image_url = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ["id", "title", "icon_url", "open"]
+        fields = ["id", "title", "icon_url", "image_url", "open"]
 
     def get_title(self, obj: Category) -> Optional[str]:
         lang = self.context.get("lang") or get_lang_code(self.context.get("request"))
         return localized_value(obj, "name", lang=lang)
 
     def get_icon_url(self, obj: Category) -> Optional[str]:
-        if obj.icon:
-            return obj.icon.url
-        if obj.image:
-            return obj.image.url
-        return None
+        return obj.icon.url if obj.icon else None
+
+    def get_image_url(self, obj: Category) -> Optional[str]:
+        return obj.image.url if obj.image else None
 
     def get_open(self, obj: Category) -> Dict[str, Any]:
         return {"type": "search", "params": {"category_ids": [obj.id]}}
