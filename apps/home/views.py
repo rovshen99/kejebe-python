@@ -250,6 +250,11 @@ class HomeViewSet(viewsets.GenericViewSet):
             service = story.service
             if not service or not service.is_active:
                 continue
+            is_owner = bool(
+                getattr(request, "user", None)
+                and getattr(request.user, "is_authenticated", False)
+                and service.vendor_id == getattr(request.user, "id", None)
+            )
             city_match = False
             if region and not city:
                 if service.city and service.city.region_id == region.id:
@@ -273,19 +278,27 @@ class HomeViewSet(viewsets.GenericViewSet):
                     "story_cover_url": story.image.url if story.image else None,
                     "has_unseen": True,
                     "stories_count": 0,
+                    "is_owner": is_owner,
                     "city_match": city_match,
                     "order": order_counter,
                     "open": {"type": "story", "service_id": service.id},
                 }
             else:
                 data["city_match"] = data.get("city_match", False) or city_match
+                data["is_owner"] = data.get("is_owner", False) or is_owner
             data["stories_count"] += 1
             if not data.get("story_cover_url") and story.image:
                 data["story_cover_url"] = story.image.url
             items_map[service.id] = data
 
         items = list(items_map.values())
-        items.sort(key=lambda x: (not x.get("city_match", False), x.get("order", 0)))
+        items.sort(
+            key=lambda x: (
+                not x.get("is_owner", False),
+                not x.get("city_match", False),
+                x.get("order", 0),
+            )
+        )
         for item in items:
             item.pop("city_match", None)
             item.pop("order", None)

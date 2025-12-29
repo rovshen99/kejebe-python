@@ -71,6 +71,7 @@ class StoriesRowItemSerializer(serializers.Serializer):
     story_cover_url = serializers.CharField(allow_null=True, required=False)
     has_unseen = serializers.BooleanField()
     stories_count = serializers.IntegerField()
+    is_owner = serializers.BooleanField(default=False)
     open = serializers.DictField()
 
     def to_representation(self, instance: Any) -> Dict[str, Any]:
@@ -83,6 +84,7 @@ class StoriesRowItemSerializer(serializers.Serializer):
             "story_cover_url": getattr(instance, "story_cover_url", None),
             "has_unseen": getattr(instance, "has_unseen", True),
             "stories_count": getattr(instance, "stories_count", 0),
+            "is_owner": getattr(instance, "is_owner", False),
             "open": getattr(instance, "open", {"type": "story", "service_id": getattr(instance, "id", None)}),
         }
         return super().to_representation(data)
