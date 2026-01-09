@@ -22,7 +22,7 @@ class ServiceStoryViewSet(mixins.CreateModelMixin,
                           mixins.DestroyModelMixin,
                           viewsets.GenericViewSet):
     serializer_class = ServiceStorySerializer
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ServiceStoryFilter
