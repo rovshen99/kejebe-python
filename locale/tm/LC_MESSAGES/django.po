@@ -1,0 +1,649 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-11 17:31+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: apps/banners/models.py:23 apps/services/models.py:26
+#: apps/services/models.py:317
+msgid "Title (TM)"
+msgstr "Ady (TM)"
+
+#: apps/banners/models.py:24 apps/services/models.py:27
+#: apps/services/models.py:318
+msgid "Title (RU)"
+msgstr "Ady (RU)"
+
+#: apps/banners/models.py:25 apps/services/models.py:28
+#: apps/services/models.py:319
+msgid "Title (EN)"
+msgstr "Ady (EN)"
+
+#: apps/banners/models.py:27 apps/categories/admin.py:32
+#: apps/categories/models.py:26 apps/services/models.py:110
+#: apps/services/models.py:347 apps/services/models.py:400
+#: apps/stories/models.py:22
+msgid "Image"
+msgstr "Surat"
+
+#: apps/banners/models.py:32
+msgid "Link URL"
+msgstr "Salgysy (URL)"
+
+#: apps/banners/models.py:33
+msgid "Optional: internal path or external URL"
+msgstr "Islege görä: içerki ýol ýa-da daş URL"
+
+#: apps/banners/models.py:41 apps/services/models.py:54
+#: apps/services/models.py:90 apps/services/models.py:109
+#: apps/services/models.py:121 apps/services/models.py:139
+#: apps/services/models.py:159 apps/services/models.py:315
+#: apps/stories/models.py:18
+msgid "Service"
+msgstr "Hyzmat"
+
+#: apps/banners/models.py:45 apps/regions/models.py:12
+#: apps/services/models.py:23
+msgid "Regions"
+msgstr "Sebitler"
+
+#: apps/banners/models.py:46 apps/regions/models.py:27
+msgid "Cities"
+msgstr "Şäherler"
+
+#: apps/banners/models.py:48 apps/services/models.py:44
+#: apps/stories/models.py:24
+msgid "Is Active"
+msgstr "Işjeň"
+
+#: apps/banners/models.py:49 apps/stories/models.py:25
+msgid "Starts At"
+msgstr "Başlaýan wagty"
+
+#: apps/banners/models.py:50 apps/stories/models.py:26
+msgid "Ends At"
+msgstr "Gutarýan wagty"
+
+#: apps/banners/models.py:52 apps/categories/models.py:31
+#: apps/services/models.py:49 apps/services/models.py:326
+#: apps/stories/models.py:28
+msgid "Priority"
+msgstr "Prioritet"
+
+#: apps/banners/models.py:53 apps/devices/models.py:38
+#: apps/services/models.py:50 apps/services/models.py:143
+#: apps/services/models.py:328 apps/services/models.py:381
+#: apps/services/models.py:401 apps/stories/models.py:29
+#: apps/users/models.py:57
+msgid "Created At"
+msgstr "Döredilen wagty"
+
+#: apps/banners/models.py:54 apps/devices/models.py:39
+#: apps/services/models.py:51 apps/services/models.py:329
+#: apps/stories/models.py:30 apps/users/models.py:58
+msgid "Updated At"
+msgstr "Täzelenen wagty"
+
+#: apps/banners/models.py:57
+msgid "Banner"
+msgstr "Banner"
+
+#: apps/banners/models.py:58
+msgid "Banners"
+msgstr "Bannerler"
+
+#: apps/categories/admin.py:27 apps/regions/models.py:6
+#: apps/regions/models.py:21 apps/services/models.py:64
+msgid "Name (TM)"
+msgstr "Ady (TM)"
+
+#: apps/categories/admin.py:37 apps/categories/models.py:29
+#: apps/services/models.py:69
+msgid "Icon"
+msgstr "Nyşan"
+
+#: apps/categories/models.py:19
+msgid "Parent"
+msgstr "Ýokarky"
+
+#: apps/categories/models.py:23 apps/services/models.py:63
+msgid "Slug"
+msgstr "Slug"
+
+#: apps/categories/models.py:34 apps/services/models.py:18
+#: apps/services/models.py:216 apps/services/models.py:364
+msgid "Category"
+msgstr "Kategoriýa"
+
+#: apps/categories/models.py:35
+msgid "Categories"
+msgstr "Kategoriýalar"
+
+#: apps/devices/models.py:10
+msgid "iOS"
+msgstr "iOS"
+
+#: apps/devices/models.py:11
+msgid "Android"
+msgstr "Android"
+
+#: apps/devices/models.py:12
+msgid "Web"
+msgstr "Web"
+
+#: apps/devices/models.py:13
+msgid "Unknown"
+msgstr "Näbelli"
+
+#: apps/devices/models.py:15
+msgid "Device ID"
+msgstr "Enjam ID"
+
+#: apps/devices/models.py:20
+msgid "Platform"
+msgstr "Platforma"
+
+#: apps/devices/models.py:28 apps/services/models.py:138
+#: apps/services/models.py:155 apps/stories/models.py:71
+#: apps/users/models.py:66
+msgid "User"
+msgstr "Ulanyjy"
+
+#: apps/devices/models.py:36 apps/regions/models.py:26
+#: apps/services/models.py:19 apps/services/models.py:366
+#: apps/users/models.py:36
+msgid "City"
+msgstr "Şäher"
+
+#: apps/devices/models.py:40
+msgid "Last Seen At"
+msgstr "Soňky peýda bolşy"
+
+#: apps/devices/models.py:43 apps/stories/models.py:79
+msgid "Device"
+msgstr "Enjam"
+
+#: apps/devices/models.py:44
+msgid "Devices"
+msgstr "Enjamlar"
+
+#: apps/home/models.py:30
+msgid "Home page config"
+msgstr "Esasy sahypa sazlamasy"
+
+#: apps/home/models.py:31
+msgid "Home page configs"
+msgstr "Esasy sahypa sazlamalary"
+
+#: apps/home/models.py:38
+msgid "Stories row"
+msgstr "Storilar hatary"
+
+#: apps/home/models.py:39
+msgid "Banner carousel"
+msgstr "Banner karuseli"
+
+#: apps/home/models.py:40
+msgid "Category strip"
+msgstr "Kategoriýa zolagy"
+
+#: apps/home/models.py:41
+msgid "Service carousel"
+msgstr "Hyzmat karuseli"
+
+#: apps/home/models.py:42
+msgid "Service list"
+msgstr "Hyzmat sanawy"
+
+#: apps/home/models.py:46
+msgid "Manual"
+msgstr "El bilen"
+
+#: apps/home/models.py:47
+msgid "Query"
+msgstr "Sorag boýunça"
+
+#: apps/home/models.py:73
+msgid "Home block"
+msgstr "Esasy blok"
+
+#: apps/home/models.py:74
+msgid "Home blocks"
+msgstr "Esasy bloklar"
+
+#: apps/home/models.py:90
+msgid "Home block item"
+msgstr "Esasy blok elementi"
+
+#: apps/home/models.py:91
+msgid "Home block items"
+msgstr "Esasy blok elementleri"
+
+#: apps/regions/models.py:7 apps/regions/models.py:22
+#: apps/services/models.py:65
+msgid "Name (RU)"
+msgstr "Ady (RU)"
+
+#: apps/regions/models.py:8 apps/regions/models.py:23
+#: apps/services/models.py:66
+msgid "Name (EN)"
+msgstr "Ady (EN)"
+
+#: apps/regions/models.py:11 apps/regions/models.py:20
+msgid "Region"
+msgstr "Sebit"
+
+#: apps/services/models.py:17 apps/users/models.py:13
+msgid "Vendor"
+msgstr "Üpjün ediji"
+
+#: apps/services/models.py:21 apps/users/models.py:42
+msgid "Avatar"
+msgstr "Avatar"
+
+#: apps/services/models.py:24
+msgid "Available Cities"
+msgstr "Elýeterli şäherler"
+
+#: apps/services/models.py:30 apps/services/models.py:321
+msgid "Description (TM)"
+msgstr "Düşündiriş (TM)"
+
+#: apps/services/models.py:31 apps/services/models.py:322
+msgid "Description (RU)"
+msgstr "Düşündiriş (RU)"
+
+#: apps/services/models.py:32 apps/services/models.py:323
+msgid "Description (EN)"
+msgstr "Düşündiriş (EN)"
+
+#: apps/services/models.py:34
+msgid "Minimum Price"
+msgstr "Iň pes baha"
+
+#: apps/services/models.py:35
+msgid "Maximum Price"
+msgstr "Iň ýokary baha"
+
+#: apps/services/models.py:37
+msgid "Show in Catalog"
+msgstr "Katalogda görkez"
+
+#: apps/services/models.py:38
+msgid "Address"
+msgstr "Salgysy"
+
+#: apps/services/models.py:39
+msgid "Latitude"
+msgstr "Ini"
+
+#: apps/services/models.py:40
+msgid "Longitude"
+msgstr "Uzynlygy"
+
+#: apps/services/models.py:41
+msgid "Background"
+msgstr "Fon"
+
+#: apps/services/models.py:42
+msgid "Display images as grid"
+msgstr "Suratlary setir görnüşde görkez"
+
+#: apps/services/models.py:45
+msgid "Active Until"
+msgstr "Şu wagta çenli işjeň"
+
+#: apps/services/models.py:47
+msgid "Tags"
+msgstr "Taglar"
+
+#: apps/services/models.py:55
+msgid "Services"
+msgstr "Hyzmatlar"
+
+#: apps/services/models.py:72
+msgid "Upload an icon image (SVG/PNG recommended)"
+msgstr "Nyşan suratyny ýükläň (SVG/PNG maslahat berilýär)"
+
+#: apps/services/models.py:76 apps/services/models.py:94
+msgid "Contact Type"
+msgstr "Habarlaşmak görnüşi"
+
+#: apps/services/models.py:77
+msgid "Contact Types"
+msgstr "Habarlaşmak görnüşleri"
+
+#: apps/services/models.py:98
+msgid "Contact Value"
+msgstr "Habarlaşmak maglumatlary"
+
+#: apps/services/models.py:101
+msgid "Service Contact"
+msgstr "Hyzmat kontakt"
+
+#: apps/services/models.py:102
+msgid "Service Contacts"
+msgstr "Hyzmat kontaktlary"
+
+#: apps/services/models.py:113
+msgid "Service Image"
+msgstr "Hyzmat suraty"
+
+#: apps/services/models.py:114
+msgid "Service Images"
+msgstr "Hyzmat suratlary"
+
+#: apps/services/models.py:124
+msgid "Video file"
+msgstr "Wideo faýl"
+
+#: apps/services/models.py:130
+msgid "Service Video"
+msgstr "Hyzmat wideosy"
+
+#: apps/services/models.py:131
+msgid "Service Videos"
+msgstr "Hyzmat wideosy"
+
+#: apps/services/models.py:140
+msgid "Rating"
+msgstr "Baha"
+
+#: apps/services/models.py:141
+msgid "Comment"
+msgstr "Teswir"
+
+#: apps/services/models.py:142 apps/services/models.py:360
+msgid "Approved"
+msgstr "Tassyklanan"
+
+#: apps/services/models.py:146
+msgid "Review"
+msgstr "Syn"
+
+#: apps/services/models.py:147
+msgid "Reviews"
+msgstr "Synlar"
+
+#: apps/services/models.py:167 apps/services/models.py:250
+#: apps/services/models.py:345
+msgid "Product"
+msgstr "Önüm"
+
+#: apps/services/models.py:174
+msgid "Favorite"
+msgstr "Halanýan"
+
+#: apps/services/models.py:175
+msgid "Favorites"
+msgstr "Halanýanlar"
+
+#: apps/services/models.py:202
+msgid "Tag Name (TM)"
+msgstr "Tag ady (TM)"
+
+#: apps/services/models.py:203
+msgid "Tag Name (RU)"
+msgstr "Tag ady (RU)"
+
+#: apps/services/models.py:204
+msgid "Tag Name (EN)"
+msgstr "Tag ady (EN)"
+
+#: apps/services/models.py:207
+msgid "Service Tag"
+msgstr "Hyzmat tagy"
+
+#: apps/services/models.py:208
+msgid "Service Tags"
+msgstr "Hyzmat taglary"
+
+#: apps/services/models.py:218
+msgid "Attribute Name (TM)"
+msgstr "Atribut ady (TM)"
+
+#: apps/services/models.py:219
+msgid "Attribute Name (RU)"
+msgstr "Atribut ady (RU)"
+
+#: apps/services/models.py:220
+msgid "Attribute Name (EN)"
+msgstr "Atribut ady (EN)"
+
+#: apps/services/models.py:222
+msgid "Attribute Slug"
+msgstr "Atribut slug"
+
+#: apps/services/models.py:226
+msgid "Text"
+msgstr "Tekst"
+
+#: apps/services/models.py:227
+msgid "Number"
+msgstr "San"
+
+#: apps/services/models.py:228
+msgid "Boolean"
+msgstr "Logiki"
+
+#: apps/services/models.py:229
+msgid "Choice"
+msgstr "Saýlaw"
+
+#: apps/services/models.py:232
+msgid "Input Type"
+msgstr "Giriş görnüşi"
+
+#: apps/services/models.py:234
+msgid "Is Required"
+msgstr "Talap edilýär"
+
+#: apps/services/models.py:237 apps/services/models.py:253
+msgid "Attribute"
+msgstr "Atribut"
+
+#: apps/services/models.py:238
+msgid "Attributes"
+msgstr "Atributlar"
+
+#: apps/services/models.py:256
+msgid "Text Value (TM)"
+msgstr "Tekst bahasy (TM)"
+
+#: apps/services/models.py:257
+msgid "Text Value (RU)"
+msgstr "Tekst bahasy (RU)"
+
+#: apps/services/models.py:258
+msgid "Text Value (EN)"
+msgstr "Tekst bahasy (EN)"
+
+#: apps/services/models.py:260
+msgid "Number Value"
+msgstr "San bahasy"
+
+#: apps/services/models.py:261
+msgid "Boolean Value"
+msgstr "Logiki bahasy"
+
+#: apps/services/models.py:264
+msgid "Attribute Value"
+msgstr "Atribut bahasy"
+
+#: apps/services/models.py:265
+msgid "Attribute Values"
+msgstr "Atribut bahalary"
+
+#: apps/services/models.py:325
+msgid "Price"
+msgstr "Baha"
+
+#: apps/services/models.py:332
+msgid "Service Product"
+msgstr "Hyzmat önümi"
+
+#: apps/services/models.py:333
+msgid "Service Products"
+msgstr "Hyzmat önümleri"
+
+#: apps/services/models.py:350
+msgid "Service Product Image"
+msgstr "Hyzmat önümi suraty"
+
+#: apps/services/models.py:351
+msgid "Service Product Images"
+msgstr "Hyzmat önümi suratlary"
+
+#: apps/services/models.py:359
+msgid "Pending"
+msgstr "Garaşylýar"
+
+#: apps/services/models.py:361
+msgid "Rejected"
+msgstr "Ret edildi"
+
+#: apps/services/models.py:368 apps/users/models.py:28
+msgid "Phone Number"
+msgstr "Telefon belgisi"
+
+#: apps/services/models.py:369
+msgid "Service Title"
+msgstr "Hyzmat ady"
+
+#: apps/services/models.py:370
+msgid "Contact Name"
+msgstr "Kontakt ady"
+
+#: apps/services/models.py:371
+msgid "Service Description"
+msgstr "Hyzmat düşündirişi"
+
+#: apps/services/models.py:373
+msgid "Status"
+msgstr "Status"
+
+#: apps/services/models.py:374
+msgid "Admin Note"
+msgstr "Admin bellik"
+
+#: apps/services/models.py:377
+msgid "Processed By"
+msgstr "Kimiň ýerine ýetirdi"
+
+#: apps/services/models.py:379
+msgid "Processed At"
+msgstr "Wagty"
+
+#: apps/services/models.py:384
+msgid "Service Application"
+msgstr "Hyzmat arza"
+
+#: apps/services/models.py:385
+msgid "Service Applications"
+msgstr "Hyzmat arzalar"
+
+#: apps/services/models.py:398
+msgid "Application"
+msgstr "Arza"
+
+#: apps/services/models.py:404
+msgid "Service Application Image"
+msgstr "Arza suraty"
+
+#: apps/services/models.py:405
+msgid "Service Application Images"
+msgstr "Arza suratlary"
+
+#: apps/stories/models.py:20
+msgid "Title"
+msgstr "Ady"
+
+#: apps/stories/models.py:21
+msgid "Caption"
+msgstr "Tekst"
+
+#: apps/stories/models.py:33
+msgid "Service Story"
+msgstr "Hyzmat stori"
+
+#: apps/stories/models.py:34
+msgid "Service Stories"
+msgstr "Hyzmat storilary"
+
+#: apps/stories/models.py:63
+msgid "Story"
+msgstr "Stori"
+
+#: apps/stories/models.py:81
+msgid "Viewed At"
+msgstr "Görülen wagty"
+
+#: apps/stories/models.py:84
+msgid "Service Story View"
+msgstr "Stori görkezmesi"
+
+#: apps/stories/models.py:85
+msgid "Service Story Views"
+msgstr "Stori görkezmeleri"
+
+#: apps/users/models.py:14
+msgid "Customer"
+msgstr "Müşderi"
+
+#: apps/users/models.py:15
+msgid "Admin"
+msgstr "Admin"
+
+#: apps/users/models.py:19
+msgid "UUID"
+msgstr "UUID"
+
+#: apps/users/models.py:20
+msgid "Name"
+msgstr "Ady"
+
+#: apps/users/models.py:21
+msgid "Surname"
+msgstr "Familiýasy"
+
+#: apps/users/models.py:22
+msgid "Email"
+msgstr "Email"
+
+#: apps/users/models.py:23
+msgid "Password"
+msgstr "Parol"
+
+#: apps/users/models.py:52
+msgid "Role"
+msgstr "Rol"
+
+#: apps/users/models.py:67
+msgid "Users"
+msgstr "Ulanyjylar"
+
+#: core/utils.py:84
+#, python-format
+msgid "from %(price)s %(currency)s"
+msgstr "Bahasy %(price)s %(currency)s-den başlap"
+
+#: core/utils.py:86
+#, python-format
+msgid "up to %(price)s %(currency)s"
+msgstr "Bahasy %(price)s %(currency)s çenli"
+
+#: core/utils.py:87
+msgid "Price on request"
+msgstr "Bahasy soralanda"

@@ -25,9 +25,9 @@ from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, Confi
 from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
+from apps.home.views import HomeViewSet
 from django.conf import settings
 from django.conf.urls.static import static
-
 
 router = routers.DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -45,15 +45,21 @@ services_router = routers.NestedDefaultRouter(router, r'services', lookup='servi
 services_router.register(r'products', ServiceProductViewSet, basename='service-products')
 services_router.register(r'stories', ServiceStoryViewSet, basename='service-stories')
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
-    path('api/', include(services_router.urls)),
-    path('api/auth/', include('apps.users.urls')),
-    path('api/devices/', include('apps.devices.urls')),
+api_patterns = [
+    path('', include(router.urls)),
+    path('', include(services_router.urls)),
+    path('auth/', include('apps.users.urls')),
+    path('devices/', include('apps.devices.urls')),
+    path('home', HomeViewSet.as_view({'get': 'list'}), name='home'),
+    path('schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+]
 
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+urlpatterns = [
+    path('_nested_admin/', include('nested_admin.urls')),
+    path('admin/', admin.site.urls),
+    path('api/', include(api_patterns)),
+    path('api/v1/', include(api_patterns)),
 
     path("sms/inbound/", InboundSMSWebhookView.as_view(), name="sms-inbound"),
     path("auth/sms/init/", InitReverseSMSView.as_view(), name="auth-sms-init"),

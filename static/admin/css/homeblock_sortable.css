@@ -1,0 +1,15 @@
+.inline-group .djn-group > .djn-items > .inline-related > h3 {
+    cursor: move;
+    position: relative;
+    padding-left: 18px;
+}
+
+.inline-group .djn-group > .djn-items > .inline-related > h3::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 12px;
+}

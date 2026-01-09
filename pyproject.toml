@@ -10,6 +10,7 @@ dependencies = [
     "django-froala-editor>=4.6.0",
     "django-mptt>=0.17.0",
     "django-nested-admin>=4.1.4",
+    "django-json-widget>=1.1.1",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt>=5.5.1",
     "drf-spectacular>=0.28.0",

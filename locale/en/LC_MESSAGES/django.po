@@ -1,0 +1,650 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-12-11 17:31+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: apps/banners/models.py:23 apps/services/models.py:26
+#: apps/services/models.py:317
+msgid "Title (TM)"
+msgstr "Title (TM)"
+
+#: apps/banners/models.py:24 apps/services/models.py:27
+#: apps/services/models.py:318
+msgid "Title (RU)"
+msgstr "Title (RU)"
+
+#: apps/banners/models.py:25 apps/services/models.py:28
+#: apps/services/models.py:319
+msgid "Title (EN)"
+msgstr "Title (EN)"
+
+#: apps/banners/models.py:27 apps/categories/admin.py:32
+#: apps/categories/models.py:26 apps/services/models.py:110
+#: apps/services/models.py:347 apps/services/models.py:400
+#: apps/stories/models.py:22
+msgid "Image"
+msgstr "Image"
+
+#: apps/banners/models.py:32
+msgid "Link URL"
+msgstr "Link URL"
+
+#: apps/banners/models.py:33
+msgid "Optional: internal path or external URL"
+msgstr "Optional: internal path or external URL"
+
+#: apps/banners/models.py:41 apps/services/models.py:54
+#: apps/services/models.py:90 apps/services/models.py:109
+#: apps/services/models.py:121 apps/services/models.py:139
+#: apps/services/models.py:159 apps/services/models.py:315
+#: apps/stories/models.py:18
+msgid "Service"
+msgstr "Service"
+
+#: apps/banners/models.py:45 apps/regions/models.py:12
+#: apps/services/models.py:23
+msgid "Regions"
+msgstr "Regions"
+
+#: apps/banners/models.py:46 apps/regions/models.py:27
+msgid "Cities"
+msgstr "Cities"
+
+#: apps/banners/models.py:48 apps/services/models.py:44
+#: apps/stories/models.py:24
+msgid "Is Active"
+msgstr "Is Active"
+
+#: apps/banners/models.py:49 apps/stories/models.py:25
+msgid "Starts At"
+msgstr "Starts At"
+
+#: apps/banners/models.py:50 apps/stories/models.py:26
+msgid "Ends At"
+msgstr "Ends At"
+
+#: apps/banners/models.py:52 apps/categories/models.py:31
+#: apps/services/models.py:49 apps/services/models.py:326
+#: apps/stories/models.py:28
+msgid "Priority"
+msgstr "Priority"
+
+#: apps/banners/models.py:53 apps/devices/models.py:38
+#: apps/services/models.py:50 apps/services/models.py:143
+#: apps/services/models.py:328 apps/services/models.py:381
+#: apps/services/models.py:401 apps/stories/models.py:29
+#: apps/users/models.py:57
+msgid "Created At"
+msgstr "Created At"
+
+#: apps/banners/models.py:54 apps/devices/models.py:39
+#: apps/services/models.py:51 apps/services/models.py:329
+#: apps/stories/models.py:30 apps/users/models.py:58
+msgid "Updated At"
+msgstr "Updated At"
+
+#: apps/banners/models.py:57
+msgid "Banner"
+msgstr "Banner"
+
+#: apps/banners/models.py:58
+msgid "Banners"
+msgstr "Banners"
+
+#: apps/categories/admin.py:27 apps/regions/models.py:6
+#: apps/regions/models.py:21 apps/services/models.py:64
+msgid "Name (TM)"
+msgstr "Name (TM)"
+
+#: apps/categories/admin.py:37 apps/categories/models.py:29
+#: apps/services/models.py:69
+msgid "Icon"
+msgstr "Icon"
+
+#: apps/categories/models.py:19
+msgid "Parent"
+msgstr "Parent"
+
+#: apps/categories/models.py:23 apps/services/models.py:63
+msgid "Slug"
+msgstr "Slug"
+
+#: apps/categories/models.py:34 apps/services/models.py:18
+#: apps/services/models.py:216 apps/services/models.py:364
+msgid "Category"
+msgstr "Category"
+
+#: apps/categories/models.py:35
+msgid "Categories"
+msgstr "Categories"
+
+#: apps/devices/models.py:10
+msgid "iOS"
+msgstr "iOS"
+
+#: apps/devices/models.py:11
+msgid "Android"
+msgstr "Android"
+
+#: apps/devices/models.py:12
+msgid "Web"
+msgstr "Web"
+
+#: apps/devices/models.py:13
+msgid "Unknown"
+msgstr "Unknown"
+
+#: apps/devices/models.py:15
+msgid "Device ID"
+msgstr "Device ID"
+
+#: apps/devices/models.py:20
+msgid "Platform"
+msgstr "Platform"
+
+#: apps/devices/models.py:28 apps/services/models.py:138
+#: apps/services/models.py:155 apps/stories/models.py:71
+#: apps/users/models.py:66
+msgid "User"
+msgstr "User"
+
+#: apps/devices/models.py:36 apps/regions/models.py:26
+#: apps/services/models.py:19 apps/services/models.py:366
+#: apps/users/models.py:36
+msgid "City"
+msgstr "City"
+
+#: apps/devices/models.py:40
+msgid "Last Seen At"
+msgstr "Last Seen At"
+
+#: apps/devices/models.py:43 apps/stories/models.py:79
+msgid "Device"
+msgstr "Device"
+
+#: apps/devices/models.py:44
+msgid "Devices"
+msgstr "Devices"
+
+#: apps/home/models.py:30
+msgid "Home page config"
+msgstr "Home page config"
+
+#: apps/home/models.py:31
+msgid "Home page configs"
+msgstr "Home page configs"
+
+#: apps/home/models.py:38
+msgid "Stories row"
+msgstr "Stories row"
+
+#: apps/home/models.py:39
+msgid "Banner carousel"
+msgstr "Banner carousel"
+
+#: apps/home/models.py:40
+msgid "Category strip"
+msgstr "Category strip"
+
+#: apps/home/models.py:41
+msgid "Service carousel"
+msgstr "Service carousel"
+
+#: apps/home/models.py:42
+msgid "Service list"
+msgstr "Service list"
+
+#: apps/home/models.py:46
+msgid "Manual"
+msgstr "Manual"
+
+#: apps/home/models.py:47
+msgid "Query"
+msgstr "Query"
+
+#: apps/home/models.py:73
+msgid "Home block"
+msgstr "Home block"
+
+#: apps/home/models.py:74
+msgid "Home blocks"
+msgstr "Home blocks"
+
+#: apps/home/models.py:90
+msgid "Home block item"
+msgstr "Home block item"
+
+#: apps/home/models.py:91
+msgid "Home block items"
+msgstr "Home block items"
+
+#: apps/regions/models.py:7 apps/regions/models.py:22
+#: apps/services/models.py:65
+msgid "Name (RU)"
+msgstr "Name (RU)"
+
+#: apps/regions/models.py:8 apps/regions/models.py:23
+#: apps/services/models.py:66
+msgid "Name (EN)"
+msgstr "Name (EN)"
+
+#: apps/regions/models.py:11 apps/regions/models.py:20
+msgid "Region"
+msgstr "Region"
+
+#: apps/services/models.py:17 apps/users/models.py:13
+msgid "Vendor"
+msgstr "Vendor"
+
+#: apps/services/models.py:21 apps/users/models.py:42
+msgid "Avatar"
+msgstr "Avatar"
+
+#: apps/services/models.py:24
+msgid "Available Cities"
+msgstr "Available Cities"
+
+#: apps/services/models.py:30 apps/services/models.py:321
+msgid "Description (TM)"
+msgstr "Description (TM)"
+
+#: apps/services/models.py:31 apps/services/models.py:322
+msgid "Description (RU)"
+msgstr "Description (RU)"
+
+#: apps/services/models.py:32 apps/services/models.py:323
+msgid "Description (EN)"
+msgstr "Description (EN)"
+
+#: apps/services/models.py:34
+msgid "Minimum Price"
+msgstr "Minimum Price"
+
+#: apps/services/models.py:35
+msgid "Maximum Price"
+msgstr "Maximum Price"
+
+#: apps/services/models.py:37
+msgid "Show in Catalog"
+msgstr "Show in Catalog"
+
+#: apps/services/models.py:38
+msgid "Address"
+msgstr "Address"
+
+#: apps/services/models.py:39
+msgid "Latitude"
+msgstr "Latitude"
+
+#: apps/services/models.py:40
+msgid "Longitude"
+msgstr "Longitude"
+
+#: apps/services/models.py:41
+msgid "Background"
+msgstr "Background"
+
+#: apps/services/models.py:42
+msgid "Display images as grid"
+msgstr "Display images as grid"
+
+#: apps/services/models.py:45
+msgid "Active Until"
+msgstr "Active Until"
+
+#: apps/services/models.py:47
+msgid "Tags"
+msgstr "Tags"
+
+#: apps/services/models.py:55
+msgid "Services"
+msgstr "Services"
+
+#: apps/services/models.py:72
+msgid "Upload an icon image (SVG/PNG recommended)"
+msgstr "Upload an icon image (SVG/PNG recommended)"
+
+#: apps/services/models.py:76 apps/services/models.py:94
+msgid "Contact Type"
+msgstr "Contact Type"
+
+#: apps/services/models.py:77
+msgid "Contact Types"
+msgstr "Contact Types"
+
+#: apps/services/models.py:98
+msgid "Contact Value"
+msgstr "Contact Value"
+
+#: apps/services/models.py:101
+msgid "Service Contact"
+msgstr "Service Contact"
+
+#: apps/services/models.py:102
+msgid "Service Contacts"
+msgstr "Service Contacts"
+
+#: apps/services/models.py:113
+msgid "Service Image"
+msgstr "Service Image"
+
+#: apps/services/models.py:114
+msgid "Service Images"
+msgstr "Service Images"
+
+#: apps/services/models.py:124
+msgid "Video file"
+msgstr "Video file"
+
+#: apps/services/models.py:130
+msgid "Service Video"
+msgstr "Service Video"
+
+#: apps/services/models.py:131
+msgid "Service Videos"
+msgstr "Service Videos"
+
+#: apps/services/models.py:140
+msgid "Rating"
+msgstr "Rating"
+
+#: apps/services/models.py:141
+msgid "Comment"
+msgstr "Comment"
+
+#: apps/services/models.py:142 apps/services/models.py:360
+msgid "Approved"
+msgstr "Approved"
+
+#: apps/services/models.py:146
+msgid "Review"
+msgstr "Review"
+
+#: apps/services/models.py:147
+msgid "Reviews"
+msgstr "Reviews"
+
+#: apps/services/models.py:167 apps/services/models.py:250
+#: apps/services/models.py:345
+msgid "Product"
+msgstr "Product"
+
+#: apps/services/models.py:174
+msgid "Favorite"
+msgstr "Favorite"
+
+#: apps/services/models.py:175
+msgid "Favorites"
+msgstr "Favorites"
+
+#: apps/services/models.py:202
+msgid "Tag Name (TM)"
+msgstr "Tag Name (TM)"
+
+#: apps/services/models.py:203
+msgid "Tag Name (RU)"
+msgstr "Tag Name (RU)"
+
+#: apps/services/models.py:204
+msgid "Tag Name (EN)"
+msgstr "Tag Name (EN)"
+
+#: apps/services/models.py:207
+msgid "Service Tag"
+msgstr "Service Tag"
+
+#: apps/services/models.py:208
+msgid "Service Tags"
+msgstr "Service Tags"
+
+#: apps/services/models.py:218
+msgid "Attribute Name (TM)"
+msgstr "Attribute Name (TM)"
+
+#: apps/services/models.py:219
+msgid "Attribute Name (RU)"
+msgstr "Attribute Name (RU)"
+
+#: apps/services/models.py:220
+msgid "Attribute Name (EN)"
+msgstr "Attribute Name (EN)"
+
+#: apps/services/models.py:222
+msgid "Attribute Slug"
+msgstr "Attribute Slug"
+
+#: apps/services/models.py:226
+msgid "Text"
+msgstr "Text"
+
+#: apps/services/models.py:227
+msgid "Number"
+msgstr "Number"
+
+#: apps/services/models.py:228
+msgid "Boolean"
+msgstr "Boolean"
+
+#: apps/services/models.py:229
+msgid "Choice"
+msgstr "Choice"
+
+#: apps/services/models.py:232
+msgid "Input Type"
+msgstr "Input Type"
+
+#: apps/services/models.py:234
+msgid "Is Required"
+msgstr "Is Required"
+
+#: apps/services/models.py:237 apps/services/models.py:253
+msgid "Attribute"
+msgstr "Attribute"
+
+#: apps/services/models.py:238
+msgid "Attributes"
+msgstr "Attributes"
+
+#: apps/services/models.py:256
+msgid "Text Value (TM)"
+msgstr "Text Value (TM)"
+
+#: apps/services/models.py:257
+msgid "Text Value (RU)"
+msgstr "Text Value (RU)"
+
+#: apps/services/models.py:258
+msgid "Text Value (EN)"
+msgstr "Text Value (EN)"
+
+#: apps/services/models.py:260
+msgid "Number Value"
+msgstr "Number Value"
+
+#: apps/services/models.py:261
+msgid "Boolean Value"
+msgstr "Boolean Value"
+
+#: apps/services/models.py:264
+msgid "Attribute Value"
+msgstr "Attribute Value"
+
+#: apps/services/models.py:265
+msgid "Attribute Values"
+msgstr "Attribute Values"
+
+#: apps/services/models.py:325
+msgid "Price"
+msgstr "Price"
+
+#: apps/services/models.py:332
+msgid "Service Product"
+msgstr "Service Product"
+
+#: apps/services/models.py:333
+msgid "Service Products"
+msgstr "Service Products"
+
+#: apps/services/models.py:350
+msgid "Service Product Image"
+msgstr "Service Product Image"
+
+#: apps/services/models.py:351
+msgid "Service Product Images"
+msgstr "Service Product Images"
+
+#: apps/services/models.py:359
+msgid "Pending"
+msgstr "Pending"
+
+#: apps/services/models.py:361
+msgid "Rejected"
+msgstr "Rejected"
+
+#: apps/services/models.py:368 apps/users/models.py:28
+msgid "Phone Number"
+msgstr "Phone Number"
+
+#: apps/services/models.py:369
+msgid "Service Title"
+msgstr "Service Title"
+
+#: apps/services/models.py:370
+msgid "Contact Name"
+msgstr "Contact Name"
+
+#: apps/services/models.py:371
+msgid "Service Description"
+msgstr "Service Description"
+
+#: apps/services/models.py:373
+msgid "Status"
+msgstr "Status"
+
+#: apps/services/models.py:374
+msgid "Admin Note"
+msgstr "Admin Note"
+
+#: apps/services/models.py:377
+msgid "Processed By"
+msgstr "Processed By"
+
+#: apps/services/models.py:379
+msgid "Processed At"
+msgstr "Processed At"
+
+#: apps/services/models.py:384
+msgid "Service Application"
+msgstr "Service Application"
+
+#: apps/services/models.py:385
+msgid "Service Applications"
+msgstr "Service Applications"
+
+#: apps/services/models.py:398
+msgid "Application"
+msgstr "Application"
+
+#: apps/services/models.py:404
+msgid "Service Application Image"
+msgstr "Service Application Image"
+
+#: apps/services/models.py:405
+msgid "Service Application Images"
+msgstr "Service Application Images"
+
+#: apps/stories/models.py:20
+msgid "Title"
+msgstr "Title"
+
+#: apps/stories/models.py:21
+msgid "Caption"
+msgstr "Caption"
+
+#: apps/stories/models.py:33
+msgid "Service Story"
+msgstr "Service Story"
+
+#: apps/stories/models.py:34
+msgid "Service Stories"
+msgstr "Service Stories"
+
+#: apps/stories/models.py:63
+msgid "Story"
+msgstr "Story"
+
+#: apps/stories/models.py:81
+msgid "Viewed At"
+msgstr "Viewed At"
+
+#: apps/stories/models.py:84
+msgid "Service Story View"
+msgstr "Service Story View"
+
+#: apps/stories/models.py:85
+msgid "Service Story Views"
+msgstr "Service Story Views"
+
+#: apps/users/models.py:14
+msgid "Customer"
+msgstr "Customer"
+
+#: apps/users/models.py:15
+msgid "Admin"
+msgstr "Admin"
+
+#: apps/users/models.py:19
+msgid "UUID"
+msgstr "UUID"
+
+#: apps/users/models.py:20
+msgid "Name"
+msgstr "Name"
+
+#: apps/users/models.py:21
+msgid "Surname"
+msgstr "Surname"
+
+#: apps/users/models.py:22
+msgid "Email"
+msgstr "Email"
+
+#: apps/users/models.py:23
+msgid "Password"
+msgstr "Password"
+
+#: apps/users/models.py:52
+msgid "Role"
+msgstr "Role"
+
+#: apps/users/models.py:67
+msgid "Users"
+msgstr "Users"
+
+#: core/utils.py:84
+#, python-format
+msgid "from %(price)s %(currency)s"
+msgstr "from %(price)s %(currency)s"
+
+#: core/utils.py:86
+#, python-format
+msgid "up to %(price)s %(currency)s"
+msgstr "up to %(price)s %(currency)s"
+
+#: core/utils.py:87
+msgid "Price on request"
+msgstr "Price on request"

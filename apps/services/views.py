@@ -131,6 +131,29 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
+    @extend_schema(
+        summary="List my services",
+        description="Возвращает активные сервисы текущего вендора",
+        responses=ServiceLightSerializer(many=True),
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="my",
+        permission_classes=[permissions.IsAuthenticated, IsVendor],
+    )
+    def my(self, request, *args, **kwargs):
+        qs = (
+            Service.objects.filter(is_active=True, vendor=request.user)
+            .select_related("vendor", "category", "city")
+            .prefetch_related("tags", "available_cities")
+            .order_by("priority", "-created_at")
+        )
+        qs = self.annotate_is_favorite(qs)
+        page = self.paginate_queryset(qs)
+        serializer = ServiceLightSerializer(page, many=True, context={"request": request})
+        return self.get_paginated_response(serializer.data)
+
 
 @extend_schema(tags=["Reviews"])
 class ReviewViewSet(mixins.ListModelMixin,
@@ -268,6 +291,7 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
 
     def get_queryset(self):
         qs = super().get_queryset()
+        qs = qs.filter(service__is_active=True)
         qs = self.annotate_is_favorite(qs)
         service_id = self.kwargs.get('service_id') or self.kwargs.get('service_pk')
         if service_id is not None:
@@ -296,6 +320,27 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
         instance.refresh_from_db()
         output = ServiceProductDetailSerializer(instance, context={'request': request})
         return Response(output.data)
+
+    @extend_schema(
+        summary="List my products",
+        description="Возвращает продукты, принадлежащие активным сервисам текущего вендора",
+        responses=ServiceProductSerializer(many=True),
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="my",
+        permission_classes=[permissions.IsAuthenticated, IsVendor],
+    )
+    def my(self, request, *args, **kwargs):
+        qs = (
+            self.get_queryset()
+            .filter(service__vendor=request.user, service__is_active=True)
+            .order_by("priority", "-created_at")
+        )
+        page = self.paginate_queryset(qs)
+        serializer = ServiceProductSerializer(page, many=True, context={"request": request})
+        return self.get_paginated_response(serializer.data)
 
 
 @extend_schema(tags=["Service Applications"])

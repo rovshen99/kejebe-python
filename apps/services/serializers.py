@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from core.utils import get_lang_code, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
     ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
@@ -41,15 +42,27 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
 
 
 class ServiceTagSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = ServiceTag
-        fields = ['id', 'name_en', 'name_tm', 'name_ru']
+        fields = ['id', 'name_en', 'name_tm', 'name_ru', 'name']
+
+    def get_name(self, obj):
+        lang = get_lang_code(self.context.get('request'))
+        return localized_value(obj, "name", lang=lang)
 
 
 class AttributeSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = Attribute
-        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'slug', 'input_type']
+        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'name', 'slug', 'input_type']
+
+    def get_name(self, obj):
+        lang = get_lang_code(self.context.get('request'))
+        return localized_value(obj, "name", lang=lang)
 
 
 class AttributeValueSerializer(serializers.ModelSerializer):
@@ -65,6 +78,8 @@ class AttributeValueSerializer(serializers.ModelSerializer):
 
 
 class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
@@ -76,18 +91,32 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
         fields = [
             'id', 'category', 'city', 'address', 'available_cities',
             'avatar', 'images', 'videos',
-            'title_tm', 'title_ru', 'title_en', 'is_favorite',
+            'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
             'price_min', 'price_max', 'tags', 'reviews_count',
-            'description_en', 'description_ru', 'description_tm',
+            'description_tm', 'description_ru', 'description_en', 'description',
             'is_grid_gallery',
         ]
 
+    def _lang(self):
+        return get_lang_code(self.context.get('request'))
+
+    def get_title(self, obj):
+        return localized_value(obj, "title", lang=self._lang())
+
+    def get_description(self, obj):
+        return localized_value(obj, "description", lang=self._lang())
+
 
 class ContactTypeSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = ContactType
-        fields = ['slug', 'name_tm', 'name_ru', 'name_en', 'icon']
+        fields = ['slug', 'name_tm', 'name_ru', 'name_en', 'name', 'icon']
+
+    def get_name(self, obj):
+        lang = get_lang_code(self.context.get('request'))
+        return localized_value(obj, "name", lang=lang)
 
 
 class ServiceContactSerializer(serializers.ModelSerializer):
@@ -99,15 +128,27 @@ class ServiceContactSerializer(serializers.ModelSerializer):
 
 
 class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
     images = ServiceProductImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = ServiceProduct
         fields = [
-            'id', 'title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en', 'price',
+            'id', 'title_tm', 'title_ru', 'title_en', 'title',
+            'description_tm', 'description_ru', 'description_en', 'description', 'price',
             'priority',
             'images', 'is_favorite',
         ]
+
+    def _lang(self):
+        return get_lang_code(self.context.get('request'))
+
+    def get_title(self, obj):
+        return localized_value(obj, "title", lang=self._lang())
+
+    def get_description(self, obj):
+        return localized_value(obj, "description", lang=self._lang())
 
 
 class ServiceProductDetailSerializer(ServiceProductSerializer):
@@ -135,6 +176,8 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
 
 
 class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
@@ -147,14 +190,23 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
         model = Service
         fields = [
             'id', 'vendor', 'category', 'city', 'address', 'available_cities', 'avatar', 'background',
-            'title_tm', 'title_ru', 'title_en',
-            'description_tm', 'description_ru', 'description_en',
+            'title_tm', 'title_ru', 'title_en', 'title',
+            'description_tm', 'description_ru', 'description_en', 'description',
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
             'images', 'videos', 'contacts', 'products', 'reviews_count', 'is_favorite',
             'is_grid_gallery',
         ]
+
+    def _lang(self):
+        return get_lang_code(self.context.get('request'))
+
+    def get_title(self, obj):
+        return localized_value(obj, "title", lang=self._lang())
+
+    def get_description(self, obj):
+        return localized_value(obj, "description", lang=self._lang())
 
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
