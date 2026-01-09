@@ -65,6 +65,7 @@ class CategoryLightSerializer(serializers.ModelSerializer):
 
 
 class StoriesRowItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
     service_id = serializers.IntegerField()
     title = serializers.CharField()
     avatar_url = serializers.CharField(allow_null=True, required=False)
@@ -78,6 +79,7 @@ class StoriesRowItemSerializer(serializers.Serializer):
         if isinstance(instance, dict):
             return super().to_representation(instance)
         data = {
+            "id": getattr(instance, "id", None) or getattr(instance, "id"),
             "service_id": getattr(instance, "service_id", None) or getattr(instance, "id"),
             "title": getattr(instance, "title", ""),
             "avatar_url": getattr(instance, "avatar_url", None),

@@ -272,6 +272,7 @@ class HomeViewSet(viewsets.GenericViewSet):
             if data is None:
                 order_counter += 1
                 data = {
+                    "id": story.id,
                     "service_id": service.id,
                     "title": localized_value(service, "title", lang=lang) or "",
                     "avatar_url": service.avatar.url if service.avatar else None,
