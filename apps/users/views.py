@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -60,6 +61,29 @@ class MeUpdateView(generics.UpdateAPIView):
         instance.refresh_from_db()
         output = UserSerializer(instance, context={"request": request})
         return Response(output.data)
+
+
+@extend_schema(
+    tags=["Auth"],
+    summary="Deactivate current user",
+    description=(
+        "Soft deletes the authenticated user's account by anonymizing personal data, "
+        "revoking the phone number, and setting is_active to false."
+    ),
+    responses={204: None},
+)
+class DeactivateMeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        if user.deleted_at:
+            return Response(status=204)
+
+        user.soft_delete()
+
+        Device.objects.filter(user=user).update(user=None, updated_at=timezone.now())
+        return Response(status=204)
 
 
 @extend_schema(
