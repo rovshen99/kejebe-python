@@ -125,6 +125,7 @@ class HomeServiceSerializer(serializers.ModelSerializer):
             "has_discount",
             "discount_text",
             "is_favorite",
+            "is_verified",
             "open",
         ]
 
