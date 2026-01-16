@@ -69,8 +69,8 @@ class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
 
 @admin.register(Service)
 class ServiceAdmin(nested_admin.NestedModelAdmin):
-    list_display = ('title_tm', 'vendor', 'category', 'city', 'is_active', 'priority')
-    list_filter = ('category', 'city', 'is_active')
+    list_display = ('title_tm', 'vendor', 'category', 'city', 'is_active', 'is_verified', 'priority')
+    list_filter = ('category', 'city', 'is_active', 'is_verified')
     search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
     filter_horizontal = ('regions',)
