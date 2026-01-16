@@ -43,6 +43,7 @@ class Service(models.Model):
     is_grid_gallery = models.BooleanField(default=False, verbose_name=_("Display images as grid"))
 
     is_active = models.BooleanField(default=False, verbose_name=_("Is Active"))
+    is_verified = models.BooleanField(default=False, verbose_name=_("Is Verified"))
     active_until = models.DateTimeField(null=True, blank=True, verbose_name=_("Active Until"))
 
     tags = models.ManyToManyField("ServiceTag", blank=True, related_name="services", verbose_name=_("Tags"))
