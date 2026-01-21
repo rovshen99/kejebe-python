@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'easy_thumbnails',
+    'image_cropping',
     "drf_spectacular",
     'rest_framework',
     'rest_framework_simplejwt',
@@ -97,6 +99,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
+IMAGE_CROPPING_BACKEND = "core.image_cropping_backend.WebPEasyThumbnailsBackend"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

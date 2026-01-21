@@ -1,11 +1,12 @@
 from django.contrib import admin
+from image_cropping import ImageCroppingMixin
 from mptt.admin import DraggableMPTTAdmin
 from .models import Category
 from django.utils.translation import gettext_lazy as _
 
 
 @admin.register(Category)
-class CategoryAdmin(DraggableMPTTAdmin):
+class CategoryAdmin(ImageCroppingMixin, DraggableMPTTAdmin):
     mptt_indent_field = "name_tm"
     list_display = (
         'tree_actions',

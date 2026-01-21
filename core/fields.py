@@ -16,6 +16,9 @@ class WebPImageFieldFile(ImageFieldFile):
         if Image is None:
             return name, None
 
+        if getattr(content, "skip_webp_conversion", False):
+            return name, None
+
         lower = name.lower()
         if lower.endswith(".svg") and not getattr(self.field, "convert_svg", False):
             return name, None
