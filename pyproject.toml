@@ -20,4 +20,6 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "python-slugify>=8.0.4",
     "whitenoise>=6.9.0",
+    "django-image-cropping>=1.7",
+    "easy-thumbnails>=2.10.1",
 ]

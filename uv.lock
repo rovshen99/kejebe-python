@@ -35,6 +35,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-appconf"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d1/a2/e58bec8d7941b914af52a67c35b5709eceed2caa2848f28437f1666ed668/django_appconf-1.2.0.tar.gz", hash = "sha256:15a88d60dd942d6059f467412fe4581db632ef03018a3c183fb415d6fc9e5cec", size = 16127 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/e6/4c34d94dfb74bbcbc489606e61f1924933de30d22c593dd1f429f35fbd7f/django_appconf-1.2.0-py3-none-any.whl", hash = "sha256:b81bce5ef0ceb9d84df48dfb623a32235d941c78cc5e45dbb6947f154ea277f4", size = 6500 },
+]
+
+[[package]]
 name = "django-filter"
 version = "25.1"
 source = { registry = "https://pypi.org/simple" }
@@ -51,6 +63,18 @@ name = "django-froala-editor"
 version = "4.6.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/14/e2/5feee32451147ae82db9ae4fec44cdca84399908fca927139e87884cd7af/django-froala-editor-4.6.0.tar.gz", hash = "sha256:7cc283844797cd7144f1e23acb0eae63199cd5b670501f4249b0797b7cb5a6ae", size = 1248318 }
+
+[[package]]
+name = "django-image-cropping"
+version = "1.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django-appconf" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/af/f1/fabd56516baf0efe5db723c61b0ede674367a13ce991568c1a4608eac9dc/django-image-cropping-1.7.tar.gz", hash = "sha256:971d1a92c9ef14f1bf95996dd4eeed0a00dbb2221bfa762290d9525696243232", size = 32945 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/28/c2ce1794282fc7aee6118ac1b39057952a9b8dd17406dcd23d0b77ea3ca7/django_image_cropping-1.7-py3-none-any.whl", hash = "sha256:429ad2c3ccad5ddeb079fbee24dc1536105b3e9d30beb53d1446fd560da04d5b", size = 43884 },
+]
 
 [[package]]
 name = "django-js-asset"
@@ -154,6 +178,19 @@ wheels = [
 ]
 
 [[package]]
+name = "easy-thumbnails"
+version = "2.10.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/04/2f/71f17c3ce65b25dd8fc8e513738c8496eadbd8bab94f39509a511ff99704/easy_thumbnails-2.10.1.tar.gz", hash = "sha256:a50aa5f99387546c35ab5ba1ea9b3cbbc5658e65601cd34949f62137c32c222e", size = 81446 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b0/90/be137d0592501ec08d4a00c8430121e95dfe6c8114a1d4436b5cdd6b9803/easy_thumbnails-2.10.1-py3-none-any.whl", hash = "sha256:24462d63dd31543ef1585538b2bfefe0db96d3409bb431c70b81548fb2cfc5be", size = 79695 },
+]
+
+[[package]]
 name = "inflection"
 version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -197,6 +234,7 @@ dependencies = [
     { name = "django" },
     { name = "django-filter" },
     { name = "django-froala-editor" },
+    { name = "django-image-cropping" },
     { name = "django-json-widget" },
     { name = "django-mptt" },
     { name = "django-nested-admin" },
@@ -204,6 +242,7 @@ dependencies = [
     { name = "djangorestframework-simplejwt" },
     { name = "drf-nested-routers" },
     { name = "drf-spectacular" },
+    { name = "easy-thumbnails" },
     { name = "pillow" },
     { name = "psycopg", extra = ["binary"] },
     { name = "python-dotenv" },
@@ -216,6 +255,7 @@ requires-dist = [
     { name = "django", specifier = ">=5.2.2" },
     { name = "django-filter", specifier = ">=25.1" },
     { name = "django-froala-editor", specifier = ">=4.6.0" },
+    { name = "django-image-cropping", specifier = ">=1.7" },
     { name = "django-json-widget", specifier = ">=1.1.1" },
     { name = "django-mptt", specifier = ">=0.17.0" },
     { name = "django-nested-admin", specifier = ">=4.1.4" },
@@ -223,6 +263,7 @@ requires-dist = [
     { name = "djangorestframework-simplejwt", specifier = ">=5.5.1" },
     { name = "drf-nested-routers", specifier = ">=0.93" },
     { name = "drf-spectacular", specifier = ">=0.28.0" },
+    { name = "easy-thumbnails", specifier = ">=2.10.1" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.9" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
