@@ -179,13 +179,11 @@ class Category(MPTTModel):
 
     @staticmethod
     def _build_cropped_filename(original_name: str) -> str:
-        dir_name = os.path.dirname(original_name)
         base_name = os.path.basename(original_name)
         root, _ = os.path.splitext(base_name)
         if not root.endswith("_cropped"):
             root = f"{root}_cropped"
-        new_base = f"{root}.webp"
-        return os.path.join(dir_name, new_base) if dir_name else new_base
+        return f"{root}.webp"
 
     @staticmethod
     def _cleanup_old_files(names: list[tuple[Storage, str]]):
