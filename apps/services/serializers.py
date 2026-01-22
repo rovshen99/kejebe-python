@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.utils import get_lang_code, localized_value
+from core.utils import format_price_text, get_lang_code, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
     ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
@@ -80,21 +80,27 @@ class AttributeValueSerializer(serializers.ModelSerializer):
 class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
-    images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
-    videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
+    cover_url = serializers.SerializerMethodField()
+    city_title = serializers.SerializerMethodField()
+    region_title = serializers.SerializerMethodField()
+    category_title = serializers.SerializerMethodField()
+    price_text = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
+    has_discount = serializers.SerializerMethodField()
+    discount_text = serializers.SerializerMethodField()
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
-    available_cities = CitySerializer(many=True, read_only=True)
 
     class Meta:
         model = Service
         fields = [
             'id', 'category', 'city', 'address', 'available_cities',
-            'avatar', 'images', 'videos',
-            'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
+            'avatar', 'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
             'price_min', 'price_max', 'tags', 'reviews_count',
             'description_tm', 'description_ru', 'description_en', 'description',
             'is_grid_gallery', 'is_verified',
+            'cover_url', 'city_title', 'region_title', 'category_title',
+            'price_text', 'rating', 'has_discount', 'discount_text',
         ]
 
     def _lang(self):
@@ -105,6 +111,47 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
 
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
+
+    def get_cover_url(self, obj):
+        if getattr(obj, "avatar", None):
+            return obj.avatar.url
+        if getattr(obj, "background", None):
+            return obj.background.url
+        images = getattr(obj, "prefetched_images", None) or []
+        first_image = images[0] if images else None
+        if not first_image and hasattr(obj, "serviceimage_set"):
+            first_image = obj.serviceimage_set.all().first()
+        return first_image.image.url if first_image and getattr(first_image, "image", None) else None
+
+    def _localized_name(self, obj, prefix):
+        return localized_value(obj, prefix, lang=self._lang())
+
+    def get_city_title(self, obj):
+        return self._localized_name(getattr(obj, "city", None), "name")
+
+    def get_region_title(self, obj):
+        city = getattr(obj, "city", None)
+        return self._localized_name(getattr(city, "region", None), "name")
+
+    def get_category_title(self, obj):
+        return self._localized_name(getattr(obj, "category", None), "name")
+
+    def get_price_text(self, obj):
+        return format_price_text(
+            getattr(obj, "price_min", None),
+            getattr(obj, "price_max", None),
+            lang=self._lang(),
+        )
+
+    def get_rating(self, obj):
+        rating = getattr(obj, "rating", None)
+        return round(float(rating), 2) if rating is not None else None
+
+    def get_has_discount(self, obj):
+        return bool(self.get_discount_text(obj))
+
+    def get_discount_text(self, obj):
+        return getattr(obj, "discount_text", None)
 
 
 class ContactTypeSerializer(serializers.ModelSerializer):

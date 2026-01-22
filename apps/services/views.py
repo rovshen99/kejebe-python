@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+from django.db.models import Avg, Prefetch, Q
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -12,7 +13,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from core.pagination import CustomPagination
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter
-from .models import Service, Review, Favorite, ServiceProduct
+from .models import Service, Review, Favorite, ServiceProduct, ServiceImage
 from .serializers import (
     ServiceSerializer,
     ReviewSerializer,
@@ -51,9 +52,17 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return ServiceSerializer
 
     def get_queryset(self):
+        # images_prefetch = Prefetch(
+        #     "serviceimage_set",
+        #     queryset=ServiceImage.objects.order_by("id"),
+        #     to_attr="prefetched_images",
+        # )
         qs = Service.objects.filter(is_active=True) \
-            .select_related('vendor', 'category', 'city') \
+            .select_related('vendor', 'category', 'city', 'city__region') \
             .prefetch_related('tags', 'available_cities') \
+            .annotate(
+                rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
+            ) \
             .order_by('priority', '-created_at')
         return self.annotate_is_favorite(qs)
 
