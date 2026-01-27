@@ -101,11 +101,14 @@ class HomeViewSet(viewsets.GenericViewSet):
         blocks = config.blocks.filter(is_active=True).order_by("position", "id").prefetch_related("manual_items")
         for block in blocks:
             items, view_all = self._build_block(block, city, region, request)
+            block_limit = block.limit
+            if block.type == HomeBlockType.CATEGORY_STRIP:
+                block_limit = self._resolve_category_strip_limit(block)
             block_payload = {
                 "id": f"blk_{block.id}",
                 "type": block.type,
                 "title": localized_value(block, "title", lang=lang) or None,
-                "limit": block.limit,
+                "limit": block_limit,
                 "style": block.style or {},
                 "items": items,
                 "view_all": view_all,
@@ -219,9 +222,14 @@ class HomeViewSet(viewsets.GenericViewSet):
         if block.type == HomeBlockType.BANNER_CAROUSEL:
             return self._build_banner_carousel(block, city, region, request), None
         if block.type == HomeBlockType.CATEGORY_STRIP:
-            items = self._build_category_strip(block, request)
+            items, total_count, display_limit = self._build_category_strip(block, request)
             style = block.style or {}
-            view_all = style.get("view_all") or {"type": "navigate", "screen": "AllCategories", "params": {}}
+            if "view_all" in style:
+                view_all = style.get("view_all")
+            elif total_count <= display_limit:
+                view_all = None
+            else:
+                view_all = {"type": "navigate", "screen": "AllCategories", "params": {}}
             return items, view_all
         if block.type in (HomeBlockType.SERVICE_CAROUSEL, HomeBlockType.SERVICE_LIST):
             return self._build_service_block(block, city, region, request)
@@ -340,11 +348,35 @@ class HomeViewSet(viewsets.GenericViewSet):
         serializer = BannerSerializer(banners, many=True, context={"lang": lang, "request": request})
         return serializer.data
 
-    def _build_category_strip(self, block: HomeBlock, request) -> List[Dict[str, Any]]:
+    @staticmethod
+    def _parse_positive_int(value: Any) -> Optional[int]:
+        if value is None or value == "":
+            return None
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return None
+        return parsed if parsed > 0 else None
+
+    def _resolve_category_strip_limit(self, block: HomeBlock) -> int:
+        block_limit = self._parse_positive_int(block.limit)
+        default_limit = HomeBlock._meta.get_field("limit").default
+        if block_limit is not None and block_limit != default_limit:
+            return block_limit
+        return 6
+
+    def _build_category_strip(self, block: HomeBlock, request) -> Tuple[List[Dict[str, Any]], int, int]:
         lang = get_lang_code(request)
+        display_limit = self._resolve_category_strip_limit(block)
         categories: Iterable[Category]
         if block.source_mode == HomeBlockSourceMode.MANUAL:
-            categories = self._manual_objects(block, Category)
+            all_categories = [
+                item.content_object
+                for item in block.manual_items.all()
+                if isinstance(item.content_object, Category)
+            ]
+            total_count = len(all_categories)
+            categories = all_categories[:display_limit]
         else:
             params = block.query_params or {}
             qs = Category.objects.filter(parent__isnull=True)
@@ -352,10 +384,11 @@ class HomeViewSet(viewsets.GenericViewSet):
             if category_ids:
                 qs = qs.filter(id__in=category_ids)
             qs = qs.order_by("priority", "id")
-            categories = qs[: block.limit]
+            total_count = qs.count()
+            categories = qs[:display_limit]
 
         serializer = CategoryLightSerializer(categories, many=True, context={"lang": lang, "request": request})
-        return serializer.data
+        return serializer.data, total_count, display_limit
 
     def _build_service_block(
         self, block: HomeBlock, city: Optional[City], region: Optional[Region], request
