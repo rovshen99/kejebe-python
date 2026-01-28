@@ -214,6 +214,15 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
         return localized_value(obj, "description", lang=self._lang())
 
 
+class ServiceProductListSerializer(ServiceProductSerializer):
+    values = AttributeValueSerializer(many=True, read_only=True)
+
+    class Meta(ServiceProductSerializer.Meta):
+        fields = ServiceProductSerializer.Meta.fields + [
+            'values',
+        ]
+
+
 class ServiceProductInServiceSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
 

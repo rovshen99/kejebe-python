@@ -20,6 +20,7 @@ from .serializers import (
     FavoriteSerializer,
     ServiceLightSerializer,
     ServiceProductSerializer,
+    ServiceProductListSerializer,
     ServiceProductDetailSerializer,
     ServiceApplicationSerializer,
     ServiceUpdateSerializer,
@@ -318,6 +319,8 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ServiceProductDetailSerializer
+        if self.action in ['list', 'my']:
+            return ServiceProductListSerializer
         if self.action in ['update', 'partial_update']:
             return ServiceProductUpdateSerializer
         return ServiceProductSerializer
@@ -356,7 +359,7 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
             .order_by("priority", "-created_at")
         )
         page = self.paginate_queryset(qs)
-        serializer = ServiceProductSerializer(page, many=True, context={"request": request})
+        serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
 
