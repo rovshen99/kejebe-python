@@ -24,9 +24,14 @@ class FavoriteStatusMixin(serializers.Serializer):
 
 
 class ServiceImageSerializer(serializers.ModelSerializer):
+    aspect_ratio = serializers.SerializerMethodField()
+
     class Meta:
         model = ServiceImage
-        fields = ['image']
+        fields = ['image', 'aspect_ratio']
+
+    def get_aspect_ratio(self, obj):
+        return obj.get_or_set_aspect_ratio()
 
 
 class ServiceVideoSerializer(serializers.ModelSerializer):

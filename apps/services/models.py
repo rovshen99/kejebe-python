@@ -111,6 +111,7 @@ class ServiceContact(models.Model):
 class ServiceImage(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
     image = WebPImageField(upload_to="services/images", verbose_name=_("Image"), null=True)
+    aspect_ratio = models.FloatField(null=True, blank=True, verbose_name=_("Aspect Ratio"))
 
     class Meta:
         verbose_name = _("Service Image")
@@ -118,6 +119,41 @@ class ServiceImage(models.Model):
 
     def __str__(self):
         return self.service.title_tm
+
+    def _calculate_aspect_ratio(self) -> float | None:
+        if not self.image:
+            return None
+        try:
+            from PIL import Image
+        except Exception:
+            return None
+        try:
+            self.image.open()
+            with Image.open(self.image) as img:
+                width, height = img.size
+        except Exception:
+            return None
+        if not height:
+            return None
+        return round(width / height, 3)
+
+    def get_or_set_aspect_ratio(self) -> float | None:
+        if self.aspect_ratio:
+            return round(self.aspect_ratio, 3)
+        ratio = self._calculate_aspect_ratio()
+        if ratio is None:
+            return None
+        self.aspect_ratio = ratio
+        if self.pk:
+            ServiceImage.objects.filter(pk=self.pk).update(aspect_ratio=ratio)
+        return ratio
+
+    def save(self, *args, **kwargs):
+        if self.image and not self.aspect_ratio:
+            ratio = self._calculate_aspect_ratio()
+            if ratio is not None:
+                self.aspect_ratio = ratio
+        super().save(*args, **kwargs)
 
 
 class ServiceVideo(models.Model):
