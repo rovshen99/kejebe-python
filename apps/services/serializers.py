@@ -66,7 +66,7 @@ class AttributeSerializer(serializers.ModelSerializer):
 
 
 class AttributeValueSerializer(serializers.ModelSerializer):
-    attribute = AttributeSerializer(read_only=True)
+    attribute = serializers.SerializerMethodField()
     value = serializers.SerializerMethodField()
 
     class Meta:
@@ -75,6 +75,10 @@ class AttributeValueSerializer(serializers.ModelSerializer):
             'attribute',
             'value',
         ]
+
+    def get_attribute(self, obj):
+        lang = get_lang_code(self.context.get("request"))
+        return localized_value(obj.attribute, "name", lang=lang)
 
     def get_value(self, obj):
         input_type = getattr(obj.attribute, "input_type", None)
