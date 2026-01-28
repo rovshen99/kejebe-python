@@ -64,6 +64,14 @@ class ServiceViewSet(FavoriteAnnotateMixin,
                 rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
             ) \
             .order_by('priority', '-created_at')
+        if getattr(self, "action", None) == "retrieve":
+            products_qs = ServiceProduct.objects.prefetch_related(
+                "images", "values__attribute"
+            ).order_by("priority", "-created_at")
+            qs = qs.prefetch_related(
+                Prefetch("products", queryset=products_qs),
+                "contacts__type",
+            )
         return self.annotate_is_favorite(qs)
 
     def get_serializer_context(self):

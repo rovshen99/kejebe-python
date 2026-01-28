@@ -67,14 +67,26 @@ class AttributeSerializer(serializers.ModelSerializer):
 
 class AttributeValueSerializer(serializers.ModelSerializer):
     attribute = AttributeSerializer(read_only=True)
+    value = serializers.SerializerMethodField()
 
     class Meta:
         model = AttributeValue
         fields = [
             'attribute',
-            'value_text_tm', 'value_text_ru', 'value_text_en',
-            'value_number', 'value_boolean',
+            'value',
         ]
+
+    def get_value(self, obj):
+        input_type = getattr(obj.attribute, "input_type", None)
+        if input_type in ("text", "choice"):
+            lang = get_lang_code(self.context.get("request"))
+            return localized_value(obj, "value_text", lang=lang)
+        if input_type == "number":
+            return obj.value_number
+        if input_type == "boolean":
+            return obj.value_boolean
+        lang = get_lang_code(self.context.get("request"))
+        return localized_value(obj, "value_text", lang=lang)
 
 
 class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
@@ -198,6 +210,17 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
         return localized_value(obj, "description", lang=self._lang())
 
 
+class ServiceProductInServiceSerializer(ServiceProductSerializer):
+    values = AttributeValueSerializer(many=True, read_only=True)
+
+    class Meta(ServiceProductSerializer.Meta):
+        fields = [
+            'id', 'title_tm', 'title_ru', 'title_en', 'title',
+            'price', 'priority',
+            'images', 'is_favorite', 'values',
+        ]
+
+
 class ServiceProductDetailSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
     contacts = ServiceContactSerializer(many=True, source='service.contacts', read_only=True)
@@ -228,7 +251,7 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
-    products = ServiceProductSerializer(many=True, read_only=True)
+    products = ServiceProductInServiceSerializer(many=True, read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
     reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     available_cities = CitySerializer(many=True, read_only=True)
