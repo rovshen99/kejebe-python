@@ -114,7 +114,7 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             'avatar', 'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
             'price_min', 'price_max', 'tags', 'reviews_count',
             'description_tm', 'description_ru', 'description_en', 'description',
-            'is_grid_gallery', 'is_verified',
+            'is_grid_gallery', 'is_verified', 'is_vip',
             'cover_url', 'city_title', 'region_title', 'category_title',
             'price_text', 'rating', 'has_discount', 'discount_text',
         ]
@@ -277,6 +277,7 @@ class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             'description_tm', 'description_ru', 'description_en', 'description',
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'is_verified', 'active_until',
+            'is_vip',
             'tags', 'priority', 'created_at', 'updated_at',
             'images', 'videos', 'contacts', 'products', 'reviews_count', 'is_favorite',
             'is_grid_gallery',
