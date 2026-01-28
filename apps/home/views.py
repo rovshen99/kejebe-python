@@ -98,7 +98,11 @@ class HomeViewSet(viewsets.GenericViewSet):
             return Response({"version": 0, "city": city_payload, "blocks": []})
 
         blocks_payload: List[Dict[str, Any]] = []
-        blocks = config.blocks.filter(is_active=True).order_by("position", "id").prefetch_related("manual_items")
+        blocks = (
+            config.blocks.filter(is_active=True)
+            .order_by("position", "id")
+            .prefetch_related("manual_items__content_object")
+        )
         for block in blocks:
             items, view_all = self._build_block(block, city, region, request)
             block_limit = block.limit
@@ -229,8 +233,8 @@ class HomeViewSet(viewsets.GenericViewSet):
             elif total_count <= display_limit:
                 view_all = None
             else:
-                view_all = {"type": "navigate", "screen": "AllCategories", "params": {}}
-            return items, view_all
+                view_all = self._default_category_view_all()
+            return items, self._ensure_view_all_label(view_all)
         if block.type in (HomeBlockType.SERVICE_CAROUSEL, HomeBlockType.SERVICE_LIST):
             return self._build_service_block(block, city, region, request)
         return [], None
@@ -358,6 +362,33 @@ class HomeViewSet(viewsets.GenericViewSet):
             return None
         return parsed if parsed > 0 else None
 
+    @staticmethod
+    def _default_view_all_label() -> Dict[str, str]:
+        return {
+            "en": "Show all",
+            "ru": "Показать все",
+            "tm": "Hemmesini gör",
+        }
+
+    @classmethod
+    def _ensure_view_all_label(cls, view_all: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        if view_all is None or not isinstance(view_all, dict):
+            return view_all
+        if "label" in view_all:
+            return view_all
+        updated = dict(view_all)
+        updated["label"] = cls._default_view_all_label()
+        return updated
+
+    @classmethod
+    def _default_category_view_all(cls) -> Dict[str, Any]:
+        return {
+            "type": "navigate",
+            "screen": "AllCategories",
+            "params": {},
+            "label": cls._default_view_all_label(),
+        }
+
     def _resolve_category_strip_limit(self, block: HomeBlock) -> int:
         block_limit = self._parse_positive_int(block.limit)
         default_limit = HomeBlock._meta.get_field("limit").default
@@ -469,7 +500,7 @@ class HomeViewSet(viewsets.GenericViewSet):
             block, city, region, apply_location_filter=apply_location_filter
         )
 
-        return serializer.data, view_all
+        return serializer.data, self._ensure_view_all_label(view_all)
 
     @staticmethod
     def _build_view_all_for_service_block(
@@ -501,7 +532,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         qs = (
             Service.objects.filter(is_active=True)
             .select_related("category", "city__region")
-            .prefetch_related("tags", "available_cities", images_prefetch)
+            .prefetch_related("tags", images_prefetch)
             .annotate(
                 rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
