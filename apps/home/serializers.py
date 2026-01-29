@@ -106,6 +106,7 @@ class HomeServiceSerializer(serializers.ModelSerializer):
     has_discount = serializers.SerializerMethodField()
     discount_text = serializers.SerializerMethodField()
     is_favorite = serializers.SerializerMethodField()
+    is_region_level = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
 
     class Meta:
@@ -127,6 +128,7 @@ class HomeServiceSerializer(serializers.ModelSerializer):
             "is_favorite",
             "is_verified",
             "is_vip",
+            "is_region_level",
             "open",
         ]
 
@@ -208,6 +210,12 @@ class HomeServiceSerializer(serializers.ModelSerializer):
     def get_is_favorite(self, obj):
         annotated = getattr(obj, "is_favorite", None)
         return bool(annotated) if annotated is not None else False
+
+    def get_is_region_level(self, obj):
+        city = getattr(obj, "city", None)
+        if not city:
+            return False
+        return bool(getattr(city, "is_region_level", False))
 
     def get_open(self, obj):
         return {"type": "service", "service_id": obj.id}
