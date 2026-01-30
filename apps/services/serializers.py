@@ -162,12 +162,10 @@ class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
 
 
 class ServiceListSerializer(ServiceBaseSerializer):
-    tags = ServiceTagSerializer(many=True, read_only=True)
     open = serializers.SerializerMethodField()
 
     class Meta(ServiceBaseSerializer.Meta):
         fields = ServiceBaseSerializer.Meta.fields + [
-            'tags',
             'open',
         ]
 
