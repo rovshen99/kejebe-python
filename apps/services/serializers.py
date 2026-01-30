@@ -2,7 +2,7 @@ from rest_framework import serializers
 from core.utils import format_price_text, get_lang_code, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceTag, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
+    ServiceProductImage, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
@@ -44,18 +44,6 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceProductImage
         fields = ['image']
-
-
-class ServiceTagSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField()
-
-    class Meta:
-        model = ServiceTag
-        fields = ['id', 'name_en', 'name_tm', 'name_ru', 'name']
-
-    def get_name(self, obj):
-        lang = get_lang_code(self.context.get('request'))
-        return localized_value(obj, "name", lang=lang)
 
 
 class AttributeSerializer(serializers.ModelSerializer):
@@ -189,8 +177,24 @@ class ServiceListSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
         return {"type": "service", "service_id": obj.id}
 
 
-class ServiceCarouselSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
-    tags = ServiceTagSerializer(many=True, read_only=True)
+class ServiceTagsMixin(serializers.Serializer):
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, obj):
+        tags_rel = getattr(obj, "tags", None)
+        if not tags_rel:
+            return []
+        tags = tags_rel.all() if hasattr(tags_rel, "all") else tags_rel
+        lang = get_lang_code(self.context.get("request"))
+        names = []
+        for tag in tags:
+            name = localized_value(tag, "name", lang=lang)
+            if name:
+                names.append(name)
+        return names
+
+
+class ServiceCarouselSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBaseSerializer):
     images = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
 
@@ -311,7 +315,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
     products = ServiceProductInServiceSerializer(many=True, read_only=True)
-    tags = ServiceTagSerializer(many=True, read_only=True)
+    tags = serializers.SerializerMethodField()
     available_cities = CitySerializer(many=True, read_only=True)
 
     class Meta(ServiceBaseSerializer.Meta):
@@ -328,6 +332,19 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
 
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
+
+    def get_tags(self, obj):
+        tags_rel = getattr(obj, "tags", None)
+        if not tags_rel:
+            return []
+        tags = tags_rel.all() if hasattr(tags_rel, "all") else tags_rel
+        lang = get_lang_code(self.context.get("request"))
+        names = []
+        for tag in tags:
+            name = localized_value(tag, "name", lang=lang)
+            if name:
+                names.append(name)
+        return names
 
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
