@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
-from django.db.models import Avg, Prefetch, Q
+from django.db.models import Avg, Count, Prefetch, Q
+from django.db.models.functions import Round
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -15,10 +16,10 @@ from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorO
 from .filters import ServiceFilter, ServiceProductFilter
 from .models import Service, Review, Favorite, ServiceProduct, ServiceImage
 from .serializers import (
-    ServiceSerializer,
+    ServiceDetailSerializer,
     ReviewSerializer,
     FavoriteSerializer,
-    ServiceLightSerializer,
+    ServiceListSerializer,
     ServiceProductSerializer,
     ServiceProductListSerializer,
     ServiceProductDetailSerializer,
@@ -47,24 +48,25 @@ class ServiceViewSet(FavoriteAnnotateMixin,
 
     def get_serializer_class(self):
         if self.action == 'list':
-            return ServiceLightSerializer
+            return ServiceListSerializer
         if self.action in ['update', 'partial_update']:
             return ServiceUpdateSerializer
-        return ServiceSerializer
+        return ServiceDetailSerializer
 
     def get_queryset(self):
-        # images_prefetch = Prefetch(
-        #     "serviceimage_set",
-        #     queryset=ServiceImage.objects.order_by("id"),
-        #     to_attr="prefetched_images",
-        # )
-        qs = Service.objects.filter(is_active=True) \
-            .select_related('vendor', 'category', 'city', 'city__region') \
-            .prefetch_related('tags', 'available_cities') \
+        prefetches = ['tags']
+        if getattr(self, "action", None) == "retrieve":
+            prefetches.append('available_cities')
+        qs = (
+            Service.objects.filter(is_active=True)
+            .select_related('vendor', 'category', 'city', 'city__region')
+            .prefetch_related(*prefetches)
             .annotate(
-                rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
-            ) \
+                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
+                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+            )
             .order_by('priority', '-created_at')
+        )
         if getattr(self, "action", None) == "retrieve":
             products_qs = ServiceProduct.objects.prefetch_related(
                 "images", "values__attribute"
@@ -93,7 +95,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         self.perform_update(serializer)
 
         instance.refresh_from_db()
-        output = ServiceSerializer(instance, context={'request': request})
+        output = ServiceDetailSerializer(instance, context={'request': request})
         return Response(output.data)
 
     @extend_schema(
@@ -152,7 +154,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     @extend_schema(
         summary="List my services",
         description="Возвращает активные сервисы текущего вендора",
-        responses=ServiceLightSerializer(many=True),
+        responses=ServiceListSerializer(many=True),
     )
     @action(
         detail=False,
@@ -164,12 +166,16 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         qs = (
             Service.objects.filter(is_active=True, vendor=request.user)
             .select_related("vendor", "category", "city")
-            .prefetch_related("tags", "available_cities")
+            .prefetch_related("tags")
+            .annotate(
+                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
+                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+            )
             .order_by("priority", "-created_at")
         )
         qs = self.annotate_is_favorite(qs)
         page = self.paginate_queryset(qs)
-        serializer = ServiceLightSerializer(page, many=True, context={"request": request})
+        serializer = ServiceListSerializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
 
 
@@ -224,7 +230,33 @@ class FavoriteViewSet(mixins.ListModelMixin,
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
-        qs = Favorite.objects.filter(user=self.request.user).select_related('service', 'product')
+        qs = (
+            Favorite.objects.filter(user=self.request.user)
+            .select_related(
+                'service',
+                'service__category',
+                'service__city',
+                'service__city__region',
+                'product',
+                'product__service',
+            )
+            .prefetch_related(
+                'service__tags',
+            )
+            .annotate(
+                service_rating=Round(
+                    Avg(
+                    "service__reviews__rating",
+                    filter=Q(service__reviews__is_approved=True),
+                    ),
+                    2,
+                ),
+                service_reviews_count=Count(
+                    "service__reviews",
+                    filter=Q(service__reviews__is_approved=True),
+                ),
+            )
+        )
         fav_type = (self.request.query_params.get('type') or '').lower().strip()
         if fav_type == 'service':
             qs = qs.filter(service__isnull=False, product__isnull=True)

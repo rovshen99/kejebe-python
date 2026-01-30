@@ -98,30 +98,26 @@ class AttributeValueSerializer(serializers.ModelSerializer):
         return localized_value(obj, "value_text", lang=lang)
 
 
-class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
-    description = serializers.SerializerMethodField()
-    cover_url = serializers.SerializerMethodField()
     city_title = serializers.SerializerMethodField()
     region_title = serializers.SerializerMethodField()
     category_title = serializers.SerializerMethodField()
     price_text = serializers.SerializerMethodField()
-    rating = serializers.SerializerMethodField()
+    rating = serializers.FloatField(read_only=True)
     has_discount = serializers.SerializerMethodField()
     discount_text = serializers.SerializerMethodField()
-    reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
-    tags = ServiceTagSerializer(many=True, read_only=True)
+    reviews_count = serializers.IntegerField(read_only=True)
     is_region_level = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
         fields = [
-            'id', 'category', 'city', 'address', 'available_cities',
+            'id', 'category',
             'avatar', 'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
-            'price_min', 'price_max', 'tags', 'reviews_count',
-            'description_tm', 'description_ru', 'description_en', 'description',
-            'is_grid_gallery', 'is_verified', 'is_vip',
-            'cover_url', 'city_title', 'region_title', 'category_title',
+            'reviews_count',
+            'is_verified', 'is_vip',
+            'city_title', 'region_title', 'category_title',
             'price_text', 'rating', 'has_discount', 'discount_text',
             'is_region_level',
         ]
@@ -129,31 +125,11 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
     def _lang(self):
         return get_lang_code(self.context.get('request'))
 
-    def get_title(self, obj):
-        return localized_value(obj, "title", lang=self._lang())
-
-    def get_description(self, obj):
-        return localized_value(obj, "description", lang=self._lang())
-
-    def get_cover_url(self, obj):
-        if getattr(obj, "avatar", None):
-            return obj.avatar.url
-        if getattr(obj, "background", None):
-            return obj.background.url
-        images = getattr(obj, "prefetched_images", None) or []
-        first_image = images[0] if images else None
-        if not first_image and hasattr(obj, "serviceimage_set"):
-            first_image = obj.serviceimage_set.all().first()
-        return first_image.image.url if first_image and getattr(first_image, "image", None) else None
-
-    def get_is_region_level(self, obj):
-        city = getattr(obj, "city", None)
-        if not city:
-            return False
-        return bool(getattr(city, "is_region_level", False))
-
     def _localized_name(self, obj, prefix):
         return localized_value(obj, prefix, lang=self._lang())
+
+    def get_title(self, obj):
+        return localized_value(obj, "title", lang=self._lang())
 
     def get_city_title(self, obj):
         return self._localized_name(getattr(obj, "city", None), "name")
@@ -172,15 +148,56 @@ class ServiceLightSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             lang=self._lang(),
         )
 
-    def get_rating(self, obj):
-        rating = getattr(obj, "rating", None)
-        return round(float(rating), 2) if rating is not None else None
-
     def get_has_discount(self, obj):
         return bool(self.get_discount_text(obj))
 
     def get_discount_text(self, obj):
         return getattr(obj, "discount_text", None)
+
+    def get_is_region_level(self, obj):
+        city = getattr(obj, "city", None)
+        if not city:
+            return False
+        return bool(getattr(city, "is_region_level", False))
+
+
+class ServiceListSerializer(ServiceBaseSerializer):
+    open = serializers.SerializerMethodField()
+
+    class Meta(ServiceBaseSerializer.Meta):
+        fields = ServiceBaseSerializer.Meta.fields + [
+            'open',
+        ]
+
+    def get_open(self, obj):
+        return {"type": "service", "service_id": obj.id}
+
+
+class ServiceCarouselSerializer(ServiceBaseSerializer):
+    tags = ServiceTagSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
+    open = serializers.SerializerMethodField()
+
+    class Meta(ServiceBaseSerializer.Meta):
+        fields = ServiceBaseSerializer.Meta.fields + [
+            'tags',
+            'images',
+            'open',
+        ]
+
+    def get_images(self, obj):
+        images = getattr(obj, "prefetched_images", None) or []
+        if not images and hasattr(obj, "serviceimage_set"):
+            images = obj.serviceimage_set.all()
+        urls = []
+        for image in images:
+            img_field = getattr(image, "image", None)
+            if img_field and getattr(img_field, "url", None):
+                urls.append(img_field.url)
+        return urls
+
+    def get_open(self, obj):
+        return {"type": "service", "service_id": obj.id}
 
 
 class ContactTypeSerializer(serializers.ModelSerializer):
@@ -271,47 +288,41 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class ServiceSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
-    title = serializers.SerializerMethodField()
+class ServiceDetailSerializer(ServiceBaseSerializer):
     description = serializers.SerializerMethodField()
+    cover_url = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
     products = ServiceProductInServiceSerializer(many=True, read_only=True)
     tags = ServiceTagSerializer(many=True, read_only=True)
-    reviews_count = serializers.IntegerField(source='reviews.count', read_only=True)
     available_cities = CitySerializer(many=True, read_only=True)
-    is_region_level = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta(ServiceBaseSerializer.Meta):
         model = Service
-        fields = [
-            'id', 'vendor', 'category', 'city', 'address', 'available_cities', 'avatar', 'background',
-            'title_tm', 'title_ru', 'title_en', 'title',
+        fields = ServiceBaseSerializer.Meta.fields + [
+            'vendor', 'city', 'address', 'available_cities', 'background', 'cover_url',
             'description_tm', 'description_ru', 'description_en', 'description',
             'price_min', 'price_max', 'is_catalog',
-            'latitude', 'longitude', 'is_active', 'is_verified', 'active_until',
-            'is_vip',
+            'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
-            'images', 'videos', 'contacts', 'products', 'reviews_count', 'is_favorite',
+            'images', 'videos', 'contacts', 'products',
             'is_grid_gallery',
-            'is_region_level',
         ]
-
-    def _lang(self):
-        return get_lang_code(self.context.get('request'))
-
-    def get_title(self, obj):
-        return localized_value(obj, "title", lang=self._lang())
 
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
 
-    def get_is_region_level(self, obj):
-        city = getattr(obj, "city", None)
-        if not city:
-            return False
-        return bool(getattr(city, "is_region_level", False))
+    def get_cover_url(self, obj):
+        if getattr(obj, "avatar", None):
+            return obj.avatar.url
+        if getattr(obj, "background", None):
+            return obj.background.url
+        images = getattr(obj, "prefetched_images", None) or []
+        first_image = images[0] if images else None
+        if not first_image and hasattr(obj, "serviceimage_set"):
+            first_image = obj.serviceimage_set.all().first()
+        return first_image.image.url if first_image and getattr(first_image, "image", None) else None
 
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
@@ -369,7 +380,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
             component_name='FavoriteObject',
             resource_type_field_name='type',
             serializers=[
-                ServiceLightSerializer,
+                ServiceListSerializer,
                 ServiceProductDetailSerializer,
             ],
             many=False,
@@ -378,7 +389,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
     def get_object(self, obj):
         request = self.context.get('request')
         if obj.service_id:
-            serializer = ServiceLightSerializer(obj.service, context={'request': request})
+            service = obj.service
+            if service is not None:
+                if hasattr(obj, "service_rating"):
+                    service.rating = obj.service_rating
+                if hasattr(obj, "service_reviews_count"):
+                    service.reviews_count = obj.service_reviews_count
+            serializer = ServiceListSerializer(service, context={'request': request})
             return serializer.data
         if obj.product_id:
             serializer = ServiceProductDetailSerializer(obj.product, context={'request': request})

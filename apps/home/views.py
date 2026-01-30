@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value, Case, When, IntegerField
+from django.db.models.functions import Round
 from django.utils import timezone, translation
 from rest_framework import permissions, viewsets
 from rest_framework.response import Response
@@ -13,11 +14,11 @@ from apps.home.serializers import (
     BannerSerializer,
     CategoryLightSerializer,
     HomeBlockSerializer,
-    HomeServiceSerializer,
     StoriesRowItemSerializer,
 )
 from apps.regions.models import City, Region
 from apps.regions.serializers import CitySerializer
+from apps.services.serializers import ServiceCarouselSerializer, ServiceListSerializer
 from apps.services.models import Favorite, Service, ServiceImage
 from apps.stories.models import ServiceStory
 from core.utils import get_lang_code, localized_value
@@ -425,7 +426,12 @@ class HomeViewSet(viewsets.GenericViewSet):
         self, block: HomeBlock, city: Optional[City], region: Optional[Region], request
     ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
         catalog_only = block.source_mode != HomeBlockSourceMode.MANUAL
-        services_qs = self._base_service_queryset(request.user, catalog_only=catalog_only)
+        include_images = block.type == HomeBlockType.SERVICE_CAROUSEL
+        services_qs = self._base_service_queryset(
+            request.user,
+            catalog_only=catalog_only,
+            include_images=include_images,
+        )
         manual_order: Optional[List[int]] = None
         pinned_ids: Optional[List[int]] = None
         apply_location_filter = self._should_filter_by_location(block, request)
@@ -495,7 +501,12 @@ class HomeViewSet(viewsets.GenericViewSet):
         else:
             services = list(services_qs[: block.limit])
 
-        serializer = HomeServiceSerializer(services, many=True, context={"request": request})
+        serializer_cls = (
+            ServiceCarouselSerializer
+            if block.type == HomeBlockType.SERVICE_CAROUSEL
+            else ServiceListSerializer
+        )
+        serializer = serializer_cls(services, many=True, context={"request": request})
         view_all = self._build_view_all_for_service_block(
             block, city, region, apply_location_filter=apply_location_filter
         )
@@ -523,18 +534,22 @@ class HomeViewSet(viewsets.GenericViewSet):
         return {"type": "search", "params": params}
 
     @staticmethod
-    def _base_service_queryset(user, catalog_only: bool = True):
-        images_prefetch = Prefetch(
-            "serviceimage_set",
-            queryset=ServiceImage.objects.order_by("id"),
-            to_attr="prefetched_images",
-        )
+    def _base_service_queryset(user, catalog_only: bool = True, include_images: bool = False):
+        prefetches = ["tags"]
+        if include_images:
+            prefetches.append(
+                Prefetch(
+                    "serviceimage_set",
+                    queryset=ServiceImage.objects.order_by("id"),
+                    to_attr="prefetched_images",
+                )
+            )
         qs = (
             Service.objects.filter(is_active=True)
             .select_related("category", "city__region")
-            .prefetch_related("tags", images_prefetch)
+            .prefetch_related(*prefetches)
             .annotate(
-                rating=Avg("reviews__rating", filter=Q(reviews__is_approved=True)),
+                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
             )
             .order_by("priority", "-created_at")
