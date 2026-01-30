@@ -309,7 +309,7 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
+class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBaseSerializer):
     description = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
@@ -332,19 +332,6 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
 
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
-
-    def get_tags(self, obj):
-        tags_rel = getattr(obj, "tags", None)
-        if not tags_rel:
-            return []
-        tags = tags_rel.all() if hasattr(tags_rel, "all") else tags_rel
-        lang = get_lang_code(self.context.get("request"))
-        names = []
-        for tag in tags:
-            name = localized_value(tag, "name", lang=lang)
-            if name:
-                names.append(name)
-        return names
 
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
