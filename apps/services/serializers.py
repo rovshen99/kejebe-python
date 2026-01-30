@@ -160,7 +160,8 @@ class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             return False
         return bool(getattr(city, "is_region_level", False))
 
-class ServiceCoverUrlMixin:
+
+class ServiceCoverUrlMixin(serializers.Serializer):
     cover_url = serializers.SerializerMethodField()
 
     def get_cover_url(self, obj):
