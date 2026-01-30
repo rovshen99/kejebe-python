@@ -11,8 +11,7 @@ class BannerSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'title_tm', 'title_ru', 'title_en', 'title',
-            'image', 'link_url', 'service',
-            'regions', 'cities',
+            'image', 'regions', 'cities',
             'is_active', 'starts_at', 'ends_at',
             'priority', 'created_at', 'updated_at',
         ]
