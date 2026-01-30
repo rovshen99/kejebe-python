@@ -160,12 +160,27 @@ class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             return False
         return bool(getattr(city, "is_region_level", False))
 
+class ServiceCoverUrlMixin:
+    cover_url = serializers.SerializerMethodField()
 
-class ServiceListSerializer(ServiceBaseSerializer):
+    def get_cover_url(self, obj):
+        if getattr(obj, "avatar", None):
+            return obj.avatar.url
+        if getattr(obj, "background", None):
+            return obj.background.url
+        images = getattr(obj, "prefetched_images", None) or []
+        first_image = images[0] if images else None
+        if not first_image and hasattr(obj, "serviceimage_set"):
+            first_image = obj.serviceimage_set.all().first()
+        return first_image.image.url if first_image and getattr(first_image, "image", None) else None
+
+
+class ServiceListSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
     open = serializers.SerializerMethodField()
 
     class Meta(ServiceBaseSerializer.Meta):
         fields = ServiceBaseSerializer.Meta.fields + [
+            'cover_url',
             'open',
         ]
 
@@ -173,13 +188,14 @@ class ServiceListSerializer(ServiceBaseSerializer):
         return {"type": "service", "service_id": obj.id}
 
 
-class ServiceCarouselSerializer(ServiceBaseSerializer):
+class ServiceCarouselSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
     tags = ServiceTagSerializer(many=True, read_only=True)
     images = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
 
     class Meta(ServiceBaseSerializer.Meta):
         fields = ServiceBaseSerializer.Meta.fields + [
+            'cover_url',
             'tags',
             'images',
             'open',
@@ -288,9 +304,8 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
-class ServiceDetailSerializer(ServiceBaseSerializer):
+class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
     description = serializers.SerializerMethodField()
-    cover_url = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
     contacts = ServiceContactSerializer(many=True, read_only=True)
@@ -312,17 +327,6 @@ class ServiceDetailSerializer(ServiceBaseSerializer):
 
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
-
-    def get_cover_url(self, obj):
-        if getattr(obj, "avatar", None):
-            return obj.avatar.url
-        if getattr(obj, "background", None):
-            return obj.background.url
-        images = getattr(obj, "prefetched_images", None) or []
-        first_image = images[0] if images else None
-        if not first_image and hasattr(obj, "serviceimage_set"):
-            first_image = obj.serviceimage_set.all().first()
-        return first_image.image.url if first_image and getattr(first_image, "image", None) else None
 
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
