@@ -1,0 +1,8 @@
+{% extends "admin/base_site.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    window.SERVICE_MAP_TILE_URL = "{{ osm_tile_url|default:''|escapejs }}";
+  </script>
+{% endblock %}
