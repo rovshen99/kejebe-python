@@ -33,10 +33,24 @@ class BannerSerializer(serializers.ModelSerializer):
         return None
 
     def get_open(self, obj: Banner) -> Dict[str, Any]:
-        if obj.service_id:
-            return {"type": "service", "service_id": obj.service_id}
-        if obj.link_url:
-            return {"type": "url", "url": obj.link_url}
+        open_type = getattr(obj, "open_type", None)
+        params = obj.open_params or {}
+        if open_type == "service":
+            service_id = params.get("service_id")
+            if service_id:
+                return {"type": "service", "service_id": service_id}
+            return {"type": "navigate", "screen": "Home"}
+        if open_type == "search":
+            return {"type": "search", "params": params}
+        if open_type == "navigate":
+            screen = params.get("screen") or "Home"
+            nav_params = params.get("params") or {}
+            return {"type": "navigate", "screen": screen, "params": nav_params}
+        if open_type == "url":
+            url = params.get("url")
+            if url:
+                return {"type": "url", "url": url}
+            return {"type": "navigate", "screen": "Home"}
         return {"type": "navigate", "screen": "Home"}
 
 

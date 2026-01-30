@@ -3,7 +3,6 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from core.fields import WebPImageField
-from apps.services.models import Service
 from apps.regions.models import Region, City
 
 
@@ -25,22 +24,19 @@ class Banner(models.Model):
     title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
     image = WebPImageField(upload_to="banners/", verbose_name=_("Image"))
-    link_url = models.CharField(
-        max_length=512,
+    open_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("service", _("Service")),
+            ("search", _("Search")),
+            ("navigate", _("Navigate")),
+            ("url", _("URL")),
+        ],
         null=True,
         blank=True,
-        verbose_name=_("Link URL"),
-        help_text=_("Optional: internal path or external URL")
+        verbose_name=_("Open Type"),
     )
-
-    service = models.ForeignKey(
-        Service,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name=_("Service"),
-        related_name='banners'
-    )
+    open_params = models.JSONField(default=dict, blank=True, verbose_name=_("Open Params"))
 
     regions = models.ManyToManyField(Region, related_name='banners', blank=True, verbose_name=_("Regions"))
     cities = models.ManyToManyField(City, related_name='banners', blank=True, verbose_name=_("Cities"))
