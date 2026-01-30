@@ -1,5 +1,6 @@
 import nested_admin
 
+from django.conf import settings
 from django.contrib import admin
 
 from core.mixins import IconPreviewMixin
@@ -81,6 +82,28 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
         ServiceAvailableCityInline,
         ServiceProductInline,
     ]
+
+    class Media:
+        css = {
+            "all": (
+                "admin/css/service_map.css",
+                "vendor/leaflet/leaflet.css",
+            )
+        }
+        js = (
+            "vendor/leaflet/leaflet.js",
+            "admin/js/service_map.js",
+        )
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["osm_tile_url"] = getattr(settings, "OSM_TILE_URL", "")
+        return super().changeform_view(request, object_id, form_url, extra_context=extra_context)
+
+    def add_view(self, request, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["osm_tile_url"] = getattr(settings, "OSM_TILE_URL", "")
+        return super().add_view(request, form_url, extra_context=extra_context)
 
 
 @admin.register(Review)
