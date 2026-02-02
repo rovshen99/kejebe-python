@@ -135,6 +135,11 @@ class InitReverseSMSView(APIView):
     authentication_classes = []
 
     def post(self, request):
+        api_key = request.headers.get("X-API-KEY") or request.headers.get("x-api-key")
+        expected = getattr(settings, "SMS_INIT_API_KEY", "")
+        if expected:
+            if not api_key or api_key != expected:
+                return Response({"detail": "invalid_api_key"}, status=403)
         serializer = InitChallengeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

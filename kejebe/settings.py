@@ -78,6 +78,7 @@ AUTH_USER_MODEL = "users.User"
 
 SMS_SERVICE_NUMBER = "+99361111111"
 DEFAULT_PHONE_COUNTRY_CODE = "993"
+SMS_INIT_API_KEY = os.getenv("SMS_INIT_API_KEY", "")
 
 SMS_BYPASS_ENABLED = os.getenv("SMS_BYPASS_ENABLED", "true" if DEBUG else "false").lower() == "true"
 SMS_BYPASS_NUMBERS = [n.strip() for n in os.getenv("SMS_BYPASS_NUMBERS", "").split(",") if n.strip()]
