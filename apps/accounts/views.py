@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import InboundSMS, SMSChallenge
-from .serializers import ConfirmChallengeSerializer, InitChallengeSerializer
+from .serializers import ConfirmChallengeSerializer, InitChallengeSerializer, InboundSMSSerializer
 from .services.phone import is_bypass_number, normalize_phone
 from apps.devices.models import Device
 
@@ -59,8 +59,10 @@ def build_user_payload(request, user):
     tags=['SMS'],
     summary='Inbound SMS webhook',
     description=(
-        'Accepts SMS from a provider (generic: From/To/Body/MessageSid).'
+        'Accepts inbound SMS (generic: From/To/Body/MessageSid) '
+        'or client payload (sender/message/receivedInMilli).'
     ),
+    request=InboundSMSSerializer,
 )
 class InboundSMSWebhookView(APIView):
     permission_classes = [AllowAny]
