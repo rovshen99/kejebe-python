@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from datetime import datetime
 
 from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import AllowAny
@@ -67,13 +68,14 @@ class InboundSMSWebhookView(APIView):
 
     def post(self, request):
         data = request.data
+        received_at = self._parse_received_at(data)
         from_number = normalize_phone(
-            data.get('From') or data.get('from') or ''
+            data.get('From') or data.get('from') or data.get('sender') or ''
         )
         to_number = normalize_phone(
-            data.get('To') or data.get('to') or settings.SMS_SERVICE_NUMBER
+            data.get('To') or data.get('to') or data.get('receiver') or settings.SMS_SERVICE_NUMBER
         )
-        body = data.get('Body') or data.get('body') or ''
+        body = data.get('Body') or data.get('body') or data.get('message') or ''
         msg_id = data.get('MessageSid') or data.get('message_id') or ''
         if not from_number or not to_number:
             return Response({'detail': 'Missing numbers'}, status=400)
@@ -83,9 +85,23 @@ class InboundSMSWebhookView(APIView):
             from_number=from_number,
             to_number=to_number,
             body=body,
-            received_at=timezone.now(),
+            received_at=received_at,
         )
         return Response(status=201)
+
+    @staticmethod
+    def _parse_received_at(data):
+        raw = data.get("receivedInMilli") or data.get("received_in_milli") or data.get("received_at")
+        if raw in (None, ""):
+            return timezone.now()
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return timezone.now()
+        if value > 1_000_000_000_000:
+            value = value / 1000
+        tz = timezone.get_current_timezone()
+        return datetime.fromtimestamp(value, tz=tz)
 
 
 @extend_schema(
