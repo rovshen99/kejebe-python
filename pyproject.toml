@@ -22,4 +22,5 @@ dependencies = [
     "whitenoise>=6.9.0",
     "django-image-cropping>=1.7",
     "easy-thumbnails>=2.10.1",
+    "gunicorn>=21.2.0",
 ]

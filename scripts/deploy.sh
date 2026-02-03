@@ -3,11 +3,19 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/kejebe}"
 APP_USER="${APP_USER:-${SUDO_USER:-$USER}}"
+SUPERUSER_PHONE="${SUPERUSER_PHONE:-+9936100000}"
 SUPERUSER_NAME="${SUPERUSER_NAME:-admin}"
 SUPERUSER_EMAIL="${SUPERUSER_EMAIL:-admin@example.com}"
 SUPERUSER_PASSWORD="${SUPERUSER_PASSWORD:-Admin123!}"
 
 cd "$APP_DIR"
+
+if [ -f ".env" ]; then
+  echo "==> Loading .env..."
+  set -a
+  . ./.env
+  set +a
+fi
 
 echo "==> Activating venv..."
 source .venv/bin/activate
@@ -22,7 +30,7 @@ echo "==> Ensuring superuser exists..."
 DJANGO_SUPERUSER_USERNAME="$SUPERUSER_NAME" \
 DJANGO_SUPERUSER_EMAIL="$SUPERUSER_EMAIL" \
 DJANGO_SUPERUSER_PASSWORD="$SUPERUSER_PASSWORD" \
-python manage.py createsuperuser --noinput || true
+python manage.py createsuperuser --noinput --phone "$SUPERUSER_PHONE" || true
 
 echo "==> Creating systemd service..."
 SERVICE_FILE="/etc/systemd/system/kejebe.service"
