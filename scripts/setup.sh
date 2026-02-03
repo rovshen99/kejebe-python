@@ -62,25 +62,15 @@ else
 fi
 
 echo "==> Creating database/user (idempotent)..."
-sudo -u postgres psql <<SQL
-DO \$\$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_database WHERE datname = '${DB_NAME}') THEN
-    CREATE DATABASE ${DB_NAME};
-  END IF;
-END
-\$\$;
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1; then
+  sudo -u postgres psql -c "CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';"
+fi
 
-DO \$\$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER}') THEN
-    CREATE USER ${DB_USER} WITH PASSWORD '${DB_PASSWORD}';
-  END IF;
-END
-\$\$;
+if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1; then
+  sudo -u postgres createdb "${DB_NAME}"
+fi
 
-GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};
-SQL
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER};"
 
 if [ ! -f ".env" ]; then
   echo "==> Creating .env..."
