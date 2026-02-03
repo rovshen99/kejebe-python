@@ -30,9 +30,9 @@ for env_path in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
 SECRET_KEY = 'django-insecure-o-l&qti4a9j&!)7a4rk!-998y7zk!nngoc#0jn#=m-2%oquh4x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
 
 
 # Application definition
