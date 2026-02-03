@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     'mptt',
     'nested_admin',
     'django_json_widget',
-    'froala_editor',
 ]
 
 REST_FRAMEWORK = {
