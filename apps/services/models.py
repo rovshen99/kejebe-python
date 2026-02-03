@@ -21,7 +21,12 @@ class Service(models.Model):
         upload_to="services/avatars", verbose_name=_("Avatar"), null=True, default=None, blank=True
     )
     regions = models.ManyToManyField(Region, related_name='services', verbose_name=_("Regions"))
-    available_cities = models.ManyToManyField(City, related_name='services', verbose_name=_("Available Cities"))
+    available_cities = models.ManyToManyField(
+        City,
+        related_name='services',
+        verbose_name=_("Available Cities"),
+        blank=True,
+    )
 
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
