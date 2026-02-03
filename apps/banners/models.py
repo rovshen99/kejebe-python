@@ -21,7 +21,6 @@ class BannerQuerySet(models.QuerySet):
 class Banner(models.Model):
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
-    title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
     image = WebPImageField(upload_to="banners/", verbose_name=_("Image"))
     open_type = models.CharField(

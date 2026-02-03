@@ -41,7 +41,7 @@ class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
     extra = 0
     fields = (
         'attribute',
-        'value_text_tm', 'value_text_ru', 'value_text_en',
+        'value_text_tm', 'value_text_ru',
         'value_number', 'value_boolean',
     )
 
@@ -71,7 +71,7 @@ class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
 class ServiceAdmin(nested_admin.NestedModelAdmin):
     list_display = ('title_tm', 'vendor', 'category', 'city', 'is_active', 'is_verified', 'is_vip', 'priority')
     list_filter = ('category', 'city', 'is_active', 'is_verified', 'is_vip')
-    search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
+    search_fields = ('title_tm', 'title_ru', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
     filter_horizontal = ('regions',)
     inlines = [
@@ -118,8 +118,8 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('user', 'get_target')
     search_fields = (
         'user__name',
-        'service__title_tm', 'service__title_ru', 'service__title_en',
-        'product__title_tm', 'product__title_ru', 'product__title_en',
+        'service__title_tm', 'service__title_ru',
+        'product__title_tm', 'product__title_ru',
     )
 
     def get_target(self, obj):
@@ -143,7 +143,7 @@ class FavoriteAdmin(admin.ModelAdmin):
 class ServiceAttributeAdmin(admin.ModelAdmin):
     list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
     list_filter = ('category', 'input_type')
-    search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
+    search_fields = ('name_tm', 'name_ru', 'slug')
 #
 #
 # @admin.register(AttributeValue)
@@ -162,8 +162,8 @@ class ServiceAttributeAdmin(admin.ModelAdmin):
 
 @admin.register(ContactType)
 class ContactTypeAdmin(IconPreviewMixin, admin.ModelAdmin):
-    list_display = ('name_tm', 'name_ru', 'name_en', 'icon_preview')
-    search_fields = ('name_tm', 'name_ru', 'name_en')
+    list_display = ('name_tm', 'name_ru', 'icon_preview')
+    search_fields = ('name_tm', 'name_ru')
     readonly_fields = ('slug',)
 
 

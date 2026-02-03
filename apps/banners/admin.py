@@ -8,7 +8,7 @@ from .models import Banner
 class BannerAdmin(admin.ModelAdmin):
     list_display = ("id", "title_tm", "is_active", "starts_at", "ends_at", "open_type", "priority")
     list_filter = ("is_active", "regions", "cities")
-    search_fields = ("title_tm", "title_ru", "title_en")
+    search_fields = ("title_tm", "title_ru")
     filter_horizontal = ("regions", "cities")
     ordering = ("priority", "-created_at")
     formfield_overrides = {

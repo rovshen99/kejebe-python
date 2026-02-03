@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 class Region(models.Model):
     name_tm = models.CharField(max_length=255, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=255, verbose_name=_("Name (RU)"))
-    name_en = models.CharField(max_length=255, verbose_name=_("Name (EN)"))
 
     class Meta:
         verbose_name = _("Region")
@@ -20,7 +19,6 @@ class City(models.Model):
     region = models.ForeignKey(Region, on_delete=models.CASCADE, verbose_name=_("Region"))
     name_tm = models.CharField(max_length=255, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=255, verbose_name=_("Name (RU)"))
-    name_en = models.CharField(max_length=255, verbose_name=_("Name (EN)"))
     is_region_level = models.BooleanField(default=False, verbose_name=_("Is region-level city"))
 
     class Meta:
