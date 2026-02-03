@@ -41,7 +41,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     filterset_class = ServiceFilter
     ordering_fields = ['priority', 'created_at', 'price_min']
     ordering = ['priority']
-    search_fields = ['title_tm', 'title_ru', 'title_en']
+    search_fields = ['title_tm', 'title_ru']
     pagination_class = CustomPagination
     favorite_field = 'service'
     parser_classes = (MultiPartParser, FormParser, JSONParser)
@@ -336,7 +336,7 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
     filterset_class = ServiceProductFilter
     ordering_fields = ['price', 'created_at', 'priority']
     ordering = ['priority', '-created_at']
-    search_fields = ['title_tm', 'title_ru', 'title_en', 'description_tm', 'description_ru', 'description_en']
+    search_fields = ['title_tm', 'title_ru', 'description_tm', 'description_ru']
     favorite_field = 'product'
 
     def get_queryset(self):

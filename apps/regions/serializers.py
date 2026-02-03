@@ -10,7 +10,7 @@ class RegionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Region
-        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'name', 'is_default']
+        fields = ['id', 'name_tm', 'name_ru', 'name', 'is_default']
 
     def get_name(self, obj):
         lang = get_lang_code(self.context.get('request'))
@@ -27,7 +27,7 @@ class CitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = City
-        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'name', 'is_region_level', 'region']
+        fields = ['id', 'name_tm', 'name_ru', 'name', 'is_region_level', 'region']
 
     def get_name(self, obj):
         lang = get_lang_code(self.context.get('request'))

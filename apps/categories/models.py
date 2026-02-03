@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 class Category(MPTTModel):
     name_tm = models.CharField(max_length=255)
     name_ru = models.CharField(max_length=255)
-    name_en = models.CharField(max_length=255)
 
     parent = TreeForeignKey(
         "self",

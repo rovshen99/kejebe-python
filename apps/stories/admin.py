@@ -7,7 +7,7 @@ from apps.stories.models import ServiceStory, ServiceStoryView
 class ServiceStoryAdmin(admin.ModelAdmin):
     list_display = ("id", "service", "title", "is_active", "starts_at", "ends_at", "priority", "created_at")
     list_filter = ("is_active", "starts_at", "ends_at", "priority")
-    search_fields = ("title", "service__title_tm", "service__title_ru", "service__title_en")
+    search_fields = ("title", "service__title_tm", "service__title_ru")
     readonly_fields = ("created_at", "updated_at")
 
 

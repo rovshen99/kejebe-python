@@ -181,10 +181,9 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGES = [
     ("tm", "Turkmen"),
     ("ru", "Russian"),
-    ("en", "English"),
 ]
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'tm'
 
 TIME_ZONE = 'UTC'
 

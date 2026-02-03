@@ -366,7 +366,6 @@ class HomeViewSet(viewsets.GenericViewSet):
     @staticmethod
     def _default_view_all_label() -> Dict[str, str]:
         return {
-            "en": "Show all",
             "ru": "Показать все",
             "tm": "Hemmesini gör",
         }

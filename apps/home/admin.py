@@ -37,7 +37,7 @@ class HomeBlockInline(nested_admin.NestedStackedInline):
         (None, {
             "fields": (
                 "type",
-                ("title_tm", "title_ru", "title_en"),
+                ("title_tm", "title_ru"),
                 "position",
                 "is_active",
                 "source_mode",
@@ -67,7 +67,7 @@ class HomePageConfigAdmin(nested_admin.NestedModelAdmin):
 class HomeBlockAdmin(admin.ModelAdmin):
     list_display = ("id", "config", "type", "position", "is_active", "source_mode", "limit")
     list_filter = ("type", "source_mode", "is_active", "config__city", "config__region", "config__locale")
-    search_fields = ("config__slug", "title_tm", "title_ru", "title_en")
+    search_fields = ("config__slug", "title_tm", "title_ru")
     ordering = ("config", "position", "id")
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},

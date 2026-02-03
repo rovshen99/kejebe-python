@@ -25,11 +25,9 @@ class Service(models.Model):
 
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
-    title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
     description_tm = SummernoteTextField(verbose_name=_("Description (TM)"))
     description_ru = SummernoteTextField(verbose_name=_("Description (RU)"))
-    description_en = SummernoteTextField(verbose_name=_("Description (EN)"))
 
     price_min = models.FloatField(null=True, blank=True, verbose_name=_("Minimum Price"))
     price_max = models.FloatField(null=True, blank=True, verbose_name=_("Maximum Price"))
@@ -66,7 +64,6 @@ class ContactType(models.Model):
     slug = models.SlugField(max_length=50, unique=True, verbose_name=_("Slug"))
     name_tm = models.CharField(max_length=100, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Name (RU)"))
-    name_en = models.CharField(max_length=100, verbose_name=_("Name (EN)"))
     icon = WebPImageField(
         upload_to='contact_type_icons/',
         verbose_name=_("Icon"),
@@ -240,7 +237,6 @@ class Favorite(models.Model):
 class ServiceTag(models.Model):
     name_tm = models.CharField(max_length=100, verbose_name=_("Tag Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Tag Name (RU)"))
-    name_en = models.CharField(max_length=100, verbose_name=_("Tag Name (EN)"))
 
     class Meta:
         verbose_name = _("Service Tag")
@@ -256,7 +252,6 @@ class Attribute(models.Model):
     )
     name_tm = models.CharField(max_length=100, verbose_name=_("Attribute Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Attribute Name (RU)"))
-    name_en = models.CharField(max_length=100, verbose_name=_("Attribute Name (EN)"))
 
     slug = models.SlugField(db_index=True, verbose_name=_("Attribute Slug"))
     input_type = models.CharField(
@@ -294,7 +289,6 @@ class AttributeValue(models.Model):
 
     value_text_tm = models.CharField(max_length=100, verbose_name=_("Text Value (TM)"))
     value_text_ru = models.CharField(max_length=100, verbose_name=_("Text Value (RU)"))
-    value_text_en = models.CharField(max_length=100, verbose_name=_("Text Value (EN)"))
 
     value_number = models.FloatField(null=True, blank=True, verbose_name=_("Number Value"))
     value_boolean = models.BooleanField(null=True, blank=True, verbose_name=_("Boolean Value"))
@@ -315,8 +309,6 @@ class AttributeValue(models.Model):
             lang = translation.get_language()
             if lang == "ru":
                 return self.value_text_ru
-            elif lang == "en":
-                return self.value_text_en
             return self.value_text_tm
 
         elif input_type == 'number':
@@ -329,7 +321,6 @@ class AttributeValue(models.Model):
     def value(self, val):
         self.value_text_tm = None
         self.value_text_ru = None
-        self.value_text_en = None
         self.value_number = None
         self.value_boolean = None
 
@@ -339,8 +330,6 @@ class AttributeValue(models.Model):
             lang = translation.get_language()
             if lang == "ru":
                 self.value_text_ru = str(val)
-            elif lang == "en":
-                self.value_text_en = str(val)
             else:
                 self.value_text_tm = str(val)
 
@@ -355,11 +344,9 @@ class ServiceProduct(models.Model):
 
     title_tm = models.CharField(max_length=255, verbose_name=_("Title (TM)"))
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
-    title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
     description_tm = models.TextField(null=True, blank=True, verbose_name=_("Description (TM)"))
     description_ru = models.TextField(null=True, blank=True, verbose_name=_("Description (RU)"))
-    description_en = models.TextField(null=True, blank=True, verbose_name=_("Description (EN)"))
 
     price = models.FloatField(null=True, blank=True, verbose_name=_("Price"))
     priority = models.PositiveIntegerField(default=100, verbose_name=_("Priority"))

@@ -51,7 +51,7 @@ class AttributeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Attribute
-        fields = ['id', 'name_tm', 'name_ru', 'name_en', 'name', 'slug', 'input_type']
+        fields = ['id', 'name_tm', 'name_ru', 'name', 'slug', 'input_type']
 
     def get_name(self, obj):
         lang = get_lang_code(self.context.get('request'))
@@ -102,7 +102,7 @@ class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
         model = Service
         fields = [
             'id', 'category',
-            'avatar', 'title_tm', 'title_ru', 'title_en', 'title', 'is_favorite',
+            'avatar', 'title_tm', 'title_ru', 'title', 'is_favorite',
             'reviews_count',
             'is_verified', 'is_vip',
             'city_title', 'region_title', 'category_title',
@@ -226,7 +226,7 @@ class ContactTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ContactType
-        fields = ['slug', 'name_tm', 'name_ru', 'name_en', 'name', 'icon']
+        fields = ['slug', 'name_tm', 'name_ru', 'name', 'icon']
 
     def get_name(self, obj):
         lang = get_lang_code(self.context.get('request'))
@@ -249,8 +249,8 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
     class Meta:
         model = ServiceProduct
         fields = [
-            'id', 'title_tm', 'title_ru', 'title_en', 'title',
-            'description_tm', 'description_ru', 'description_en', 'description', 'price',
+            'id', 'title_tm', 'title_ru', 'title',
+            'description_tm', 'description_ru', 'description', 'price',
             'priority',
             'images', 'is_favorite',
         ]
@@ -279,7 +279,7 @@ class ServiceProductInServiceSerializer(ServiceProductSerializer):
 
     class Meta(ServiceProductSerializer.Meta):
         fields = [
-            'id', 'title_tm', 'title_ru', 'title_en', 'title',
+            'id', 'title_tm', 'title_ru', 'title',
             'price', 'priority',
             'images', 'is_favorite', 'values',
         ]
@@ -290,12 +290,11 @@ class ServiceProductDetailSerializer(ServiceProductSerializer):
     contacts = ServiceContactSerializer(many=True, source='service.contacts', read_only=True)
     service_title_tm = serializers.CharField(source='service.title_tm', read_only=True)
     service_title_ru = serializers.CharField(source='service.title_ru', read_only=True)
-    service_title_en = serializers.CharField(source='service.title_en', read_only=True)
 
     class Meta(ServiceProductSerializer.Meta):
         fields = ServiceProductSerializer.Meta.fields + [
             'values', 'contacts',
-            'service', 'service_title_tm', 'service_title_ru', 'service_title_en'
+            'service', 'service_title_tm', 'service_title_ru'
         ]
 
 
@@ -303,8 +302,8 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceProduct
         fields = [
-            'title_tm', 'title_ru', 'title_en',
-            'description_tm', 'description_ru', 'description_en',
+            'title_tm', 'title_ru',
+            'description_tm', 'description_ru',
             'price',
         ]
 
@@ -322,7 +321,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
         model = Service
         fields = ServiceBaseSerializer.Meta.fields + [
             'vendor', 'city', 'address', 'available_cities', 'background', 'cover_url',
-            'description_tm', 'description_ru', 'description_en', 'description',
+            'description_tm', 'description_ru', 'description',
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
@@ -341,8 +340,8 @@ class ServiceUpdateSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             'city', 'address', 'available_cities', 'avatar', 'background',
-            'title_tm', 'title_ru', 'title_en',
-            'description_tm', 'description_ru', 'description_en',
+            'title_tm', 'title_ru',
+            'description_tm', 'description_ru',
             'price_min', 'price_max'
         ]
 

@@ -62,7 +62,6 @@ class HomeBlock(models.Model):
 
     title_tm = models.CharField(max_length=255, blank=True, default="")
     title_ru = models.CharField(max_length=255, blank=True, default="")
-    title_en = models.CharField(max_length=255, blank=True, default="")
 
     position = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)

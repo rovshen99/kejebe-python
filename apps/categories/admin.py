@@ -23,7 +23,7 @@ class CategoryAdmin(ImageCroppingMixin, DraggableMPTTAdmin):
     )
     list_display_links = ('indented_title',)
     list_filter = ('parent',)
-    search_fields = ('name_tm', 'name_ru', 'name_en', 'slug')
+    search_fields = ('name_tm', 'name_ru', 'slug')
     prepopulated_fields = {'slug': ('name_tm',)}
     ordering = ('priority',)
 

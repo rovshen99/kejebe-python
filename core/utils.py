@@ -3,7 +3,7 @@ from typing import Any, Iterable, Optional, Set, Union
 from django.utils import translation
 from django.utils.translation import get_language_from_request, gettext as _
 
-SUPPORTED_LANGS: Set[str] = {"tm", "ru", "en"}
+SUPPORTED_LANGS: Set[str] = {"tm", "ru"}
 
 
 def get_lang_code(request=None, supported: Iterable[str] = None, default: str = "tm") -> str:
