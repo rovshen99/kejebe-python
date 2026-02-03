@@ -183,7 +183,7 @@ LANGUAGES = [
     ("ru", "Russian"),
 ]
 
-LANGUAGE_CODE = 'tm'
+LANGUAGE_CODE = 'ru'
 
 TIME_ZONE = 'UTC'
 
