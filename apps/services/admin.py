@@ -1,4 +1,6 @@
 import nested_admin
+from froala_editor.fields import FroalaField
+from django_summernote.widgets import SummernoteWidget
 
 from django.conf import settings
 from django.contrib import admin
@@ -75,6 +77,9 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
     search_fields = ('title_tm', 'title_ru', 'title_en', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
     filter_horizontal = ('regions',)
+    formfield_overrides = {
+        FroalaField: {'widget': SummernoteWidget()},
+    }
     inlines = [
         ServiceContactInline,
         ServiceImageInline,

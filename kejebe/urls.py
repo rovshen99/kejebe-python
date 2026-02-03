@@ -58,6 +58,7 @@ api_patterns = [
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
+    path('summernote/', include('django_summernote.urls')),
     path('api/', include(api_patterns)),
     path('api/v1/', include(api_patterns)),
 
