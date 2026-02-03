@@ -15,6 +15,8 @@ if [ ! -d "$APP_DIR" ]; then
   exit 1
 fi
 
+sudo chown -R "$APP_USER":"$APP_USER" "$APP_DIR"
+
 cd "$APP_DIR"
 
 if [ -f ".env" ]; then
@@ -35,7 +37,12 @@ DEBUG="${DEBUG:-false}"
 ALLOWED_HOSTS="${ALLOWED_HOSTS:-*}"
 
 echo "==> Setting up Python venv..."
-python3 -m venv .venv
+if [ -d ".venv" ] && [ ! -w ".venv" ]; then
+  sudo chown -R "$APP_USER":"$APP_USER" ".venv"
+fi
+if [ ! -d ".venv" ]; then
+  python3 -m venv .venv
+fi
 source .venv/bin/activate
 pip install -U pip
 if [ -f "requirements.txt" ]; then
