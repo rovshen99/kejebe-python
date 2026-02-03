@@ -38,7 +38,14 @@ echo "==> Setting up Python venv..."
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -U pip
-pip install -r requirements.txt
+if [ -f "requirements.txt" ]; then
+  pip install -r requirements.txt
+elif [ -f "pyproject.toml" ]; then
+  pip install .
+else
+  echo "No requirements.txt or pyproject.toml found."
+  exit 1
+fi
 
 echo "==> Creating database/user (idempotent)..."
 sudo -u postgres psql <<SQL
