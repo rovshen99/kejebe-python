@@ -41,7 +41,21 @@ pip install -U pip
 if [ -f "requirements.txt" ]; then
   pip install -r requirements.txt
 elif [ -f "pyproject.toml" ]; then
-  pip install .
+  deps=$(python - <<'PY'
+import tomllib
+from pathlib import Path
+
+data = tomllib.loads(Path("pyproject.toml").read_text())
+deps = data.get("project", {}).get("dependencies", [])
+print("\n".join(deps))
+PY
+)
+  if [ -n "$deps" ]; then
+    echo "$deps" | xargs -r pip install
+  else
+    echo "No dependencies found in pyproject.toml."
+    exit 1
+  fi
 else
   echo "No requirements.txt or pyproject.toml found."
   exit 1
