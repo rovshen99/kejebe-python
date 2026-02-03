@@ -1,5 +1,4 @@
 import nested_admin
-
 from django.conf import settings
 from django.contrib import admin
 

@@ -8,7 +8,7 @@ from apps.services.validators import validate_file_size
 from apps.users.models import User
 from core.fields import WebPImageField
 
-from froala_editor.fields import FroalaField
+from django_summernote.fields import SummernoteTextField
 
 from slugify import slugify
 
@@ -27,9 +27,9 @@ class Service(models.Model):
     title_ru = models.CharField(max_length=255, verbose_name=_("Title (RU)"))
     title_en = models.CharField(max_length=255, verbose_name=_("Title (EN)"))
 
-    description_tm = FroalaField(verbose_name=_("Description (TM)"))
-    description_ru = FroalaField(verbose_name=_("Description (RU)"))
-    description_en = FroalaField(verbose_name=_("Description (EN)"))
+    description_tm = SummernoteTextField(verbose_name=_("Description (TM)"))
+    description_ru = SummernoteTextField(verbose_name=_("Description (RU)"))
+    description_en = SummernoteTextField(verbose_name=_("Description (EN)"))
 
     price_min = models.FloatField(null=True, blank=True, verbose_name=_("Minimum Price"))
     price_max = models.FloatField(null=True, blank=True, verbose_name=_("Maximum Price"))

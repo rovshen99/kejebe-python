@@ -38,6 +38,7 @@ ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") i
 # Application definition
 
 INSTALLED_APPS = [
+    'django_summernote',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,7 +63,6 @@ INSTALLED_APPS = [
     'mptt',
     'nested_admin',
     'django_json_widget',
-    'froala_editor',
 ]
 
 REST_FRAMEWORK = {
