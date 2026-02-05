@@ -18,4 +18,21 @@ class BannerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     ordering = ['priority', '-created_at']
 
     def get_queryset(self):
-        return Banner.objects.active_now().prefetch_related('regions', 'cities')
+        return (
+            Banner.objects.active_now()
+            .only(
+                "id",
+                "title_tm",
+                "title_ru",
+                "image",
+                "open_type",
+                "open_params",
+                "is_active",
+                "starts_at",
+                "ends_at",
+                "priority",
+                "created_at",
+                "updated_at",
+            )
+            .prefetch_related('regions', 'cities')
+        )

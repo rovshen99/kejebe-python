@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from core.utils import format_price_text, get_lang_code, localized_value
+from django.core.files.storage import default_storage
+from core.serializers import LangMixin
+from core.utils import format_price_text, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
     ServiceProductImage, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
@@ -46,7 +48,7 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
         fields = ['image']
 
 
-class AttributeSerializer(serializers.ModelSerializer):
+class AttributeSerializer(LangMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
     class Meta:
@@ -54,11 +56,10 @@ class AttributeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name_tm', 'name_ru', 'name', 'slug', 'input_type']
 
     def get_name(self, obj):
-        lang = get_lang_code(self.context.get('request'))
-        return localized_value(obj, "name", lang=lang)
+        return localized_value(obj, "name", lang=self._lang())
 
 
-class AttributeValueSerializer(serializers.ModelSerializer):
+class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
     attribute = serializers.SerializerMethodField()
     value = serializers.SerializerMethodField()
 
@@ -70,23 +71,20 @@ class AttributeValueSerializer(serializers.ModelSerializer):
         ]
 
     def get_attribute(self, obj):
-        lang = get_lang_code(self.context.get("request"))
-        return localized_value(obj.attribute, "name", lang=lang)
+        return localized_value(obj.attribute, "name", lang=self._lang())
 
     def get_value(self, obj):
         input_type = getattr(obj.attribute, "input_type", None)
         if input_type in ("text", "choice"):
-            lang = get_lang_code(self.context.get("request"))
-            return localized_value(obj, "value_text", lang=lang)
+            return localized_value(obj, "value_text", lang=self._lang())
         if input_type == "number":
             return obj.value_number
         if input_type == "boolean":
             return obj.value_boolean
-        lang = get_lang_code(self.context.get("request"))
-        return localized_value(obj, "value_text", lang=lang)
+        return localized_value(obj, "value_text", lang=self._lang())
 
 
-class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     city_title = serializers.SerializerMethodField()
     region_title = serializers.SerializerMethodField()
@@ -109,9 +107,6 @@ class ServiceBaseSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
             'price_text', 'rating', 'has_discount', 'discount_text',
             'is_region_level',
         ]
-
-    def _lang(self):
-        return get_lang_code(self.context.get('request'))
 
     def _localized_name(self, obj, prefix):
         return localized_value(obj, prefix, lang=self._lang())
@@ -157,6 +152,14 @@ class ServiceCoverUrlMixin(serializers.Serializer):
             return obj.avatar.url
         if getattr(obj, "background", None):
             return obj.background.url
+        cover_image_path = getattr(obj, "cover_image_path", None) or getattr(obj, "cover_image", None)
+        if cover_image_path:
+            if hasattr(cover_image_path, "url"):
+                return cover_image_path.url
+            try:
+                return default_storage.url(cover_image_path)
+            except Exception:
+                return None
         images = getattr(obj, "prefetched_images", None) or []
         first_image = images[0] if images else None
         if not first_image and hasattr(obj, "serviceimage_set"):
@@ -177,7 +180,7 @@ class ServiceListSerializer(ServiceCoverUrlMixin, ServiceBaseSerializer):
         return {"type": "service", "service_id": obj.id}
 
 
-class ServiceTagsMixin(serializers.Serializer):
+class ServiceTagsMixin(LangMixin, serializers.Serializer):
     tags = serializers.SerializerMethodField()
 
     def get_tags(self, obj):
@@ -185,10 +188,9 @@ class ServiceTagsMixin(serializers.Serializer):
         if not tags_rel:
             return []
         tags = tags_rel.all() if hasattr(tags_rel, "all") else tags_rel
-        lang = get_lang_code(self.context.get("request"))
         names = []
         for tag in tags:
-            name = localized_value(tag, "name", lang=lang)
+            name = localized_value(tag, "name", lang=self._lang())
             if name:
                 names.append(name)
         return names
@@ -221,7 +223,7 @@ class ServiceCarouselSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceB
         return {"type": "service", "service_id": obj.id}
 
 
-class ContactTypeSerializer(serializers.ModelSerializer):
+class ContactTypeSerializer(LangMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
     class Meta:
@@ -229,8 +231,7 @@ class ContactTypeSerializer(serializers.ModelSerializer):
         fields = ['slug', 'name_tm', 'name_ru', 'name', 'icon']
 
     def get_name(self, obj):
-        lang = get_lang_code(self.context.get('request'))
-        return localized_value(obj, "name", lang=lang)
+        return localized_value(obj, "name", lang=self._lang())
 
 
 class ServiceContactSerializer(serializers.ModelSerializer):
@@ -241,7 +242,7 @@ class ServiceContactSerializer(serializers.ModelSerializer):
         fields = ['type', 'value']
 
 
-class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer):
+class ServiceProductSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     images = ServiceProductImageSerializer(many=True, read_only=True)
@@ -254,9 +255,6 @@ class ServiceProductSerializer(FavoriteStatusMixin, serializers.ModelSerializer)
             'priority',
             'images', 'is_favorite',
         ]
-
-    def _lang(self):
-        return get_lang_code(self.context.get('request'))
 
     def get_title(self, obj):
         return localized_value(obj, "title", lang=self._lang())
@@ -403,6 +401,8 @@ class FavoriteSerializer(serializers.ModelSerializer):
                     service.rating = obj.service_rating
                 if hasattr(obj, "service_reviews_count"):
                     service.reviews_count = obj.service_reviews_count
+                if hasattr(obj, "service_cover_image_path"):
+                    service.cover_image_path = obj.service_cover_image_path
             serializer = ServiceListSerializer(service, context={'request': request})
             return serializer.data
         if obj.product_id:
