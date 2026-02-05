@@ -5,10 +5,11 @@ from rest_framework import serializers
 from apps.banners.models import Banner
 from apps.categories.models import Category
 from apps.services.models import Service
-from core.utils import format_price_text, get_lang_code, localized_value
+from core.serializers import LangMixin
+from core.utils import format_price_text, localized_value
 
 
-class BannerSerializer(serializers.ModelSerializer):
+class BannerSerializer(LangMixin, serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     subtitle = serializers.SerializerMethodField()
@@ -23,8 +24,7 @@ class BannerSerializer(serializers.ModelSerializer):
         return obj.image.url if obj.image else None
 
     def get_title(self, obj: Banner) -> Optional[str]:
-        lang = self.context.get("lang") or get_lang_code(self.context.get("request"))
-        return localized_value(obj, "title", lang=lang)
+        return localized_value(obj, "title", lang=self._lang())
 
     def get_subtitle(self, obj: Banner) -> Optional[str]:
         return None
@@ -54,7 +54,7 @@ class BannerSerializer(serializers.ModelSerializer):
         return {"type": "navigate", "screen": "Home"}
 
 
-class CategoryLightSerializer(serializers.ModelSerializer):
+class CategoryLightSerializer(LangMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     icon_url = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
@@ -65,8 +65,7 @@ class CategoryLightSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "icon_url", "image_url", "open"]
 
     def get_title(self, obj: Category) -> Optional[str]:
-        lang = self.context.get("lang") or get_lang_code(self.context.get("request"))
-        return localized_value(obj, "name", lang=lang)
+        return localized_value(obj, "name", lang=self._lang())
 
     def get_icon_url(self, obj: Category) -> Optional[str]:
         return obj.icon.url if obj.icon else None
@@ -106,7 +105,7 @@ class StoriesRowItemSerializer(serializers.Serializer):
         return super().to_representation(data)
 
 
-class HomeServiceSerializer(serializers.ModelSerializer):
+class HomeServiceSerializer(LangMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     cover_url = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
@@ -145,9 +144,6 @@ class HomeServiceSerializer(serializers.ModelSerializer):
             "is_region_level",
             "open",
         ]
-
-    def _lang(self):
-        return get_lang_code(self.context.get("request"))
 
     def get_title(self, obj):
         return localized_value(obj, "title", lang=self._lang())

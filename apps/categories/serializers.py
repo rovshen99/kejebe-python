@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from core.utils import get_lang_code, localized_value
+from core.serializers import LangMixin
+from core.utils import localized_value
 from .models import Category
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class CategorySerializer(LangMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
 
     class Meta:
@@ -14,5 +15,4 @@ class CategorySerializer(serializers.ModelSerializer):
         ]
 
     def get_name(self, obj):
-        lang = get_lang_code(self.context.get('request'))
-        return localized_value(obj, "name", lang=lang)
+        return localized_value(obj, "name", lang=self._lang())

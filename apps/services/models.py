@@ -60,6 +60,11 @@ class Service(models.Model):
         verbose_name = _("Service")
         verbose_name_plural = _("Services")
         ordering = ('priority', '-created_at')
+        indexes = [
+            models.Index(fields=["is_active", "priority", "created_at"], name="service_active_order_idx"),
+            models.Index(fields=["category", "is_active"], name="service_category_active_idx"),
+            models.Index(fields=["city", "is_active"], name="service_city_active_idx"),
+        ]
 
     def __str__(self):
         return self.title_tm

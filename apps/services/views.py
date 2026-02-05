@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from django.db.models import Avg, Count, Prefetch, Q
+from django.db.models import Avg, Count, Prefetch, Q, OuterRef, Subquery
 from django.db.models.functions import Round
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -36,7 +36,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
                      mixins.RetrieveModelMixin,
                      mixins.UpdateModelMixin,
                      viewsets.GenericViewSet):
-    queryset = Service.objects.select_related('vendor', 'category', 'city').prefetch_related('tags', 'available_cities')
+    queryset = Service.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = ServiceFilter
     ordering_fields = ['priority', 'created_at', 'price_min']
@@ -54,9 +54,9 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return ServiceDetailSerializer
 
     def get_queryset(self):
-        prefetches = ['tags']
+        prefetches = []
         if getattr(self, "action", None) == "retrieve":
-            prefetches.append('available_cities')
+            prefetches.extend(['tags', 'available_cities'])
         qs = (
             Service.objects.filter(is_active=True)
             .select_related('vendor', 'category', 'city', 'city__region')
@@ -64,9 +64,16 @@ class ServiceViewSet(FavoriteAnnotateMixin,
             .annotate(
                 rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                cover_image_path=Subquery(
+                    ServiceImage.objects.filter(service_id=OuterRef("pk"))
+                    .order_by("id")
+                    .values("image")[:1]
+                ),
             )
             .order_by('priority', '-created_at')
         )
+        if getattr(self, "action", None) != "retrieve":
+            qs = qs.defer("description_tm", "description_ru")
         if getattr(self, "action", None) == "retrieve":
             products_qs = ServiceProduct.objects.prefetch_related(
                 "images", "values__attribute"
@@ -166,11 +173,16 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         qs = (
             Service.objects.filter(is_active=True, vendor=request.user)
             .select_related("vendor", "category", "city")
-            .prefetch_related("tags")
             .annotate(
                 rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                cover_image_path=Subquery(
+                    ServiceImage.objects.filter(service_id=OuterRef("pk"))
+                    .order_by("id")
+                    .values("image")[:1]
+                ),
             )
+            .defer("description_tm", "description_ru")
             .order_by("priority", "-created_at")
         )
         qs = self.annotate_is_favorite(qs)
@@ -240,9 +252,6 @@ class FavoriteViewSet(mixins.ListModelMixin,
                 'product',
                 'product__service',
             )
-            .prefetch_related(
-                'service__tags',
-            )
             .annotate(
                 service_rating=Round(
                     Avg(
@@ -254,6 +263,11 @@ class FavoriteViewSet(mixins.ListModelMixin,
                 service_reviews_count=Count(
                     "service__reviews",
                     filter=Q(service__reviews__is_approved=True),
+                ),
+                service_cover_image_path=Subquery(
+                    ServiceImage.objects.filter(service_id=OuterRef("service_id"))
+                    .order_by("id")
+                    .values("image")[:1]
                 ),
             )
         )
