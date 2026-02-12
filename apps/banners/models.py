@@ -52,6 +52,10 @@ class Banner(models.Model):
         verbose_name = _("Banner")
         verbose_name_plural = _("Banners")
         ordering = ("priority", "-created_at")
+        indexes = [
+            models.Index(fields=["is_active", "starts_at", "ends_at"], name="banner_active_range_idx"),
+            models.Index(fields=["priority", "created_at"], name="banner_priority_created_idx"),
+        ]
 
     def __str__(self):
         return self.title_tm

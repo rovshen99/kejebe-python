@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value, Case, When, IntegerField
+from django.db.models import Avg, BooleanField, Count, Exists, OuterRef, Prefetch, Q, Value, Case, When, IntegerField, Subquery
 from django.db.models.functions import Round
 from django.utils import timezone, translation
 from rest_framework import permissions, viewsets
@@ -426,19 +426,25 @@ class HomeViewSet(viewsets.GenericViewSet):
     ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
         catalog_only = block.source_mode != HomeBlockSourceMode.MANUAL
         include_images = block.type == HomeBlockType.SERVICE_CAROUSEL
+        include_tags = block.type == HomeBlockType.SERVICE_CAROUSEL
         services_qs = self._base_service_queryset(
             request.user,
             catalog_only=catalog_only,
             include_images=include_images,
+            include_tags=include_tags,
         )
         manual_order: Optional[List[int]] = None
         pinned_ids: Optional[List[int]] = None
         apply_location_filter = self._should_filter_by_location(block, request)
+        needs_distinct = False
+        manual_items = None
+        if block.source_mode in (HomeBlockSourceMode.MANUAL, HomeBlockSourceMode.PINNED_QUERY):
+            manual_items = list(block.manual_items.all())
 
         if block.source_mode == HomeBlockSourceMode.MANUAL:
             manual_order = [
                 item.object_id
-                for item in block.manual_items.all()
+                for item in manual_items or []
                 if isinstance(item.content_object, Service)
             ]
             services_qs = services_qs.filter(id__in=manual_order)
@@ -447,7 +453,7 @@ class HomeViewSet(viewsets.GenericViewSet):
             if block.source_mode == HomeBlockSourceMode.PINNED_QUERY:
                 pinned_ids = [
                     item.object_id
-                    for item in block.manual_items.all()
+                    for item in manual_items or []
                     if isinstance(item.content_object, Service)
                 ]
 
@@ -460,12 +466,15 @@ class HomeViewSet(viewsets.GenericViewSet):
                 services_qs = services_qs.filter(category_id__in=category_ids)
             if tag_ids:
                 services_qs = services_qs.filter(tags__id__in=tag_ids)
+                needs_distinct = True
             if city_ids:
                 services_qs = services_qs.filter(Q(city_id__in=city_ids) | Q(available_cities__id__in=city_ids))
+                needs_distinct = True
             if region_ids:
                 services_qs = services_qs.filter(
                     Q(city__region_id__in=region_ids) | Q(available_cities__region_id__in=region_ids)
                 )
+                needs_distinct = True
 
             order = params.get("ordering")
             if order:
@@ -474,10 +483,13 @@ class HomeViewSet(viewsets.GenericViewSet):
         if apply_location_filter:
             if city:
                 services_qs = services_qs.filter(Q(city=city) | Q(available_cities=city))
+                needs_distinct = True
             elif region:
                 services_qs = services_qs.filter(Q(city__region=region) | Q(available_cities__region=region))
+                needs_distinct = True
 
-        services_qs = services_qs.distinct()
+        if needs_distinct:
+            services_qs = services_qs.distinct()
 
         services: List[Service]
         if manual_order is not None:
@@ -533,8 +545,13 @@ class HomeViewSet(viewsets.GenericViewSet):
         return {"type": "search", "params": params}
 
     @staticmethod
-    def _base_service_queryset(user, catalog_only: bool = True, include_images: bool = False):
-        prefetches = ["tags"]
+    def _base_service_queryset(
+        user,
+        catalog_only: bool = True,
+        include_images: bool = False,
+        include_tags: bool = True,
+    ):
+        prefetches = ["tags"] if include_tags else []
         if include_images:
             prefetches.append(
                 Prefetch(
@@ -550,7 +567,13 @@ class HomeViewSet(viewsets.GenericViewSet):
             .annotate(
                 rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                cover_image_path=Subquery(
+                    ServiceImage.objects.filter(service_id=OuterRef("pk"))
+                    .order_by("id")
+                    .values("image")[:1]
+                ),
             )
+            .defer("description_tm", "description_ru")
             .order_by("priority", "-created_at")
         )
         # if catalog_only:
