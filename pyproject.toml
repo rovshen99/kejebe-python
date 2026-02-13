@@ -12,6 +12,7 @@ dependencies = [
     "django-nested-admin>=4.1.4",
     "django-json-widget>=1.1.1",
     "django-summernote>=0.8.20",
+    "bleach<5",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt>=5.5.1",
     "drf-spectacular>=0.28.0",

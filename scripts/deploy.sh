@@ -23,6 +23,9 @@ source .venv/bin/activate
 echo "==> Running migrations..."
 python manage.py migrate
 
+echo "==> Compiling translations..."
+python manage.py compilemessages
+
 echo "==> Collecting static..."
 python manage.py collectstatic --noinput
 
