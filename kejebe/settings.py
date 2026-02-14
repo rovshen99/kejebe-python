@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'apps.banners',
     'apps.devices',
     'apps.home',
+    'apps.system',
     'mptt',
     'nested_admin',
     'django_json_widget',
