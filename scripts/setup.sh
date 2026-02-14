@@ -7,7 +7,7 @@ APP_USER="${APP_USER:-${SUDO_USER:-$USER}}"
 echo "==> Installing system packages..."
 sudo apt update
 sudo apt install -y git python3 python3-venv python3-pip build-essential \
-  libpq-dev postgresql postgresql-contrib
+  libpq-dev postgresql postgresql-contrib gettext
 
 if [ ! -d "$APP_DIR" ]; then
   echo "App directory not found: $APP_DIR"
@@ -105,6 +105,7 @@ fi
 
 echo "==> Running migrations and collectstatic..."
 python manage.py migrate
+python manage.py compilemessages
 python manage.py collectstatic --noinput
 
 echo "==> Done. Run scripts/deploy.sh to start the service."

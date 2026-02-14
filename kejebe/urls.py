@@ -23,6 +23,7 @@ from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
 from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
+from apps.system.views import SystemContactViewSet
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
 from apps.home.views import HomeViewSet
@@ -51,6 +52,7 @@ api_patterns = [
     path('auth/', include('apps.users.urls')),
     path('devices/', include('apps.devices.urls')),
     path('home', HomeViewSet.as_view({'get': 'list'}), name='home'),
+    path('system/contacts', SystemContactViewSet.as_view({'get': 'list'}), name='system-contacts'),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 ]
