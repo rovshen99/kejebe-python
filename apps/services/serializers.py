@@ -432,13 +432,21 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceApplication
         fields = [
-            'id', 'category', 'city', 'phone', 'title', 'contact_name', 'description',
+            'id', 'category', 'category_name', 'city', 'city_name', 'phone', 'title', 'contact_name', 'description',
             'images', 'images_preview', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
             'category': {'required': False, 'allow_null': True},
+            'city': {'required': False, 'allow_null': True},
         }
+
+    def validate(self, attrs):
+        city = attrs.get("city")
+        city_name = (attrs.get("city_name") or "").strip()
+        if not city and not city_name:
+            raise serializers.ValidationError({"city": "Provide city or city_name."})
+        return attrs
 
     def validate_phone(self, value: str) -> str:
         normalized = normalize_phone(value)

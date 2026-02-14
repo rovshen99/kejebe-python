@@ -399,7 +399,9 @@ class ServiceApplication(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("Category")
     )
-    city = models.ForeignKey(City, on_delete=models.PROTECT, verbose_name=_("City"))
+    category_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Category Name"))
+    city = models.ForeignKey(City, on_delete=models.PROTECT, null=True, blank=True, verbose_name=_("City"))
+    city_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("City Name"))
 
     phone = models.CharField(max_length=32, verbose_name=_("Phone Number"))
     title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Service Title"))
