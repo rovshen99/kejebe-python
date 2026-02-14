@@ -179,8 +179,8 @@ class ServiceApplicationImageInline(IconPreviewMixin, admin.TabularInline):
 
 @admin.register(ServiceApplication)
 class ServiceApplicationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'phone', 'category', 'city', 'status', 'created_at')
+    list_display = ('id', 'title', 'phone', 'category', 'category_name', 'city', 'city_name', 'status', 'created_at')
     list_filter = ('status', 'category', 'city')
-    search_fields = ('title', 'phone', 'description', 'contact_name')
+    search_fields = ('title', 'phone', 'description', 'contact_name', 'category_name', 'city_name')
     readonly_fields = ('created_at',)
     inlines = [ServiceApplicationImageInline]
