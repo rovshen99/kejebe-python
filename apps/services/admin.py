@@ -73,7 +73,7 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
     list_filter = ('category', 'city', 'is_active', 'is_verified', 'is_vip')
     search_fields = ('title_tm', 'title_ru', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
-    filter_horizontal = ('regions',)
+    filter_horizontal = ('regions', 'tags')
     inlines = [
         ServiceContactInline,
         ServiceImageInline,
@@ -127,16 +127,10 @@ class FavoriteAdmin(admin.ModelAdmin):
     get_target.short_description = 'Target'
 
 
-# class ServiceInline(admin.TabularInline):
-#     model = Service.tags.through
-#     extra = 1
-
-
-# @admin.register(ServiceTag)
-# class ServiceTagAdmin(admin.ModelAdmin):
-#     list_display = ('name_tm', 'name_ru', 'name_en')
-#     search_fields = ('name_tm', 'name_ru', 'name_en')
-#     inlines = [ServiceInline]
+@admin.register(ServiceTag)
+class ServiceTagAdmin(admin.ModelAdmin):
+    list_display = ('name_tm', 'name_ru')
+    search_fields = ('name_tm', 'name_ru')
 
 
 @admin.register(Attribute)
