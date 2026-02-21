@@ -74,12 +74,13 @@ class ContactType(models.Model):
     slug = models.SlugField(max_length=50, unique=True, verbose_name=_("Slug"))
     name_tm = models.CharField(max_length=100, verbose_name=_("Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Name (RU)"))
-    icon = WebPImageField(
+    icon = models.FileField(
         upload_to='contact_type_icons/',
         verbose_name=_("Icon"),
         null=True,
         blank=True,
-        help_text=_("Upload an icon image (SVG/PNG recommended)")
+        validators=[FileExtensionValidator(allowed_extensions=["svg", "png", "jpg", "jpeg", "webp"])],
+        help_text=_("Upload an icon image (SVG/PNG/JPG/WebP recommended)")
     )
 
     class Meta:
