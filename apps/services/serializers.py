@@ -39,7 +39,7 @@ class ServiceImageSerializer(serializers.ModelSerializer):
 class ServiceVideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceVideo
-        fields = ['file']
+        fields = ['file', 'preview']
 
 
 class ServiceProductImageSerializer(serializers.ModelSerializer):

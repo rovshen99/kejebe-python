@@ -31,9 +31,14 @@ class ServiceImageInline(nested_admin.NestedTabularInline):
     extra = 1
 
 
-class ServiceVideoInline(nested_admin.NestedTabularInline):
+class ServiceVideoInline(IconPreviewMixin, nested_admin.NestedTabularInline):
     model = ServiceVideo
     extra = 1
+    icon_field_name = "preview"
+    icon_width = 80
+    icon_height = 80
+    readonly_fields = ("icon_preview",)
+    fields = ("file", "preview", "icon_preview")
 
 
 class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
