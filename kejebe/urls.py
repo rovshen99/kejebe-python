@@ -23,7 +23,7 @@ from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
 from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
-from apps.system.views import SystemContactViewSet
+from apps.system.views import SystemContactViewSet, delete_account_view
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
 from apps.home.views import HomeViewSet
@@ -60,6 +60,7 @@ api_patterns = [
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
+    path('delete-account/', delete_account_view, name='delete-account'),
     path('summernote/', include('django_summernote.urls')),
     path('api/', include(api_patterns)),
     path('api/v1/', include(api_patterns)),
