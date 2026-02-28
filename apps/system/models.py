@@ -28,3 +28,26 @@ class SystemContact(models.Model):
         if self.type_id:
             return f"{self.type.slug}: {self.value}"
         return self.value
+
+
+class AccountDeletionRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        PROCESSED = "processed", _("Processed")
+
+    phone = models.CharField(max_length=32, db_index=True, verbose_name=_("Phone Number"))
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name=_("Status"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Account Deletion Request")
+        verbose_name_plural = _("Account Deletion Requests")
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.phone} ({self.status})"
