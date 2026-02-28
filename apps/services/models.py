@@ -172,6 +172,12 @@ class ServiceVideo(models.Model):
         validators=[FileExtensionValidator(allowed_extensions=["mp4", "mov", "webm", "mkv"]), validate_file_size],
         null=True,
     )
+    preview = WebPImageField(
+        upload_to="services/videos/previews",
+        verbose_name=_("Preview image"),
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Service Video")
