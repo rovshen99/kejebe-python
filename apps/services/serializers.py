@@ -37,9 +37,14 @@ class ServiceImageSerializer(serializers.ModelSerializer):
 
 
 class ServiceVideoSerializer(serializers.ModelSerializer):
+    hls_url = serializers.SerializerMethodField()
+
     class Meta:
         model = ServiceVideo
-        fields = ['file', 'preview']
+        fields = ['file', 'preview', 'hls_url', 'hls_ready']
+
+    def get_hls_url(self, obj):
+        return obj.get_hls_url()
 
 
 class ServiceProductImageSerializer(serializers.ModelSerializer):

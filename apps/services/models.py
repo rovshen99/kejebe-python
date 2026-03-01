@@ -1,4 +1,5 @@
 from django.core.validators import FileExtensionValidator
+from django.core.files.storage import default_storage
 from django.db import models
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
@@ -178,6 +179,16 @@ class ServiceVideo(models.Model):
         null=True,
         blank=True,
     )
+    hls_playlist = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        verbose_name=_("HLS playlist path"),
+    )
+    hls_ready = models.BooleanField(default=False, verbose_name=_("HLS ready"))
+    hls_error = models.TextField(blank=True, default="", verbose_name=_("HLS error"))
+    hls_updated_at = models.DateTimeField(null=True, blank=True, verbose_name=_("HLS updated at"))
+
 
     class Meta:
         verbose_name = _("Service Video")
@@ -185,6 +196,14 @@ class ServiceVideo(models.Model):
 
     def __str__(self):
         return self.file
+
+    def get_hls_url(self):
+        if not self.hls_ready or not self.hls_playlist:
+            return None
+        try:
+            return default_storage.url(self.hls_playlist)
+        except Exception:
+            return None
 
 
 class Review(models.Model):
