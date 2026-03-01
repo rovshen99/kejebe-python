@@ -145,6 +145,7 @@ if MINIO_ENABLED and MINIO_ENDPOINT and MINIO_BUCKET and MINIO_ACCESS_KEY and MI
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = not MINIO_PUBLIC
+    MINIO_PUBLIC_BASE_URL = ""
     if MINIO_PUBLIC_ENDPOINT:
         parsed_public = urlparse(
             MINIO_PUBLIC_ENDPOINT
@@ -152,12 +153,14 @@ if MINIO_ENABLED and MINIO_ENDPOINT and MINIO_BUCKET and MINIO_ACCESS_KEY and MI
             else f"{'https' if MINIO_USE_HTTPS else 'http'}://{MINIO_PUBLIC_ENDPOINT}"
         )
         if parsed_public.netloc:
-            AWS_S3_CUSTOM_DOMAIN = parsed_public.netloc
-            AWS_S3_URL_PROTOCOL = f"{parsed_public.scheme}:"
+            MINIO_PUBLIC_BASE_URL = f"{parsed_public.scheme}://{parsed_public.netloc}"
+            if MINIO_ADDRESSING_STYLE != "path":
+                AWS_S3_CUSTOM_DOMAIN = parsed_public.netloc
+                AWS_S3_URL_PROTOCOL = f"{parsed_public.scheme}:"
 
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": "core.storage.PublicMinioStorage",
         },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
