@@ -13,6 +13,8 @@ dependencies = [
     "django-json-widget>=1.1.1",
     "django-summernote>=0.8.20",
     "bleach<5",
+    "django-storages>=1.14.2",
+    "boto3>=1.34.0",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt>=5.5.1",
     "drf-spectacular>=0.28.0",

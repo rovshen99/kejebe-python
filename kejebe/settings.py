@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'mptt',
     'nested_admin',
     'django_json_widget',
+    'storages',
 ]
 
 REST_FRAMEWORK = {
@@ -117,8 +118,45 @@ MIDDLEWARE = [
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+
+MINIO_ENABLED = os.getenv("MINIO_ENABLED", "false").lower() == "true"
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "").strip()
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "").strip()
+MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "").strip()
+MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "").strip()
+MINIO_USE_HTTPS = os.getenv("MINIO_USE_HTTPS", "false").lower() == "true"
+MINIO_PUBLIC = os.getenv("MINIO_PUBLIC", "true").lower() == "true"
+MINIO_PUBLIC_ENDPOINT = os.getenv("MINIO_PUBLIC_ENDPOINT", "").strip()
+MINIO_REGION = os.getenv("MINIO_REGION", "us-east-1").strip()
+MINIO_ADDRESSING_STYLE = os.getenv("MINIO_ADDRESSING_STYLE", "path").strip()
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+if MINIO_ENABLED and MINIO_ENDPOINT and MINIO_BUCKET and MINIO_ACCESS_KEY and MINIO_SECRET_KEY:
+    AWS_ACCESS_KEY_ID = MINIO_ACCESS_KEY
+    AWS_SECRET_ACCESS_KEY = MINIO_SECRET_KEY
+    AWS_STORAGE_BUCKET_NAME = MINIO_BUCKET
+    AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
+    AWS_S3_USE_SSL = MINIO_USE_HTTPS
+    AWS_S3_REGION_NAME = MINIO_REGION
+    AWS_S3_ADDRESSING_STYLE = MINIO_ADDRESSING_STYLE
+    AWS_S3_SIGNATURE_VERSION = "s3v4"
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = not MINIO_PUBLIC
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+
+    public_base = MINIO_PUBLIC_ENDPOINT or MINIO_ENDPOINT
+    if public_base:
+        MEDIA_URL = f"{public_base.rstrip('/')}/{MINIO_BUCKET}/"
 
 ROOT_URLCONF = 'kejebe.urls'
 
