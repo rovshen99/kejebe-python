@@ -268,6 +268,12 @@ class ServiceProductSerializer(LangMixin, FavoriteStatusMixin, serializers.Model
         return localized_value(obj, "description", lang=self._lang())
 
 
+    def get_videos(self, obj):
+        videos = getattr(obj, "hls_videos", None)
+        if videos is None:
+            videos = obj.servicevideo_set.filter(hls_ready=True)
+        return ServiceVideoSerializer(videos, many=True, context=self.context).data
+
 class ServiceProductListSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
 
@@ -314,7 +320,7 @@ class ServiceProductUpdateSerializer(serializers.ModelSerializer):
 class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBaseSerializer):
     description = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
-    videos = ServiceVideoSerializer(many=True, source='servicevideo_set', read_only=True)
+    videos = serializers.SerializerMethodField()
     contacts = ServiceContactSerializer(many=True, read_only=True)
     products = ServiceProductInServiceSerializer(many=True, read_only=True)
     tags = serializers.SerializerMethodField()
@@ -335,6 +341,12 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
 
+
+    def get_videos(self, obj):
+        videos = getattr(obj, "hls_videos", None)
+        if videos is None:
+            videos = obj.servicevideo_set.filter(hls_ready=True)
+        return ServiceVideoSerializer(videos, many=True, context=self.context).data
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
     available_cities = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), many=True, required=False)
