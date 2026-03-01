@@ -195,7 +195,9 @@ class ServiceVideo(models.Model):
         verbose_name_plural = _("Service Videos")
 
     def __str__(self):
-        return self.file
+        if self.file:
+            return self.file.name
+        return ""
 
     def get_hls_url(self):
         if not self.hls_ready or not self.hls_playlist:
