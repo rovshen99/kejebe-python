@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -144,6 +145,15 @@ if MINIO_ENABLED and MINIO_ENDPOINT and MINIO_BUCKET and MINIO_ACCESS_KEY and MI
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = not MINIO_PUBLIC
+    if MINIO_PUBLIC_ENDPOINT:
+        parsed_public = urlparse(
+            MINIO_PUBLIC_ENDPOINT
+            if "://" in MINIO_PUBLIC_ENDPOINT
+            else f"{'https' if MINIO_USE_HTTPS else 'http'}://{MINIO_PUBLIC_ENDPOINT}"
+        )
+        if parsed_public.netloc:
+            AWS_S3_CUSTOM_DOMAIN = parsed_public.netloc
+            AWS_S3_URL_PROTOCOL = parsed_public.scheme
 
     STORAGES = {
         "default": {
