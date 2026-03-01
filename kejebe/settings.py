@@ -153,7 +153,7 @@ if MINIO_ENABLED and MINIO_ENDPOINT and MINIO_BUCKET and MINIO_ACCESS_KEY and MI
         )
         if parsed_public.netloc:
             AWS_S3_CUSTOM_DOMAIN = parsed_public.netloc
-            AWS_S3_URL_PROTOCOL = parsed_public.scheme
+            AWS_S3_URL_PROTOCOL = f"{parsed_public.scheme}:"
 
     STORAGES = {
         "default": {
