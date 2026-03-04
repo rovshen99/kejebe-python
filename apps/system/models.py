@@ -1,5 +1,7 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django_summernote.fields import SummernoteTextField
 
 from apps.services.models import ContactType
 
@@ -51,3 +53,23 @@ class AccountDeletionRequest(models.Model):
 
     def __str__(self):
         return f"{self.phone} ({self.status})"
+
+
+class SystemAbout(models.Model):
+    about_tm = SummernoteTextField(verbose_name=_("About (TM)"))
+    about_ru = SummernoteTextField(verbose_name=_("About (RU)"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
+
+    class Meta:
+        verbose_name = _("System About")
+        verbose_name_plural = _("System About")
+        ordering = ("-updated_at", "-id")
+
+    def save(self, *args, **kwargs):
+        if not self.pk and SystemAbout.objects.exists():
+            raise ValidationError("Only one System About record is allowed.")
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return "System About"

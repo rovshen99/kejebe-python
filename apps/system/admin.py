@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django_summernote.admin import SummernoteModelAdmin
 
-from .models import SystemContact, AccountDeletionRequest
+from .models import SystemContact, AccountDeletionRequest, SystemAbout
 
 
 @admin.register(SystemContact)
@@ -17,3 +18,17 @@ class AccountDeletionRequestAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("phone",)
     ordering = ("-created_at",)
+
+
+@admin.register(SystemAbout)
+class SystemAboutAdmin(SummernoteModelAdmin):
+    list_display = ("id", "updated_at")
+    ordering = ("-updated_at", "-id")
+    summernote_fields = ("about_tm", "about_ru")
+
+    def has_add_permission(self, request):
+        return not SystemAbout.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
