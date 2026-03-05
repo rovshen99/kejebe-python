@@ -1,11 +1,11 @@
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import render
-from rest_framework import mixins, permissions, viewsets
+from rest_framework import mixins, permissions, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import SystemContact, AccountDeletionRequest, SystemAbout
-from .serializers import SystemContactSerializer, SystemAboutSerializer
+from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
+from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer
 from .forms import DeleteAccountForm
 
 
@@ -57,3 +57,15 @@ class SystemAboutView(APIView):
         if not about:
             return Response({"about_tm": "", "about_ru": ""})
         return Response(SystemAboutSerializer(about).data)
+
+
+@extend_schema(
+    tags=["System"],
+    request=ClientFeedbackSerializer,
+    responses={201: ClientFeedbackSerializer},
+)
+class ClientFeedbackCreateView(generics.CreateAPIView):
+    queryset = ClientFeedback.objects.all()
+    serializer_class = ClientFeedbackSerializer
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
