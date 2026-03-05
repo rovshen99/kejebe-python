@@ -1,9 +1,11 @@
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import render
 from rest_framework import mixins, permissions, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import SystemContact, AccountDeletionRequest
-from .serializers import SystemContactSerializer
+from .models import SystemContact, AccountDeletionRequest, SystemAbout
+from .serializers import SystemContactSerializer, SystemAboutSerializer
 from .forms import DeleteAccountForm
 
 
@@ -43,3 +45,15 @@ def delete_account_view(request):
             "developer_name": "Rovshen Berdimyradov",
         },
     )
+
+
+class SystemAboutView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(tags=["System"], responses=SystemAboutSerializer)
+    def get(self, request):
+        about = SystemAbout.objects.order_by("-updated_at", "-id").first()
+        if not about:
+            return Response({"about_tm": "", "about_ru": ""})
+        return Response(SystemAboutSerializer(about).data)
