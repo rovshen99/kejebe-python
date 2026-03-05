@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 
-from .models import SystemContact, AccountDeletionRequest, SystemAbout
+from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
 
 
 @admin.register(SystemContact)
@@ -20,6 +20,14 @@ class AccountDeletionRequestAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
+@admin.register(ClientFeedback)
+class ClientFeedbackAdmin(admin.ModelAdmin):
+    list_display = ("name", "phone", "status", "created_at")
+    list_filter = ("status",)
+    search_fields = ("name", "phone", "message")
+    ordering = ("-created_at",)
+
+
 @admin.register(SystemAbout)
 class SystemAboutAdmin(SummernoteModelAdmin):
     list_display = ("id", "updated_at")
@@ -31,4 +39,3 @@ class SystemAboutAdmin(SummernoteModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-

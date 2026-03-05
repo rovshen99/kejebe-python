@@ -55,6 +55,31 @@ class AccountDeletionRequest(models.Model):
         return f"{self.phone} ({self.status})"
 
 
+class ClientFeedback(models.Model):
+    class Status(models.TextChoices):
+        NEW = "new", _("New")
+        PROCESSED = "processed", _("Processed")
+
+    name = models.CharField(max_length=255, verbose_name=_("Name"))
+    phone = models.CharField(max_length=32, db_index=True, verbose_name=_("Phone Number"))
+    message = models.TextField(verbose_name=_("Message"))
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.NEW,
+        verbose_name=_("Status"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Client Feedback")
+        verbose_name_plural = _("Client Feedback")
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
 class SystemAbout(models.Model):
     about_tm = SummernoteTextField(verbose_name=_("About (TM)"))
     about_ru = SummernoteTextField(verbose_name=_("About (RU)"))
