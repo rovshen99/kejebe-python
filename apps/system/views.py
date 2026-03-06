@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
 from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer
 from .forms import DeleteAccountForm
+from .throttles import FeedbackIPThrottle
 
 
 @extend_schema(tags=["System"])
@@ -62,10 +63,11 @@ class SystemAboutView(APIView):
 @extend_schema(
     tags=["System"],
     request=ClientFeedbackSerializer,
-    responses={201: ClientFeedbackSerializer},
+    responses={201: ClientFeedbackSerializer, 429: None},
 )
 class ClientFeedbackCreateView(generics.CreateAPIView):
     queryset = ClientFeedback.objects.all()
     serializer_class = ClientFeedbackSerializer
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    throttle_classes = [FeedbackIPThrottle]
