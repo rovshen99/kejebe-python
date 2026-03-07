@@ -7,6 +7,24 @@ SUPERUSER_PHONE="${SUPERUSER_PHONE:-+9936100000}"
 SUPERUSER_NAME="${SUPERUSER_NAME:-admin}"
 SUPERUSER_EMAIL="${SUPERUSER_EMAIL:-admin@example.com}"
 SUPERUSER_PASSWORD="${SUPERUSER_PASSWORD:-Admin123!}"
+LEAFLET_DIR="apps/services/static/vendor/leaflet/images"
+LEAFLET_REQUIRED_FILES=("layers.png" "layers-2x.png")
+
+check_required_static_assets() {
+  local missing=0
+  for file in "${LEAFLET_REQUIRED_FILES[@]}"; do
+    if [ ! -f "${LEAFLET_DIR}/${file}" ]; then
+      echo "Missing required static asset: ${LEAFLET_DIR}/${file}"
+      missing=1
+    fi
+  done
+
+  if [ "$missing" -ne 0 ]; then
+    echo "Static preflight failed."
+    echo "Place missing files into ${LEAFLET_DIR} and rerun this script."
+    exit 1
+  fi
+}
 
 cd "$APP_DIR"
 
@@ -27,6 +45,7 @@ echo "==> Compiling translations..."
 python manage.py compilemessages
 
 echo "==> Collecting static..."
+check_required_static_assets
 python manage.py collectstatic --noinput
 
 echo "==> Ensuring superuser exists..."
