@@ -3,6 +3,24 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/kejebe}"
 APP_USER="${APP_USER:-${SUDO_USER:-$USER}}"
+LEAFLET_DIR="apps/services/static/vendor/leaflet/images"
+LEAFLET_REQUIRED_FILES=("layers.png" "layers-2x.png")
+
+check_required_static_assets() {
+  local missing=0
+  for file in "${LEAFLET_REQUIRED_FILES[@]}"; do
+    if [ ! -f "${LEAFLET_DIR}/${file}" ]; then
+      echo "Missing required static asset: ${LEAFLET_DIR}/${file}"
+      missing=1
+    fi
+  done
+
+  if [ "$missing" -ne 0 ]; then
+    echo "Static preflight failed."
+    echo "Place missing files into ${LEAFLET_DIR} and rerun this script."
+    exit 1
+  fi
+}
 
 echo "==> Installing system packages..."
 sudo apt update
@@ -130,6 +148,7 @@ fi
 echo "==> Running migrations and collectstatic..."
 python manage.py migrate
 python manage.py compilemessages
+check_required_static_assets
 python manage.py collectstatic --noinput
 
 echo "==> Done. Run scripts/deploy.sh to start the service."
