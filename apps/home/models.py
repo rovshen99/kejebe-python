@@ -82,7 +82,14 @@ class HomeBlock(models.Model):
         verbose_name_plural = _("Home blocks")
 
     def __str__(self) -> str:
-        return f"{self.get_type_display()} ({self.config.slug})"
+        type_label = self.get_type_display() if self.type else _("Home block")
+        if not self.config_id:
+            return f"{type_label} (unsaved)"
+        try:
+            config_label = self.config.slug
+        except HomePageConfig.DoesNotExist:
+            config_label = f"id={self.config_id}"
+        return f"{type_label} ({config_label})"
 
 
 class HomeBlockItem(models.Model):
