@@ -13,7 +13,7 @@ class CategoryViewSet(mixins.ListModelMixin,
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['parent', 'slug']
     ordering_fields = ['priority', 'name_tm']
-    ordering = ['priority']
+    ordering = ['priority', 'id']
 
     def get_queryset(self):
         return Category.objects.only(
@@ -25,4 +25,4 @@ class CategoryViewSet(mixins.ListModelMixin,
             "image",
             "icon",
             "priority",
-        )
+        ).order_by("priority", "id")
