@@ -5,12 +5,13 @@ from rest_framework import serializers
 from apps.banners.models import Banner
 from apps.categories.models import Category
 from apps.services.models import Service
+from core.image_assets import build_image_asset
 from core.serializers import LangMixin
 from core.utils import format_price_text, localized_value
 
 
 class BannerSerializer(LangMixin, serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     subtitle = serializers.SerializerMethodField()
     cta = serializers.SerializerMethodField()
@@ -18,10 +19,16 @@ class BannerSerializer(LangMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Banner
-        fields = ["id", "image_url", "title", "subtitle", "cta", "open"]
+        fields = ["id", "image", "title", "subtitle", "cta", "open"]
 
-    def get_image_url(self, obj: Banner) -> Optional[str]:
-        return obj.image.url if obj.image else None
+    def get_image(self, obj: Banner) -> Optional[Dict[str, Any]]:
+        return build_image_asset(
+            obj.image,
+            entity="banner",
+            object_id=obj.id,
+            field_name="image",
+            preset_keys=("banner_1x", "banner_2x"),
+        )
 
     def get_title(self, obj: Banner) -> Optional[str]:
         return localized_value(obj, "title", lang=self._lang())
@@ -56,22 +63,34 @@ class BannerSerializer(LangMixin, serializers.ModelSerializer):
 
 class CategoryLightSerializer(LangMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
-    icon_url = serializers.SerializerMethodField()
-    image_url = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
-        fields = ["id", "title", "icon_url", "image_url", "open"]
+        fields = ["id", "title", "image", "icon", "open"]
 
     def get_title(self, obj: Category) -> Optional[str]:
         return localized_value(obj, "name", lang=self._lang())
 
-    def get_icon_url(self, obj: Category) -> Optional[str]:
-        return obj.icon.url if obj.icon else None
+    def get_image(self, obj: Category) -> Optional[Dict[str, Any]]:
+        return build_image_asset(
+            obj.image,
+            entity="category",
+            object_id=obj.id,
+            field_name="image",
+            preset_keys=("category_card_1x", "category_card_2x"),
+        )
 
-    def get_image_url(self, obj: Category) -> Optional[str]:
-        return obj.image.url if obj.image else None
+    def get_icon(self, obj: Category) -> Optional[Dict[str, Any]]:
+        return build_image_asset(
+            obj.icon,
+            entity="category",
+            object_id=obj.id,
+            field_name="icon",
+            preset_keys=("category_icon_1x", "category_icon_2x"),
+        )
 
     def get_open(self, obj: Category) -> Dict[str, Any]:
         return {"type": "search", "params": {"category_ids": [obj.id]}}

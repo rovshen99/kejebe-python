@@ -350,7 +350,14 @@ class HomeViewSet(viewsets.GenericViewSet):
             banners_qs = banners_qs.order_by("priority", "-created_at").distinct()
             banners = banners_qs if not block.limit else banners_qs[: block.limit]
 
-        serializer = BannerSerializer(banners, many=True, context={"lang": lang, "request": request})
+        serializer = BannerSerializer(
+            banners,
+            many=True,
+            context={
+                "lang": lang,
+                "request": request,
+            },
+        )
         return serializer.data
 
     @staticmethod
@@ -418,7 +425,14 @@ class HomeViewSet(viewsets.GenericViewSet):
             total_count = qs.count()
             categories = qs[:display_limit]
 
-        serializer = CategoryLightSerializer(categories, many=True, context={"lang": lang, "request": request})
+        serializer = CategoryLightSerializer(
+            categories,
+            many=True,
+            context={
+                "lang": lang,
+                "request": request,
+            },
+        )
         return serializer.data, total_count, display_limit
 
     def _build_service_block(

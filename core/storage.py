@@ -7,7 +7,7 @@ from storages.backends.s3boto3 import S3Boto3Storage
 class PublicMinioStorage(S3Boto3Storage):
     def get_object_parameters(self, name):
         params = super().get_object_parameters(name)
-        if name and name.startswith("category/thumbs/"):
+        if name and (name.startswith("category/thumbs/") or name.startswith("home/variants/")):
             params = {
                 **params,
                 "CacheControl": "public, max-age=31536000, immutable",
