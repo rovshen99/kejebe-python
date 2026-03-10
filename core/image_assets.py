@@ -29,6 +29,16 @@ HOME_IMAGE_PRESETS = {
     "category_card_2x": ImagePreset("category_card_2x", 960, 720, 80),
     "category_icon_1x": ImagePreset("category_icon_1x", 120, 120, 80),
     "category_icon_2x": ImagePreset("category_icon_2x", 240, 240, 80),
+    # "story_avatar_1x": ImagePreset("story_avatar_1x", 120, 120, 80),
+    # "story_avatar_2x": ImagePreset("story_avatar_2x", 240, 240, 80),
+    # "story_cover_1x": ImagePreset("story_cover_1x", 360, 640, 80),
+    # "story_cover_2x": ImagePreset("story_cover_2x", 720, 1280, 80),
+    # "service_avatar_1x": ImagePreset("service_avatar_1x", 160, 160, 80),
+    # "service_avatar_2x": ImagePreset("service_avatar_2x", 320, 320, 80),
+    # "service_cover_1x": ImagePreset("service_cover_1x", 720, 540, 80),
+    # "service_cover_2x": ImagePreset("service_cover_2x", 1440, 1080, 80),
+    # "service_image_1x": ImagePreset("service_image_1x", 720, 540, 80),
+    # "service_image_2x": ImagePreset("service_image_2x", 1440, 1080, 80),
 }
 
 

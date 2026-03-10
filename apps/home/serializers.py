@@ -100,8 +100,8 @@ class StoriesRowItemSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     service_id = serializers.IntegerField()
     title = serializers.CharField()
-    avatar_url = serializers.CharField(allow_null=True, required=False)
-    story_cover_url = serializers.CharField(allow_null=True, required=False)
+    avatar = serializers.DictField(allow_null=True, required=False)
+    story_cover = serializers.DictField(allow_null=True, required=False)
     has_unseen = serializers.BooleanField()
     stories_count = serializers.IntegerField()
     is_owner = serializers.BooleanField(default=False)
@@ -114,8 +114,8 @@ class StoriesRowItemSerializer(serializers.Serializer):
             "id": getattr(instance, "id", None) or getattr(instance, "id"),
             "service_id": getattr(instance, "service_id", None) or getattr(instance, "id"),
             "title": getattr(instance, "title", ""),
-            "avatar_url": getattr(instance, "avatar_url", None),
-            "story_cover_url": getattr(instance, "story_cover_url", None),
+            "avatar": getattr(instance, "avatar", None),
+            "story_cover": getattr(instance, "story_cover", None),
             "has_unseen": getattr(instance, "has_unseen", True),
             "stories_count": getattr(instance, "stories_count", 0),
             "is_owner": getattr(instance, "is_owner", False),
