@@ -21,6 +21,7 @@ from apps.regions.serializers import CitySerializer
 from apps.services.serializers import ServiceCarouselSerializer, ServiceListSerializer
 from apps.services.models import Favorite, Service, ServiceImage
 from apps.stories.models import ServiceStory
+from core.image_assets import build_image_asset
 from core.utils import get_lang_code, localized_value
 
 
@@ -288,8 +289,20 @@ class HomeViewSet(viewsets.GenericViewSet):
                     "id": story.id,
                     "service_id": service.id,
                     "title": localized_value(service, "title", lang=lang) or "",
-                    "avatar_url": service.avatar.url if service.avatar else None,
-                    "story_cover_url": story.image.url if story.image else None,
+                    "avatar": build_image_asset(
+                        service.avatar,
+                        entity="story",
+                        object_id=service.id,
+                        field_name="avatar",
+                        preset_keys=("story_avatar_1x", "story_avatar_2x"),
+                    ),
+                    "story_cover": build_image_asset(
+                        story.image,
+                        entity="story",
+                        object_id=story.id,
+                        field_name="cover",
+                        preset_keys=("story_cover_1x", "story_cover_2x"),
+                    ),
                     "has_unseen": True,
                     "stories_count": 0,
                     "is_owner": is_owner,
@@ -301,8 +314,14 @@ class HomeViewSet(viewsets.GenericViewSet):
                 data["city_match"] = data.get("city_match", False) or city_match
                 data["is_owner"] = data.get("is_owner", False) or is_owner
             data["stories_count"] += 1
-            if not data.get("story_cover_url") and story.image:
-                data["story_cover_url"] = story.image.url
+            if not data.get("story_cover") and story.image:
+                data["story_cover"] = build_image_asset(
+                    story.image,
+                    entity="story",
+                    object_id=story.id,
+                    field_name="cover",
+                    preset_keys=("story_cover_1x", "story_cover_2x"),
+                )
             items_map[service.id] = data
 
         items = list(items_map.values())
@@ -532,11 +551,69 @@ class HomeViewSet(viewsets.GenericViewSet):
             else ServiceListSerializer
         )
         serializer = serializer_cls(services, many=True, context={"request": request})
+        items_data = list(serializer.data)
+        self._inject_service_asset_fields(items_data, services)
         view_all = self._build_view_all_for_service_block(
             block, city, region, apply_location_filter=apply_location_filter
         )
 
-        return serializer.data, self._ensure_view_all_label(view_all)
+        return items_data, self._ensure_view_all_label(view_all)
+
+    @staticmethod
+    def _service_image_fields(service: Service) -> List[Any]:
+        images = getattr(service, "prefetched_images", None) or []
+        if not images and hasattr(service, "serviceimage_set"):
+            images = service.serviceimage_set.all()
+        fields = []
+        for image in images:
+            img_field = getattr(image, "image", None)
+            if img_field:
+                fields.append(img_field)
+        return fields
+
+    @classmethod
+    def _service_cover_field(cls, service: Service):
+        if getattr(service, "avatar", None):
+            return service.avatar
+        if getattr(service, "background", None):
+            return service.background
+        image_fields = cls._service_image_fields(service)
+        return image_fields[0] if image_fields else None
+
+    @classmethod
+    def _inject_service_asset_fields(cls, items: List[Dict[str, Any]], services: List[Service]) -> None:
+        for item, service in zip(items, services):
+            item["avatar"] = build_image_asset(
+                getattr(service, "avatar", None),
+                entity="service",
+                object_id=service.id,
+                field_name="avatar",
+                preset_keys=("service_avatar_1x", "service_avatar_2x"),
+            )
+
+            cover_field = cls._service_cover_field(service)
+            item["cover"] = build_image_asset(
+                cover_field,
+                entity="service",
+                object_id=service.id,
+                field_name="cover",
+                preset_keys=("service_cover_1x", "service_cover_2x"),
+            )
+            item.pop("cover_url", None)
+
+            if "images" in item:
+                image_fields = cls._service_image_fields(service)
+                image_assets = [
+                    build_image_asset(
+                        image_field,
+                        entity="service",
+                        object_id=service.id,
+                        field_name=f"image_{index}",
+                        preset_keys=("service_image_1x", "service_image_2x"),
+                    )
+                    for index, image_field in enumerate(image_fields)
+                ]
+                item["images"] = [asset for asset in image_assets if asset]
 
     @staticmethod
     def _build_view_all_for_service_block(
