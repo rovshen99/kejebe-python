@@ -5,6 +5,16 @@ from storages.backends.s3boto3 import S3Boto3Storage
 
 
 class PublicMinioStorage(S3Boto3Storage):
+    def get_object_parameters(self, name):
+        params = super().get_object_parameters(name)
+        if name and name.startswith("category/thumbs/"):
+            params = {
+                **params,
+                "CacheControl": "public, max-age=31536000, immutable",
+                "ContentType": "image/webp",
+            }
+        return params
+
     def url(self, name, parameters=None, expire=None):
         url = super().url(name, parameters=parameters, expire=expire)
         public_base = getattr(settings, "MINIO_PUBLIC_BASE_URL", "")
