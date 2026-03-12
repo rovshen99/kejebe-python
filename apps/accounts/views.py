@@ -49,6 +49,7 @@ def build_user_payload(request, user):
         'uuid': str(getattr(user, 'uuid', '')),
         'phone': user.phone,
         'name': getattr(user, 'name', ''),
+        'surname': getattr(user, 'surname', ''),
         'email': getattr(user, 'email', None),
         'role': getattr(user, 'role', None),
         'avatar': avatar_url,
