@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
+from django_summernote import settings as summernote_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,6 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 for env_path in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
     if env_path.exists():
         load_dotenv(env_path, override=False)
+
+if "hr" not in summernote_settings.ALLOWED_TAGS:
+    summernote_settings.ALLOWED_TAGS.append("hr")
 
 
 # Quick-start development settings - unsuitable for production
