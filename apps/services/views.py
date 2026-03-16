@@ -1,4 +1,5 @@
 from django.core.exceptions import PermissionDenied
+from django.core.files.storage import default_storage
 from django.db.models import Avg, Count, Prefetch, Q, OuterRef, Subquery
 from django.db.models.functions import Round
 from rest_framework import mixins, viewsets, permissions
@@ -15,6 +16,7 @@ from core.pagination import CustomPagination
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter
 from .models import Service, Review, Favorite, ServiceProduct, ServiceImage
+from .models import ServiceVideo
 from .serializers import (
     ServiceDetailSerializer,
     ReviewSerializer,
@@ -90,7 +92,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return context
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update']:
+        if self.action in ['update', 'partial_update', 'delete_video']:
             return [permissions.IsAuthenticated(), IsVendor(), IsServiceVendorOwner()]
         return [permissions.AllowAny()]
 
@@ -104,6 +106,65 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         instance.refresh_from_db()
         output = ServiceDetailSerializer(instance, context={'request': request})
         return Response(output.data)
+
+    @extend_schema(
+        summary="Delete service video",
+        description="Deletes a video belonging to the specified service. Only the service owner can delete it.",
+        responses={
+            204: None,
+            404: OpenApiResponse(description="Service or video not found."),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path=r"videos/(?P<video_id>[^/.]+)",
+    )
+    def delete_video(self, request, pk=None, video_id=None, *args, **kwargs):
+        try:
+            service = Service.objects.select_related("vendor").get(pk=pk)
+        except Service.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self.check_object_permissions(request, service)
+
+        try:
+            video = ServiceVideo.objects.get(pk=video_id, service_id=service.id)
+        except ServiceVideo.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        self._delete_service_video_files(video)
+        video.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @staticmethod
+    def _delete_service_video_files(video):
+        for field_name in ("file", "preview"):
+            field = getattr(video, field_name, None)
+            name = getattr(field, "name", None)
+            if not name:
+                continue
+            try:
+                field.storage.delete(name)
+            except Exception:
+                continue
+
+        playlist = (getattr(video, "hls_playlist", "") or "").strip()
+        if not playlist:
+            return
+
+        prefix = playlist.rsplit("/", 1)[0]
+        try:
+            _, files = default_storage.listdir(prefix)
+        except Exception:
+            files = []
+
+        for filename in files:
+            path = f"{prefix.rstrip('/')}/{filename}"
+            try:
+                default_storage.delete(path)
+            except Exception:
+                continue
 
     @extend_schema(
         summary='List services',
