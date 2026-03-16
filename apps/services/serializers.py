@@ -90,6 +90,7 @@ class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
 
 
 class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSerializer):
+    city = CitySerializer(read_only=True)
     title = serializers.SerializerMethodField()
     city_title = serializers.SerializerMethodField()
     region_title = serializers.SerializerMethodField()
@@ -104,10 +105,8 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
     class Meta:
         model = Service
         fields = [
-            'id', 'category',
-            'avatar', 'title_tm', 'title_ru', 'title', 'is_favorite',
-            'reviews_count',
-            'is_verified', 'is_vip',
+            'id', 'category', 'city', 'avatar', 'title_tm', 'title_ru',
+            'title', 'is_favorite', 'reviews_count', 'is_verified', 'is_vip',
             'city_title', 'region_title', 'category_title',
             'price_text', 'rating', 'has_discount', 'discount_text',
             'is_region_level',
@@ -329,7 +328,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
     class Meta(ServiceBaseSerializer.Meta):
         model = Service
         fields = ServiceBaseSerializer.Meta.fields + [
-            'vendor', 'city', 'address', 'available_cities', 'background', 'cover_url',
+            'vendor', 'address', 'available_cities', 'background', 'cover_url',
             'description_tm', 'description_ru', 'description',
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
