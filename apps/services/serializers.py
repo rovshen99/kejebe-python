@@ -41,7 +41,7 @@ class ServiceVideoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ServiceVideo
-        fields = ['file', 'preview', 'hls_url', 'hls_ready']
+        fields = ['id', 'file', 'preview', 'hls_url', 'hls_ready']
 
     def get_hls_url(self, obj):
         return obj.get_hls_url()
