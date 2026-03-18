@@ -1,4 +1,5 @@
 import nested_admin
+from django import forms
 from django.conf import settings
 from django.contrib import admin
 
@@ -72,13 +73,36 @@ class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
     can_delete = True
 
 
+class ServiceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = "__all__"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        additional_categories = cleaned_data.get("additional_categories")
+
+        if category and additional_categories and additional_categories.filter(pk=category.pk).exists():
+            self.add_error("additional_categories", "Primary category must not be duplicated.")
+
+        if additional_categories and additional_categories.count() > 3:
+            self.add_error("additional_categories", "No more than 3 additional categories are allowed.")
+
+        return cleaned_data
+
+
 @admin.register(Service)
 class ServiceAdmin(nested_admin.NestedModelAdmin):
-    list_display = ('title_tm', 'vendor', 'category', 'city', 'is_active', 'is_verified', 'is_vip', 'priority')
+    form = ServiceAdminForm
+    list_display = (
+        'title_tm', 'vendor', 'category', 'additional_categories_list',
+        'city', 'is_active', 'is_verified', 'is_vip', 'priority'
+    )
     list_filter = ('category', 'city', 'is_active', 'is_verified', 'is_vip')
     search_fields = ('title_tm', 'title_ru', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
-    filter_horizontal = ('regions', 'tags')
+    filter_horizontal = ('regions', 'tags', 'additional_categories')
     inlines = [
         ServiceContactInline,
         ServiceImageInline,
@@ -98,6 +122,14 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
             "vendor/leaflet/leaflet.js",
             "admin/js/service_map.js",
         )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("additional_categories")
+
+    def additional_categories_list(self, obj):
+        return ", ".join(category.name_tm for category in obj.additional_categories.all())
+
+    additional_categories_list.short_description = "Additional Categories"
 
     def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
         extra_context = extra_context or {}

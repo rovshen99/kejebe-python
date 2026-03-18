@@ -91,6 +91,9 @@ class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
 
 class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSerializer):
     city = CitySerializer(read_only=True)
+    primary_category = serializers.IntegerField(source="category_id", read_only=True)
+    additional_categories = serializers.SerializerMethodField()
+    categories = serializers.SerializerMethodField()
     title = serializers.SerializerMethodField()
     city_title = serializers.SerializerMethodField()
     region_title = serializers.SerializerMethodField()
@@ -105,7 +108,8 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
     class Meta:
         model = Service
         fields = [
-            'id', 'category', 'city', 'avatar', 'title_tm', 'title_ru',
+            'id', 'category', 'primary_category', 'additional_categories', 'categories',
+            'city', 'avatar', 'title_tm', 'title_ru',
             'title', 'is_favorite', 'reviews_count', 'is_verified', 'is_vip',
             'city_title', 'region_title', 'category_title',
             'price_text', 'rating', 'has_discount', 'discount_text',
@@ -124,6 +128,19 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
     def get_region_title(self, obj):
         city = getattr(obj, "city", None)
         return self._localized_name(getattr(city, "region", None), "name")
+
+    def _additional_category_ids(self, obj):
+        categories_rel = getattr(obj, "additional_categories", None)
+        if categories_rel is None:
+            return []
+        categories = categories_rel.all() if hasattr(categories_rel, "all") else categories_rel
+        return [category.id for category in categories]
+
+    def get_additional_categories(self, obj):
+        return self._additional_category_ids(obj)
+
+    def get_categories(self, obj):
+        return [obj.category_id, *self._additional_category_ids(obj)]
 
     def get_category_title(self, obj):
         return self._localized_name(getattr(obj, "category", None), "name")
@@ -266,12 +283,12 @@ class ServiceProductSerializer(LangMixin, FavoriteStatusMixin, serializers.Model
     def get_description(self, obj):
         return localized_value(obj, "description", lang=self._lang())
 
-
     def get_videos(self, obj):
         videos = getattr(obj, "hls_videos", None)
         if videos is None:
             videos = obj.servicevideo_set.filter(hls_ready=True)
         return ServiceVideoSerializer(videos, many=True, context=self.context).data
+
 
 class ServiceProductListSerializer(ServiceProductSerializer):
     values = AttributeValueSerializer(many=True, read_only=True)
@@ -346,6 +363,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
         if videos is None:
             videos = obj.servicevideo_set.filter(hls_ready=True)
         return ServiceVideoSerializer(videos, many=True, context=self.context).data
+
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
     available_cities = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), many=True, required=False)
