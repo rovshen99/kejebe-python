@@ -1,6 +1,7 @@
 from django.core.validators import FileExtensionValidator
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 from apps.categories.models import Category
@@ -14,9 +15,35 @@ from django_summernote.fields import SummernoteTextField
 from slugify import slugify
 
 
+class ServiceQuerySet(models.QuerySet):
+    def filter_by_category_ids(self, category_ids):
+        if not category_ids:
+            return self
+        return self.filter(
+            Q(category_id__in=category_ids) | Q(additional_categories__id__in=category_ids)
+        ).distinct()
+
+    def with_category_match_rank(self, category_id):
+        if not category_id:
+            return self
+        return self.annotate(
+            category_match_rank=Case(
+                When(category_id=category_id, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        ).order_by("category_match_rank", "priority", "-created_at")
+
+
 class Service(models.Model):
     vendor = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Vendor"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name=_("Category"))
+    additional_categories = models.ManyToManyField(
+        Category,
+        blank=True,
+        related_name="services_additional",
+        verbose_name=_("Additional Categories"),
+    )
     city = models.ForeignKey(City, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_("City"))
     avatar = WebPImageField(
         upload_to="services/avatars", verbose_name=_("Avatar"), null=True, default=None, blank=True
@@ -66,6 +93,8 @@ class Service(models.Model):
             models.Index(fields=["category", "is_active"], name="service_category_active_idx"),
             models.Index(fields=["city", "is_active"], name="service_city_active_idx"),
         ]
+
+    objects = ServiceQuerySet.as_manager()
 
     def __str__(self):
         return self.title_tm

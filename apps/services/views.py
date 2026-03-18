@@ -1,6 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
-from django.db.models import Avg, Count, Prefetch, Q, OuterRef, Subquery
+from django.db.models import Avg, Case, Count, IntegerField, Prefetch, Q, OuterRef, Subquery, Value, When
 from django.db.models.functions import Round
 from rest_framework import mixins, viewsets, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
@@ -14,7 +14,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from core.pagination import CustomPagination
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
-from .filters import ServiceFilter, ServiceProductFilter
+from .filters import ServiceFilter, ServiceProductFilter, parse_int_list
 from .models import Service, Review, Favorite, ServiceProduct, ServiceImage
 from .models import ServiceVideo
 from .serializers import (
@@ -42,7 +42,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
     filterset_class = ServiceFilter
     ordering_fields = ['priority', 'created_at', 'price_min']
-    ordering = ['priority']
+    ordering = ['priority', '-created_at']
     search_fields = ['title_tm', 'title_ru']
     pagination_class = CustomPagination
     favorite_field = 'service'
@@ -56,7 +56,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return ServiceDetailSerializer
 
     def get_queryset(self):
-        prefetches = []
+        prefetches = ["additional_categories"]
         if getattr(self, "action", None) == "retrieve":
             prefetches.extend(['tags', 'available_cities'])
         qs = (
@@ -85,6 +85,22 @@ class ServiceViewSet(FavoriteAnnotateMixin,
                 "contacts__type",
             )
         return self.annotate_is_favorite(qs)
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+
+        category_ids = parse_int_list(self.request.query_params.get("category"))
+        explicit_ordering = self.request.query_params.get("ordering")
+        if len(category_ids) == 1 and not explicit_ordering:
+            queryset = queryset.annotate(
+                category_match_rank=Case(
+                    When(category_id=category_ids[0], then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            ).order_by("category_match_rank", "priority", "-created_at")
+
+        return queryset
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -234,6 +250,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         qs = (
             Service.objects.filter(is_active=True, vendor=request.user)
             .select_related("vendor", "category", "city")
+            .prefetch_related("additional_categories")
             .annotate(
                 rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
                 reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
@@ -313,6 +330,7 @@ class FavoriteViewSet(mixins.ListModelMixin,
                 'product',
                 'product__service',
             )
+            .prefetch_related('service__additional_categories')
             .annotate(
                 service_rating=Round(
                     Avg(

@@ -494,9 +494,12 @@ class HomeViewSet(viewsets.GenericViewSet):
             tag_ids = self._param_list(params, "tag_ids", "tags")
             city_ids = self._param_list(params, "city_ids", "cities")
             region_ids = self._param_list(params, "region_ids", "regions")
+            explicit_ordering = params.get("ordering")
 
             if category_ids:
-                services_qs = services_qs.filter(category_id__in=category_ids)
+                services_qs = services_qs.filter_by_category_ids(category_ids)
+                if len(category_ids) == 1 and not explicit_ordering:
+                    services_qs = services_qs.with_category_match_rank(category_ids[0])
             if tag_ids:
                 services_qs = services_qs.filter(tags__id__in=tag_ids)
                 needs_distinct = True
@@ -509,9 +512,8 @@ class HomeViewSet(viewsets.GenericViewSet):
                 )
                 needs_distinct = True
 
-            order = params.get("ordering")
-            if order:
-                services_qs = services_qs.order_by(order)
+            if explicit_ordering:
+                services_qs = services_qs.order_by(explicit_ordering)
 
         if apply_location_filter:
             if city:
@@ -643,6 +645,7 @@ class HomeViewSet(viewsets.GenericViewSet):
         include_tags: bool = True,
     ):
         prefetches = ["tags"] if include_tags else []
+        prefetches.append("additional_categories")
         if include_images:
             prefetches.append(
                 Prefetch(
