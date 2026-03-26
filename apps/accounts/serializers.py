@@ -6,6 +6,15 @@ class InitChallengeSerializer(serializers.Serializer):
     ttl_seconds = serializers.IntegerField(required=False, min_value=60, max_value=1800, default=600)
 
 
+class InitChallengeResponseSerializer(serializers.Serializer):
+    challenge_id = serializers.UUIDField()
+    expires_at = serializers.DateTimeField()
+    phone_number = serializers.CharField()
+    skip_sms = serializers.BooleanField(
+        help_text="When true, client may skip the explicit SMS send step and start confirm polling immediately.",
+    )
+
+
 class ConfirmChallengeSerializer(serializers.Serializer):
     challenge_id = serializers.UUIDField()
     name = serializers.CharField(required=False, allow_blank=True)

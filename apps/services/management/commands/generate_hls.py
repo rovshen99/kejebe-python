@@ -5,7 +5,8 @@ from pathlib import Path
 
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 from django.utils import timezone
 
 from apps.services.models import ServiceVideo
@@ -18,11 +19,18 @@ class Command(BaseCommand):
         parser.add_argument("--id", type=int, dest="video_id", help="Process one ServiceVideo by id")
         parser.add_argument("--force", action="store_true", help="Re-generate HLS even if already ready")
         parser.add_argument("--limit", type=int, default=0, help="Limit number of videos")
+        parser.add_argument(
+            "--ffmpeg-bin",
+            dest="ffmpeg_bin",
+            default="",
+            help="Custom ffmpeg binary path. Defaults to settings.FFMPEG_BIN or 'ffmpeg'.",
+        )
 
     def handle(self, *args, **options):
         video_id = options.get("video_id")
         force = options.get("force", False)
         limit = options.get("limit", 0)
+        ffmpeg_bin = self._resolve_ffmpeg_bin(options.get("ffmpeg_bin"))
 
         qs = ServiceVideo.objects.exclude(file="").exclude(file=None)
         if video_id:
@@ -37,9 +45,19 @@ class Command(BaseCommand):
             return
 
         for video in qs:
-            self._process_video(video, force)
+            self._process_video(video, force, ffmpeg_bin)
 
-    def _process_video(self, video, force):
+    def _resolve_ffmpeg_bin(self, cli_value):
+        candidate = (cli_value or getattr(settings, "FFMPEG_BIN", "") or "ffmpeg").strip()
+        resolved = shutil.which(candidate)
+        if resolved:
+            return resolved
+        raise CommandError(
+            f"ffmpeg binary not found: {candidate!r}. "
+            f"Install ffmpeg or set FFMPEG_BIN / --ffmpeg-bin to the full path."
+        )
+
+    def _process_video(self, video, force, ffmpeg_bin):
         if not force and video.hls_ready and video.hls_playlist:
             return
         if not video.file:
@@ -60,7 +78,7 @@ class Command(BaseCommand):
                 playlist_path = hls_dir / playlist_name
 
                 cmd = [
-                    "ffmpeg",
+                    ffmpeg_bin,
                     "-y",
                     "-i",
                     str(source_path),
