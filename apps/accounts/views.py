@@ -3,14 +3,19 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import datetime
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import InboundSMS, SMSChallenge
-from .serializers import ConfirmChallengeSerializer, InitChallengeSerializer, InboundSMSSerializer
+from .serializers import (
+    ConfirmChallengeSerializer,
+    InitChallengeResponseSerializer,
+    InitChallengeSerializer,
+    InboundSMSSerializer,
+)
 from .services.phone import is_bypass_number, normalize_phone
 from apps.devices.models import Device
 
@@ -114,27 +119,37 @@ class InboundSMSWebhookView(APIView):
 
 @extend_schema(
     request=InitChallengeSerializer,
-    responses={
-        201: {
-            'type': 'object',
-            'properties': {
-                'challenge_id': {
-                    'type': 'string',
-                    'format': 'uuid',
-                },
-                'expires_at': {
-                    'type': 'string',
-                    'format': 'date-time',
-                },
-            },
-        }
-    },
+    responses={201: InitChallengeResponseSerializer},
     tags=['Auth'],
     summary='Start reverse-SMS verification',
     description=(
         'Initiates a reverse-SMS verification challenge and returns '
         'its ID and expiry.'
     ),
+    examples=[
+        OpenApiExample(
+            "Regular SMS flow",
+            value={
+                "challenge_id": "d6d6ad07-5ad6-4b54-8e30-6eb4b9246c0e",
+                "expires_at": "2026-03-26T12:00:00Z",
+                "phone_number": "+99361111111",
+                "skip_sms": False,
+            },
+            response_only=True,
+            status_codes=["201"],
+        ),
+        OpenApiExample(
+            "Demo auto-verified flow",
+            value={
+                "challenge_id": "f928b879-9a44-49bc-95fd-0d9e5d090e9f",
+                "expires_at": "2026-03-26T12:00:00Z",
+                "phone_number": "+99361111111",
+                "skip_sms": True,
+            },
+            response_only=True,
+            status_codes=["201"],
+        ),
+    ],
 )
 class InitReverseSMSView(APIView):
     permission_classes = [AllowAny]
@@ -146,6 +161,7 @@ class InitReverseSMSView(APIView):
 
         from_number = normalize_phone(serializer.validated_data['phone'])
         to_number = normalize_phone(getattr(settings, 'SMS_SERVICE_NUMBER', ''))
+        skip_sms = is_bypass_number(from_number)
         challenge = SMSChallenge.create(
             from_number,
             to_number,
@@ -156,6 +172,7 @@ class InitReverseSMSView(APIView):
                 'challenge_id': str(challenge.id),
                 'expires_at': challenge.expires_at,
                 'phone_number': settings.SMS_SERVICE_NUMBER,
+                'skip_sms': skip_sms,
             },
             status=201,
         )
