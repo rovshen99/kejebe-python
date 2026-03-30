@@ -95,6 +95,27 @@ DEVICE_LAST_SEEN_ENABLED = os.getenv("DEVICE_LAST_SEEN_ENABLED", "true").lower()
 DEFAULT_REGION_ID = int(os.getenv("DEFAULT_REGION_ID", "0")) or None
 OSM_TILE_URL = os.getenv("OSM_TILE_URL", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
+CORS_ALLOWED_ORIGINS = [
+    origin.strip().rstrip("/")
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "true").lower() == "true"
+CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
+CORS_ALLOW_HEADERS = [
+    "Accept",
+    "Accept-Language",
+    "Authorization",
+    "Content-Type",
+    "Origin",
+    "X-Device-ID",
+    "X-Device-Id",
+    "X-Platform",
+]
+CORS_PREFLIGHT_MAX_AGE = int(os.getenv("CORS_PREFLIGHT_MAX_AGE", "86400"))
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Kejebe API',
@@ -114,6 +135,7 @@ IMAGE_CROPPING_BACKEND = "core.image_cropping_backend.WebPEasyThumbnailsBackend"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'core.middleware.CorsHeadersMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
