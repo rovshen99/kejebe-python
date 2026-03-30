@@ -119,7 +119,7 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
             'city', 'avatar', 'title_tm', 'title_ru',
             'title', 'is_favorite', 'reviews_count', 'is_verified', 'is_vip',
             'city_title', 'region_title', 'category_title',
-            'price_text', 'rating', 'has_discount', 'discount_text',
+            'price_text', 'rating', 'has_discount', 'discount_text', 'work_experience_years',
             'is_region_level',
         ]
 
@@ -381,7 +381,7 @@ class ServiceUpdateSerializer(serializers.ModelSerializer):
             'city', 'address', 'available_cities', 'avatar', 'background',
             'title_tm', 'title_ru',
             'description_tm', 'description_ru',
-            'price_min', 'price_max'
+            'price_min', 'price_max', 'work_experience_years',
         ]
 
 
@@ -473,7 +473,8 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ServiceApplication
         fields = [
-            'id', 'category', 'category_name', 'city', 'city_name', 'phone', 'title', 'contact_name', 'description',
+            'id', 'category', 'category_name', 'city', 'city_name', 'phone', 'title', 'contact_name',
+            'work_experience_years', 'description',
             'images', 'images_preview', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']

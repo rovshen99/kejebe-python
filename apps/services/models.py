@@ -65,6 +65,11 @@ class Service(models.Model):
     price_min = models.FloatField(null=True, blank=True, verbose_name=_("Minimum Price"))
     price_max = models.FloatField(null=True, blank=True, verbose_name=_("Maximum Price"))
     discount_text = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Discount Text"))
+    work_experience_years = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Work Experience (Years)"),
+    )
 
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Address"))
@@ -463,6 +468,11 @@ class ServiceApplication(models.Model):
     phone = models.CharField(max_length=32, verbose_name=_("Phone Number"))
     title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Service Title"))
     contact_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Contact Name"))
+    work_experience_years = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Work Experience (Years)"),
+    )
     description = models.TextField(verbose_name=_("Service Description"))
 
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING, verbose_name=_("Status"))

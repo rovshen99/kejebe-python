@@ -97,7 +97,7 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
     form = ServiceAdminForm
     list_display = (
         'title_tm', 'vendor', 'category', 'additional_categories_list',
-        'city', 'is_active', 'is_verified', 'is_vip', 'priority'
+        'city', 'work_experience_years', 'is_active', 'is_verified', 'is_vip', 'priority'
     )
     list_filter = ('category', 'city', 'is_active', 'is_verified', 'is_vip')
     search_fields = ('title_tm', 'title_ru', 'vendor__name', 'category__name_tm')
@@ -210,7 +210,10 @@ class ServiceApplicationImageInline(IconPreviewMixin, admin.TabularInline):
 
 @admin.register(ServiceApplication)
 class ServiceApplicationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title', 'phone', 'category', 'category_name', 'city', 'city_name', 'status', 'created_at')
+    list_display = (
+        'id', 'title', 'phone', 'category', 'category_name', 'city', 'city_name',
+        'work_experience_years', 'status', 'created_at'
+    )
     list_filter = ('status', 'category', 'city')
     search_fields = ('title', 'phone', 'description', 'contact_name', 'category_name', 'city_name')
     readonly_fields = ('created_at',)
