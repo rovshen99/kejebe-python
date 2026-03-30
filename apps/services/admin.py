@@ -19,6 +19,7 @@ from .models import (
     ServiceProduct,
     ServiceApplication,
     ServiceApplicationImage,
+    ServiceApplicationLink,
 )
 
 
@@ -208,13 +209,19 @@ class ServiceApplicationImageInline(IconPreviewMixin, admin.TabularInline):
     fields = ('icon_preview', 'image',)
 
 
+class ServiceApplicationLinkInline(admin.TabularInline):
+    model = ServiceApplicationLink
+    extra = 0
+    fields = ("url",)
+
+
 @admin.register(ServiceApplication)
 class ServiceApplicationAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'title', 'phone', 'category', 'category_name', 'city', 'city_name',
-        'work_experience_years', 'status', 'created_at'
+        'id', 'title', 'phone', 'email', 'category', 'category_name', 'city', 'city_name',
+        'price_from', 'work_experience_years', 'status', 'created_at'
     )
     list_filter = ('status', 'category', 'city')
-    search_fields = ('title', 'phone', 'description', 'contact_name', 'category_name', 'city_name')
+    search_fields = ('title', 'phone', 'email', 'description', 'contact_name', 'category_name', 'city_name', 'address')
     readonly_fields = ('created_at',)
-    inlines = [ServiceApplicationImageInline]
+    inlines = [ServiceApplicationLinkInline, ServiceApplicationImageInline]
