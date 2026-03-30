@@ -30,6 +30,7 @@ from .serializers import (
     ServiceProductUpdateSerializer,
 )
 from .mixins import FavoriteAnnotateMixin
+from .throttles import ServiceApplicationIPThrottle
 
 
 @extend_schema(tags=["Services"])
@@ -493,3 +494,4 @@ class ServiceApplicationViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet
     serializer_class = ServiceApplicationSerializer
     permission_classes = [permissions.AllowAny]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
+    throttle_classes = [ServiceApplicationIPThrottle]

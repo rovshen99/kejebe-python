@@ -1,3 +1,7 @@
+from datetime import timedelta
+
+from django.conf import settings
+from django.utils import timezone
 from rest_framework import serializers
 from django.core.files.storage import default_storage
 from core.serializers import LangMixin
@@ -9,6 +13,9 @@ from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
 from apps.regions.models import City
+
+SERVICE_APPLICATION_DUPLICATE_WINDOW = timedelta(hours=12)
+SERVICE_APPLICATION_LOCAL_PHONE_LENGTH = 8
 
 
 class FavoriteStatusMixin(serializers.Serializer):
@@ -486,6 +493,18 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
         normalized = normalize_phone(value)
         if not normalized:
             raise serializers.ValidationError('Invalid phone number')
+        cc = getattr(settings, "DEFAULT_PHONE_COUNTRY_CODE", "993")
+        expected_length = 1 + len(cc) + SERVICE_APPLICATION_LOCAL_PHONE_LENGTH
+        if not normalized.startswith(f"+{cc}") or len(normalized) != expected_length:
+            raise serializers.ValidationError("Only Turkmen phone numbers are allowed.")
+        recent_duplicate_exists = ServiceApplication.objects.filter(
+            phone=normalized,
+            created_at__gte=timezone.now() - SERVICE_APPLICATION_DUPLICATE_WINDOW,
+        ).exists()
+        if recent_duplicate_exists:
+            raise serializers.ValidationError(
+                'An application with this phone number was already submitted in the last 12 hours.'
+            )
         return normalized
 
     def get_images_preview(self, obj):
