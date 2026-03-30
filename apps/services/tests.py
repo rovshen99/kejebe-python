@@ -5,7 +5,11 @@ from django.test import RequestFactory, SimpleTestCase
 from rest_framework import serializers
 
 from core.utils import format_price_text
-from apps.services.serializers import ServiceApplicationSerializer
+from apps.services.serializers import (
+    ServiceApplicationSerializer,
+    ServiceBaseSerializer,
+    ServiceUpdateSerializer,
+)
 from apps.services.throttles import ServiceApplicationIPThrottle
 
 
@@ -82,3 +86,14 @@ class ServiceApplicationIPThrottleTests(SimpleTestCase):
         throttle = ServiceApplicationIPThrottle()
 
         self.assertIsNone(throttle.get_cache_key(request, view=None))
+
+
+class ServiceSerializerFieldTests(SimpleTestCase):
+    def test_service_base_serializer_includes_work_experience_years(self):
+        self.assertIn("work_experience_years", ServiceBaseSerializer.Meta.fields)
+
+    def test_service_update_serializer_includes_work_experience_years(self):
+        self.assertIn("work_experience_years", ServiceUpdateSerializer.Meta.fields)
+
+    def test_service_application_serializer_includes_work_experience_years(self):
+        self.assertIn("work_experience_years", ServiceApplicationSerializer.Meta.fields)
