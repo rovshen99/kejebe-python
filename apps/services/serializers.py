@@ -8,7 +8,7 @@ from core.serializers import LangMixin
 from core.utils import format_price_text, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceApplication, ServiceApplicationImage, Attribute, AttributeValue
+    ServiceProductImage, ServiceApplication, ServiceApplicationImage, ServiceApplicationLink, Attribute, AttributeValue
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
@@ -463,18 +463,38 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+class ServiceApplicationLinksField(serializers.Field):
+    default_error_messages = {
+        "invalid": "Expected a list of URLs.",
+    }
+
+    def to_representation(self, value):
+        links = value.all() if hasattr(value, "all") else value
+        return [link.url for link in links]
+
+    def to_internal_value(self, data):
+        if data in (None, serializers.empty):
+            return []
+        if not isinstance(data, list):
+            self.fail("invalid")
+        url_field = serializers.URLField()
+        return [url_field.run_validation(item) for item in data]
+
+
 class ServiceApplicationSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(), write_only=True, required=False, allow_empty=True
     )
+    links = ServiceApplicationLinksField(required=False)
 
     images_preview = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ServiceApplication
         fields = [
-            'id', 'category', 'category_name', 'city', 'city_name', 'phone', 'title', 'contact_name',
-            'work_experience_years', 'description',
+            'id', 'category', 'category_name', 'city', 'city_name', 'phone', 'email', 'title', 'contact_name',
+            'address', 'price_from', 'work_experience_years', 'description',
+            'links',
             'images', 'images_preview', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
@@ -516,11 +536,19 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         request = self.context.get('request')
         uploaded = validated_data.pop('images', [])
+        links_data = validated_data.pop('links', [])
         # Also accept multiple files via request.FILES.getlist('images')
         if request is not None:
             uploaded += list(request.FILES.getlist('images'))
 
         application = super().create(validated_data)
+        links_to_create = [
+            ServiceApplicationLink(application=application, url=url)
+            for url in links_data
+            if url
+        ]
+        if links_to_create:
+            ServiceApplicationLink.objects.bulk_create(links_to_create)
         images_to_create = [
             ServiceApplicationImage(application=application, image=f) for f in uploaded if f
         ]

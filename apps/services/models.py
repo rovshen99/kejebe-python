@@ -466,8 +466,11 @@ class ServiceApplication(models.Model):
     city_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("City Name"))
 
     phone = models.CharField(max_length=32, verbose_name=_("Phone Number"))
+    email = models.EmailField(max_length=254, null=True, blank=True, verbose_name=_("Email"))
     title = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Service Title"))
     contact_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Contact Name"))
+    address = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Address"))
+    price_from = models.FloatField(null=True, blank=True, verbose_name=_("Price From"))
     work_experience_years = models.PositiveIntegerField(
         null=True,
         blank=True,
@@ -493,6 +496,25 @@ class ServiceApplication(models.Model):
     def __str__(self):
         parts = [self.title or "Service Application", self.phone]
         return " – ".join([p for p in parts if p])
+
+
+class ServiceApplicationLink(models.Model):
+    application = models.ForeignKey(
+        ServiceApplication,
+        on_delete=models.CASCADE,
+        related_name="links",
+        verbose_name=_("Application"),
+    )
+    url = models.URLField(max_length=500, verbose_name=_("URL"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Service Application Link")
+        verbose_name_plural = _("Service Application Links")
+        ordering = ("created_at",)
+
+    def __str__(self):
+        return self.url
 
 
 class ServiceApplicationImage(models.Model):

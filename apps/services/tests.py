@@ -97,3 +97,13 @@ class ServiceSerializerFieldTests(SimpleTestCase):
 
     def test_service_application_serializer_includes_work_experience_years(self):
         self.assertIn("work_experience_years", ServiceApplicationSerializer.Meta.fields)
+
+    def test_service_application_serializer_includes_address_and_price_from(self):
+        self.assertIn("address", ServiceApplicationSerializer.Meta.fields)
+        self.assertIn("price_from", ServiceApplicationSerializer.Meta.fields)
+
+    def test_service_application_serializer_includes_links(self):
+        self.assertIn("links", ServiceApplicationSerializer.Meta.fields)
+
+    def test_service_application_serializer_includes_email(self):
+        self.assertIn("email", ServiceApplicationSerializer.Meta.fields)
