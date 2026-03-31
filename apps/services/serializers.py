@@ -271,6 +271,18 @@ class ServiceContactSerializer(serializers.ModelSerializer):
         fields = ['type', 'value']
 
 
+class ServiceContactWriteSerializer(serializers.ModelSerializer):
+    type_slug = serializers.SlugRelatedField(
+        source="type",
+        slug_field="slug",
+        queryset=ContactType.objects.all(),
+    )
+
+    class Meta:
+        model = ServiceContact
+        fields = ['type_slug', 'value']
+
+
 class ServiceProductSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
@@ -375,15 +387,32 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
 
 class ServiceUpdateSerializer(serializers.ModelSerializer):
     available_cities = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), many=True, required=False)
+    contacts = ServiceContactWriteSerializer(many=True, required=False)
 
     class Meta:
         model = Service
         fields = [
             'city', 'address', 'available_cities', 'avatar', 'background',
+            'contacts',
             'title_tm', 'title_ru',
             'description_tm', 'description_ru',
             'price_min', 'price_max', 'work_experience_years',
         ]
+
+    def update(self, instance, validated_data):
+        contacts_data = validated_data.pop("contacts", None)
+        instance = super().update(instance, validated_data)
+
+        if contacts_data is not None:
+            instance.contacts.all().delete()
+            ServiceContact.objects.bulk_create(
+                [
+                    ServiceContact(service=instance, **contact_data)
+                    for contact_data in contacts_data
+                ]
+            )
+
+        return instance
 
 
 class ReviewUserSerializer(serializers.ModelSerializer):

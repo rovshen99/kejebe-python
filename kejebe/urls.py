@@ -22,7 +22,14 @@ from rest_framework_nested import routers
 from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
-from apps.services.views import ServiceViewSet, ReviewViewSet, FavoriteViewSet, ServiceProductViewSet, ServiceApplicationViewSet
+from apps.services.views import (
+    ServiceViewSet,
+    ReviewViewSet,
+    FavoriteViewSet,
+    ServiceProductViewSet,
+    ServiceApplicationViewSet,
+    ContactTypeViewSet,
+)
 from apps.system.views import SystemContactViewSet, SystemAboutView, ClientFeedbackCreateView, delete_account_view
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
@@ -35,6 +42,7 @@ router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'regions', RegionViewSet, basename='region')
 router.register(r'cities', CityViewSet, basename='city')
 router.register(r'services', ServiceViewSet, basename='service')
+router.register(r'contact-types', ContactTypeViewSet, basename='contact-type')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 router.register(r'service-applications', ServiceApplicationViewSet, basename='service-application')

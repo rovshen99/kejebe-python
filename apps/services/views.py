@@ -15,7 +15,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from core.pagination import CustomPagination
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter, parse_int_list
-from .models import Service, Review, Favorite, ServiceProduct, ServiceImage
+from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, ContactType
 from .models import ServiceVideo
 from .serializers import (
     ServiceDetailSerializer,
@@ -28,6 +28,7 @@ from .serializers import (
     ServiceApplicationSerializer,
     ServiceUpdateSerializer,
     ServiceProductUpdateSerializer,
+    ContactTypeSerializer,
 )
 from .mixins import FavoriteAnnotateMixin
 from .throttles import ServiceApplicationIPThrottle
@@ -270,6 +271,16 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         page = self.paginate_queryset(qs)
         serializer = ServiceListSerializer(page, many=True, context={"request": request})
         return self.get_paginated_response(serializer.data)
+
+
+@extend_schema(tags=["Services"])
+class ContactTypeViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = ContactTypeSerializer
+    permission_classes = [permissions.AllowAny]
+    pagination_class = None
+
+    def get_queryset(self):
+        return ContactType.objects.order_by("slug")
 
 
 @extend_schema(tags=["Reviews"])
