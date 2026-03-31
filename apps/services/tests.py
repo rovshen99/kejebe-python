@@ -66,6 +66,24 @@ class ServiceApplicationSerializerTests(SimpleTestCase):
 
         filter_mock.assert_not_called()
 
+    def test_links_reject_more_than_five_items(self):
+        serializer = ServiceApplicationSerializer()
+
+        with self.assertRaisesMessage(
+            serializers.ValidationError,
+            "No more than 5 links are allowed.",
+        ):
+            serializer.fields["links"].run_validation(
+                [
+                    "https://example.com/1",
+                    "https://example.com/2",
+                    "https://example.com/3",
+                    "https://example.com/4",
+                    "https://example.com/5",
+                    "https://example.com/6",
+                ]
+            )
+
 
 class ServiceApplicationIPThrottleTests(SimpleTestCase):
     def test_post_request_uses_ip_based_throttle_key(self):
