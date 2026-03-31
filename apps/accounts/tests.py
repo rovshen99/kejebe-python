@@ -55,3 +55,40 @@ class SMSBypassAuthFlowTests(TestCase):
         self.assertTrue(response.data["verified"])
         self.assertEqual(response.data["tokens"]["access"], "access-token")
         self.assertTrue(challenge.is_verified)
+
+
+@override_settings(CORS_ALLOWED_ORIGINS=["http://localhost:5173"])
+class AuthCorsTests(TestCase):
+    def test_auth_route_returns_cors_headers_for_allowed_origin(self):
+        response = self.client.get(
+            "/auth/sms/init/",
+            HTTP_ORIGIN="http://localhost:5173",
+        )
+
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:5173",
+        )
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Credentials"),
+            "true",
+        )
+
+    def test_auth_route_options_preflight_returns_cors_headers(self):
+        response = self.client.options(
+            "/auth/sms/init/",
+            HTTP_ORIGIN="http://localhost:5173",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="POST",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="authorization,content-type",
+        )
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:5173",
+        )
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Headers"),
+            "authorization,content-type",
+        )
