@@ -15,7 +15,7 @@ class CorsHeadersMiddleware:
 
     @staticmethod
     def _is_api_request(request) -> bool:
-        return request.path.startswith("/api/")
+        return request.path.startswith(("/api/", "/auth/"))
 
     def _is_preflight_request(self, request) -> bool:
         return (
