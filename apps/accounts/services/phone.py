@@ -13,9 +13,8 @@ def normalize_phone(raw: str) -> str:
 
 
 def is_bypass_number(phone: str) -> bool:
-    from django.conf import settings
+    phone_norm = normalize_phone(phone)
     if not getattr(settings, "SMS_BYPASS_ENABLED", False):
         return False
-    phone_norm = normalize_phone(phone)
     bypass = {normalize_phone(n) for n in getattr(settings, "SMS_BYPASS_NUMBERS", [])}
     return phone_norm in bypass

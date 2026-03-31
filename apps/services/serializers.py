@@ -16,6 +16,7 @@ from apps.regions.models import City
 
 SERVICE_APPLICATION_DUPLICATE_WINDOW = timedelta(hours=12)
 SERVICE_APPLICATION_LOCAL_PHONE_LENGTH = 8
+SERVICE_APPLICATION_MAX_LINKS = 5
 
 
 class FavoriteStatusMixin(serializers.Serializer):
@@ -466,6 +467,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 class ServiceApplicationLinksField(serializers.Field):
     default_error_messages = {
         "invalid": "Expected a list of URLs.",
+        "max_items": f"No more than {SERVICE_APPLICATION_MAX_LINKS} links are allowed.",
     }
 
     def to_representation(self, value):
@@ -477,6 +479,8 @@ class ServiceApplicationLinksField(serializers.Field):
             return []
         if not isinstance(data, list):
             self.fail("invalid")
+        if len(data) > SERVICE_APPLICATION_MAX_LINKS:
+            self.fail("max_items")
         url_field = serializers.URLField()
         return [url_field.run_validation(item) for item in data]
 
@@ -485,7 +489,10 @@ class ServiceApplicationSerializer(serializers.ModelSerializer):
     images = serializers.ListField(
         child=serializers.ImageField(), write_only=True, required=False, allow_empty=True
     )
-    links = ServiceApplicationLinksField(required=False)
+    links = ServiceApplicationLinksField(
+        required=False,
+        help_text=f"Optional list of URLs. Maximum {SERVICE_APPLICATION_MAX_LINKS} items.",
+    )
 
     images_preview = serializers.SerializerMethodField(read_only=True)
 

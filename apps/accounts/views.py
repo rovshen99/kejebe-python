@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -20,6 +21,7 @@ from .services.phone import is_bypass_number, normalize_phone
 from apps.devices.models import Device
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 def issue_tokens(user):
@@ -167,6 +169,12 @@ class InitReverseSMSView(APIView):
             to_number,
             serializer.validated_data['ttl_seconds'],
         )
+        if skip_sms:
+            logger.warning(
+                "SMS init bypass enabled for phone=%s challenge_id=%s",
+                from_number,
+                challenge.id,
+            )
         return Response(
             {
                 'challenge_id': str(challenge.id),
@@ -217,6 +225,11 @@ class ConfirmReverseSMSView(APIView):
             if not ch.is_verified:
                 ch.verified_at = timezone.now()
                 ch.save(update_fields=['verified_at'])
+            logger.warning(
+                "SMS confirm bypass used for phone=%s challenge_id=%s",
+                ch.from_number,
+                ch.id,
+            )
 
         if ch.is_expired:
             return Response({'verified': False, 'detail': 'expired'}, status=200)
