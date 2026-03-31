@@ -109,6 +109,8 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return context
 
     def get_permissions(self):
+        if self.action == 'my':
+            return [permissions.IsAuthenticated(), IsVendor()]
         if self.action in ['update', 'partial_update', 'delete_video']:
             return [permissions.IsAuthenticated(), IsVendor(), IsServiceVendorOwner()]
         return [permissions.AllowAny()]
@@ -452,6 +454,8 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
         return ServiceProductSerializer
 
     def get_permissions(self):
+        if self.action == 'my':
+            return [permissions.IsAuthenticated(), IsVendor()]
         if self.action in ['update', 'partial_update']:
             return [permissions.IsAuthenticated(), IsVendor(), IsServiceProductVendorOwner()]
         return [permissions.AllowAny()]
