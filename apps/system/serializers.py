@@ -19,6 +19,13 @@ class SystemAboutSerializer(serializers.ModelSerializer):
         fields = ["id", "about_tm", "about_ru"]
 
 
+class MapConfigSerializer(serializers.Serializer):
+    tile_url = serializers.CharField()
+    attribution = serializers.CharField()
+    min_zoom = serializers.IntegerField()
+    max_zoom = serializers.IntegerField()
+
+
 class ClientFeedbackSerializer(serializers.ModelSerializer):
     text = serializers.CharField(source="message")
 
