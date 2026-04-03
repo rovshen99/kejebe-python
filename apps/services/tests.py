@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 from django.test import RequestFactory, SimpleTestCase
 from rest_framework import serializers
@@ -125,3 +126,30 @@ class ServiceSerializerFieldTests(SimpleTestCase):
 
     def test_service_application_serializer_includes_email(self):
         self.assertIn("email", ServiceApplicationSerializer.Meta.fields)
+
+    def test_service_base_serializer_includes_has_location(self):
+        self.assertIn("has_location", ServiceBaseSerializer.Meta.fields)
+
+    def test_service_base_serializer_includes_show_location(self):
+        self.assertIn("show_location", ServiceBaseSerializer.Meta.fields)
+
+    def test_service_update_serializer_includes_show_location(self):
+        self.assertIn("show_location", ServiceUpdateSerializer.Meta.fields)
+
+    def test_has_location_is_true_when_address_present(self):
+        serializer = ServiceBaseSerializer()
+        service = SimpleNamespace(address="Ashgabat", latitude=None, longitude=None)
+
+        self.assertTrue(serializer.get_has_location(service))
+
+    def test_has_location_is_true_when_coordinates_present(self):
+        serializer = ServiceBaseSerializer()
+        service = SimpleNamespace(address="", latitude=37.95, longitude=58.38)
+
+        self.assertTrue(serializer.get_has_location(service))
+
+    def test_has_location_is_false_without_address_and_full_coordinates(self):
+        serializer = ServiceBaseSerializer()
+        service = SimpleNamespace(address=" ", latitude=37.95, longitude=None)
+
+        self.assertFalse(serializer.get_has_location(service))

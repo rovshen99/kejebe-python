@@ -72,6 +72,7 @@ class Service(models.Model):
     )
 
     is_catalog = models.BooleanField(default=False, verbose_name=_("Show in Catalog"))
+    show_location = models.BooleanField(default=True, verbose_name=_("Show Location Block"))
     address = models.CharField(max_length=255, null=True, blank=True, verbose_name=_("Address"))
     latitude = models.FloatField(null=True, blank=True, verbose_name=_("Latitude"))
     longitude = models.FloatField(null=True, blank=True, verbose_name=_("Longitude"))
