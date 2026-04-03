@@ -98,9 +98,9 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
     form = ServiceAdminForm
     list_display = (
         'title_tm', 'vendor', 'category', 'additional_categories_list',
-        'city', 'work_experience_years', 'is_active', 'is_verified', 'is_vip', 'priority'
+        'city', 'show_location', 'work_experience_years', 'is_active', 'is_verified', 'is_vip', 'priority'
     )
-    list_filter = ('category', 'city', 'is_active', 'is_verified', 'is_vip')
+    list_filter = ('category', 'city', 'show_location', 'is_active', 'is_verified', 'is_vip')
     search_fields = ('title_tm', 'title_ru', 'vendor__name', 'category__name_tm')
     ordering = ('priority', '-created_at')
     filter_horizontal = ('regions', 'tags', 'additional_categories')

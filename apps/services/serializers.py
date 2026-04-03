@@ -112,6 +112,7 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
     discount_text = serializers.SerializerMethodField()
     reviews_count = serializers.IntegerField(read_only=True)
     is_region_level = serializers.SerializerMethodField()
+    has_location = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
@@ -121,7 +122,7 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
             'title', 'is_favorite', 'reviews_count', 'is_verified', 'is_vip',
             'city_title', 'region_title', 'category_title',
             'price_text', 'rating', 'has_discount', 'discount_text', 'work_experience_years',
-            'is_region_level',
+            'is_region_level', 'has_location', 'show_location',
         ]
 
     def _localized_name(self, obj, prefix):
@@ -171,6 +172,12 @@ class ServiceBaseSerializer(LangMixin, FavoriteStatusMixin, serializers.ModelSer
         if not city:
             return False
         return bool(getattr(city, "is_region_level", False))
+
+    def get_has_location(self, obj):
+        address = (getattr(obj, "address", "") or "").strip()
+        latitude = getattr(obj, "latitude", None)
+        longitude = getattr(obj, "longitude", None)
+        return bool(address) or (latitude is not None and longitude is not None)
 
 
 class ServiceCoverUrlMixin(serializers.Serializer):
@@ -393,6 +400,7 @@ class ServiceUpdateSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             'city', 'address', 'available_cities', 'avatar', 'background',
+            'show_location',
             'contacts',
             'title_tm', 'title_ru',
             'description_tm', 'description_ru',
