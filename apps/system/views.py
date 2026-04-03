@@ -1,11 +1,13 @@
 from drf_spectacular.utils import extend_schema
 from django.shortcuts import render
+from django.conf import settings
+from django.utils.cache import patch_cache_control, patch_response_headers
 from rest_framework import mixins, permissions, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
-from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer
+from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer, MapConfigSerializer
 from .forms import DeleteAccountForm
 from .throttles import FeedbackIPThrottle
 
@@ -58,6 +60,25 @@ class SystemAboutView(APIView):
         if not about:
             return Response({"about_tm": "", "about_ru": ""})
         return Response(SystemAboutSerializer(about).data)
+
+
+class SystemMapConfigView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(tags=["System"], responses=MapConfigSerializer)
+    def get(self, request):
+        payload = {
+            "tile_url": getattr(settings, "MAP_TILE_URL", "") or getattr(settings, "OSM_TILE_URL", ""),
+            "attribution": getattr(settings, "MAP_ATTRIBUTION", "© OpenStreetMap contributors"),
+            "min_zoom": getattr(settings, "MAP_MIN_ZOOM", 0),
+            "max_zoom": getattr(settings, "MAP_MAX_ZOOM", 19),
+        }
+        response = Response(MapConfigSerializer(payload).data)
+        cache_timeout = max(int(getattr(settings, "MAP_CONFIG_CACHE_MAX_AGE", 3600)), 0)
+        patch_response_headers(response, cache_timeout=cache_timeout)
+        patch_cache_control(response, public=True, max_age=cache_timeout)
+        return response
 
 
 @extend_schema(

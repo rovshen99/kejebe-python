@@ -94,6 +94,11 @@ SERVICE_STORY_TTL_HOURS = int(os.getenv("SERVICE_STORY_TTL_HOURS", "24"))
 DEVICE_LAST_SEEN_ENABLED = os.getenv("DEVICE_LAST_SEEN_ENABLED", "true").lower() == "true"
 DEFAULT_REGION_ID = int(os.getenv("DEFAULT_REGION_ID", "0")) or None
 OSM_TILE_URL = os.getenv("OSM_TILE_URL", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+MAP_TILE_URL = os.getenv("MAP_TILE_URL", OSM_TILE_URL).strip()
+MAP_ATTRIBUTION = os.getenv("MAP_ATTRIBUTION", "© OpenStreetMap contributors").strip()
+MAP_MIN_ZOOM = int(os.getenv("MAP_MIN_ZOOM", "0"))
+MAP_MAX_ZOOM = int(os.getenv("MAP_MAX_ZOOM", "19"))
+MAP_CONFIG_CACHE_MAX_AGE = int(os.getenv("MAP_CONFIG_CACHE_MAX_AGE", "3600"))
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
 CORS_ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")
