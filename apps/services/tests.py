@@ -9,6 +9,7 @@ from core.utils import format_price_text
 from apps.services.serializers import (
     ServiceApplicationSerializer,
     ServiceBaseSerializer,
+    ServiceShowcaseSerializer,
     ServiceUpdateSerializer,
 )
 from apps.services.throttles import ServiceApplicationIPThrottle
@@ -108,6 +109,12 @@ class ServiceApplicationIPThrottleTests(SimpleTestCase):
 
 
 class ServiceSerializerFieldTests(SimpleTestCase):
+    def test_service_showcase_serializer_excludes_products(self):
+        self.assertNotIn("products", ServiceShowcaseSerializer.Meta.fields)
+
+    def test_service_showcase_serializer_excludes_videos(self):
+        self.assertNotIn("videos", ServiceShowcaseSerializer.Meta.fields)
+
     def test_service_base_serializer_includes_work_experience_years(self):
         self.assertIn("work_experience_years", ServiceBaseSerializer.Meta.fields)
 

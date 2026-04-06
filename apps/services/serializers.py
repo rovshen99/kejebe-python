@@ -392,6 +392,29 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
         return ServiceVideoSerializer(videos, many=True, context=self.context).data
 
 
+class ServiceShowcaseSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBaseSerializer):
+    description = serializers.SerializerMethodField()
+    images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
+    contacts = ServiceContactSerializer(many=True, read_only=True)
+    tags = serializers.SerializerMethodField()
+    available_cities = CitySerializer(many=True, read_only=True)
+
+    class Meta(ServiceBaseSerializer.Meta):
+        model = Service
+        fields = ServiceBaseSerializer.Meta.fields + [
+            'vendor', 'address', 'available_cities', 'background', 'cover_url',
+            'description_tm', 'description_ru', 'description',
+            'price_min', 'price_max', 'is_catalog',
+            'latitude', 'longitude', 'is_active', 'active_until',
+            'tags', 'priority', 'created_at', 'updated_at',
+            'images', 'contacts',
+            'is_grid_gallery',
+        ]
+
+    def get_description(self, obj):
+        return localized_value(obj, "description", lang=self._lang())
+
+
 class ServiceUpdateSerializer(serializers.ModelSerializer):
     available_cities = serializers.PrimaryKeyRelatedField(queryset=City.objects.all(), many=True, required=False)
     contacts = ServiceContactWriteSerializer(many=True, required=False)
