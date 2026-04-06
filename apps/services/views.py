@@ -19,6 +19,7 @@ from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, Con
 from .models import ServiceVideo
 from .serializers import (
     ServiceDetailSerializer,
+    ServiceShowcaseSerializer,
     ReviewSerializer,
     FavoriteSerializer,
     ServiceListSerializer,
@@ -243,7 +244,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     @extend_schema(
         summary="List showcase services",
         description="Returns manually selected services for the website showcase block.",
-        responses=ServiceDetailSerializer(many=True),
+        responses=ServiceShowcaseSerializer(many=True),
     )
     @action(
         detail=False,
@@ -267,9 +268,6 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         if not service_ids:
             return Response([])
 
-        products_qs = ServiceProduct.objects.prefetch_related(
-            "images", "values__attribute"
-        ).order_by("priority", "-created_at")
         showcase_qs = (
             Service.objects.filter(is_active=True, id__in=service_ids)
             .select_related('vendor', 'category', 'city', 'city__region')
@@ -279,12 +277,6 @@ class ServiceViewSet(FavoriteAnnotateMixin,
                 "available_cities",
                 "contacts__type",
                 "serviceimage_set",
-                Prefetch(
-                    "servicevideo_set",
-                    queryset=ServiceVideo.objects.filter(hls_ready=True).order_by("id"),
-                    to_attr="hls_videos",
-                ),
-                Prefetch("products", queryset=products_qs),
             )
             .annotate(
                 rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
@@ -299,7 +291,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         showcase_qs = self.annotate_is_favorite(showcase_qs)
         services_map = {service.id: service for service in showcase_qs}
         services = [services_map[service_id] for service_id in service_ids if service_id in services_map]
-        serializer = ServiceDetailSerializer(services, many=True, context={"request": request})
+        serializer = ServiceShowcaseSerializer(services, many=True, context={"request": request})
         return Response(serializer.data)
 
     @extend_schema(
