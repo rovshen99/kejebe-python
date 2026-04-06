@@ -32,6 +32,7 @@ from .serializers import (
 )
 from .mixins import FavoriteAnnotateMixin
 from .throttles import ServiceApplicationIPThrottle
+from apps.system.models import WebsiteShowcaseConfig
 
 
 @extend_schema(tags=["Services"])
@@ -238,6 +239,68 @@ class ServiceViewSet(FavoriteAnnotateMixin,
     )
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="List showcase services",
+        description="Returns manually selected services for the website showcase block.",
+        responses=ServiceDetailSerializer(many=True),
+    )
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="showcase",
+        permission_classes=[permissions.AllowAny],
+        pagination_class=None,
+    )
+    def showcase(self, request, *args, **kwargs):
+        config = (
+            WebsiteShowcaseConfig.objects.filter(is_active=True)
+            .prefetch_related("items")
+            .order_by("-updated_at", "-id")
+            .first()
+        )
+        if not config:
+            return Response([])
+
+        showcase_items = list(config.items.filter(is_active=True).order_by("position", "id"))
+        service_ids = [item.service_id for item in showcase_items[: config.limit]]
+        if not service_ids:
+            return Response([])
+
+        products_qs = ServiceProduct.objects.prefetch_related(
+            "images", "values__attribute"
+        ).order_by("priority", "-created_at")
+        showcase_qs = (
+            Service.objects.filter(is_active=True, id__in=service_ids)
+            .select_related('vendor', 'category', 'city', 'city__region')
+            .prefetch_related(
+                "additional_categories",
+                "tags",
+                "available_cities",
+                "contacts__type",
+                "serviceimage_set",
+                Prefetch(
+                    "servicevideo_set",
+                    queryset=ServiceVideo.objects.filter(hls_ready=True).order_by("id"),
+                    to_attr="hls_videos",
+                ),
+                Prefetch("products", queryset=products_qs),
+            )
+            .annotate(
+                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
+                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                cover_image_path=Subquery(
+                    ServiceImage.objects.filter(service_id=OuterRef("pk"))
+                    .order_by("id")
+                    .values("image")[:1]
+                ),
+            )
+        )
+        showcase_qs = self.annotate_is_favorite(showcase_qs)
+        services_map = {service.id: service for service in showcase_qs}
+        services = [services_map[service_id] for service_id in service_ids if service_id in services_map]
+        serializer = ServiceDetailSerializer(services, many=True, context={"request": request})
+        return Response(serializer.data)
 
     @extend_schema(
         summary="List my services",

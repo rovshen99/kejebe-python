@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django_summernote.fields import SummernoteTextField
 
-from apps.services.models import ContactType
+from apps.services.models import ContactType, Service
 
 
 class SystemContact(models.Model):
@@ -98,3 +98,58 @@ class SystemAbout(models.Model):
 
     def __str__(self):
         return "System About"
+
+
+class WebsiteShowcaseConfig(models.Model):
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Active"))
+    limit = models.PositiveSmallIntegerField(default=4, verbose_name=_("Limit"))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_("Updated At"))
+
+    class Meta:
+        verbose_name = _("Website Showcase")
+        verbose_name_plural = _("Website Showcase")
+        ordering = ("-updated_at", "-id")
+
+    def clean(self):
+        if self.limit < 1 or self.limit > 8:
+            raise ValidationError({"limit": _("Limit must be between 1 and 8.")})
+        if not self.pk and WebsiteShowcaseConfig.objects.exists():
+            raise ValidationError(_("Only one Website Showcase record is allowed."))
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return "Website Showcase"
+
+
+class WebsiteShowcaseItem(models.Model):
+    config = models.ForeignKey(
+        WebsiteShowcaseConfig,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("Config"),
+    )
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="website_showcase_items",
+        verbose_name=_("Service"),
+    )
+    position = models.PositiveIntegerField(default=100, verbose_name=_("Position"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Active"))
+
+    class Meta:
+        verbose_name = _("Website Showcase Item")
+        verbose_name_plural = _("Website Showcase Items")
+        ordering = ("position", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("config", "service"),
+                name="website_showcase_config_service_unique",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.position}: {self.service}"

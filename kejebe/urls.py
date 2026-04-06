@@ -65,7 +65,7 @@ api_patterns = [
     path('', include(services_router.urls)),
     path('auth/', include('apps.users.urls')),
     path('devices/', include('apps.devices.urls')),
-    path('home', HomeViewSet.as_view({'get': 'list'}), name='home'),
+    path('home/', HomeViewSet.as_view({'get': 'list'})),
     path('system/contacts', SystemContactViewSet.as_view({'get': 'list'}), name='system-contacts'),
     path('system/about', SystemAboutView.as_view(), name='system-about'),
     path('system/map-config/', SystemMapConfigView.as_view(), name='system-map-config'),
