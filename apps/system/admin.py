@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django_summernote.admin import SummernoteModelAdmin
 
-from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
+from .models import (
+    SystemContact,
+    AccountDeletionRequest,
+    SystemAbout,
+    ClientFeedback,
+    WebsiteShowcaseConfig,
+    WebsiteShowcaseItem,
+)
 
 
 @admin.register(SystemContact)
@@ -36,6 +43,28 @@ class SystemAboutAdmin(SummernoteModelAdmin):
 
     def has_add_permission(self, request):
         return not SystemAbout.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class WebsiteShowcaseItemInline(admin.TabularInline):
+    model = WebsiteShowcaseItem
+    extra = 0
+    autocomplete_fields = ("service",)
+    fields = ("service", "position", "is_active")
+    ordering = ("position", "id")
+
+
+@admin.register(WebsiteShowcaseConfig)
+class WebsiteShowcaseConfigAdmin(admin.ModelAdmin):
+    list_display = ("id", "is_active", "limit", "updated_at")
+    list_filter = ("is_active",)
+    ordering = ("-updated_at", "-id")
+    inlines = [WebsiteShowcaseItemInline]
+
+    def has_add_permission(self, request):
+        return not WebsiteShowcaseConfig.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
         return False
