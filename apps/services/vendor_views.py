@@ -82,7 +82,6 @@ class VendorServiceViewSet(FavoriteAnnotateMixin,
                            mixins.CreateModelMixin,
                            mixins.RetrieveModelMixin,
                            mixins.UpdateModelMixin,
-                           mixins.DestroyModelMixin,
                            viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated, IsVendor]
     parser_classes = (MultiPartParser, FormParser, JSONParser)
