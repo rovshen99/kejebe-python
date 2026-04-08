@@ -26,3 +26,8 @@ class VendorMyEndpointsAuthTests(SimpleTestCase):
         response = self.client.get("/api/v1/vendor/services/1/products/")
 
         self.assertIn(response.status_code, {401, 403})
+
+    def test_vendor_contacts_requires_authentication(self):
+        response = self.client.get("/api/v1/vendor/services/1/contacts/")
+
+        self.assertIn(response.status_code, {401, 403})

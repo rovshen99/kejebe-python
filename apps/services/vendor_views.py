@@ -17,6 +17,8 @@ from apps.services.vendor_serializers import (
     VendorCategoryAttributeSerializer,
     VendorMeSerializer,
     VendorMeUpdateSerializer,
+    VendorServiceContactSerializer,
+    VendorServiceContactWriteSerializer,
     VendorServiceDetailSerializer,
     VendorServiceImageSerializer,
     VendorServiceImageWriteSerializer,
@@ -134,6 +136,41 @@ class VendorServiceViewSet(FavoriteAnnotateMixin,
         instance = serializer.save()
         instance.refresh_from_db()
         return Response(VendorServiceDetailSerializer(instance, context={"request": request}).data)
+
+
+class VendorServiceContactViewSet(VendorOwnedServiceMixin,
+                                  mixins.ListModelMixin,
+                                  mixins.CreateModelMixin,
+                                  mixins.UpdateModelMixin,
+                                  mixins.DestroyModelMixin,
+                                  viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsVendor]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    pagination_class = None
+
+    def get_queryset(self):
+        service = self.get_vendor_service()
+        return service.contacts.select_related("type").order_by("id")
+
+    def get_serializer_class(self):
+        if self.action in {"create", "update", "partial_update"}:
+            return VendorServiceContactWriteSerializer
+        return VendorServiceContactSerializer
+
+    def create(self, request, *args, **kwargs):
+        service = self.get_vendor_service()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        contact = serializer.save(service=service)
+        return Response(VendorServiceContactSerializer(contact, context={"request": request}).data, status=201)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        contact = serializer.save()
+        return Response(VendorServiceContactSerializer(contact, context={"request": request}).data)
 
 class VendorServiceImageViewSet(VendorOwnedServiceMixin,
                                 mixins.ListModelMixin,

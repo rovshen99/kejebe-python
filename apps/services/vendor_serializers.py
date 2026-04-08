@@ -135,6 +135,18 @@ class VendorServiceWriteSerializer(serializers.ModelSerializer):
         return self._save_relations(instance, validated_data)
 
 
+class VendorServiceContactSerializer(ServiceContactSerializer):
+    id = serializers.IntegerField(read_only=True)
+
+    class Meta(ServiceContactSerializer.Meta):
+        fields = ["id", "type", "value"]
+
+
+class VendorServiceContactWriteSerializer(ServiceContactWriteSerializer):
+    class Meta(ServiceContactWriteSerializer.Meta):
+        fields = ["type_slug", "value"]
+
+
 class VendorServiceImageSerializer(serializers.ModelSerializer):
     aspect_ratio = serializers.SerializerMethodField()
 

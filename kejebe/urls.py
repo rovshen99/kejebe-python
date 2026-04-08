@@ -34,6 +34,7 @@ from apps.services.vendor_views import (
     VendorCategoryAttributesView,
     VendorMeUpdateView,
     VendorMeView,
+    VendorServiceContactViewSet,
     VendorServiceImageViewSet,
     VendorServiceProductImageViewSet,
     VendorServiceProductViewSet,
@@ -74,6 +75,7 @@ vendor_router = routers.DefaultRouter()
 vendor_router.register(r'services', VendorServiceViewSet, basename='vendor-service')
 
 vendor_services_router = routers.NestedDefaultRouter(vendor_router, r'services', lookup='service')
+vendor_services_router.register(r'contacts', VendorServiceContactViewSet, basename='vendor-service-contacts')
 vendor_services_router.register(r'images', VendorServiceImageViewSet, basename='vendor-service-images')
 vendor_services_router.register(r'videos', VendorServiceVideoViewSet, basename='vendor-service-videos')
 vendor_services_router.register(r'products', VendorServiceProductViewSet, basename='vendor-service-products')
