@@ -30,6 +30,16 @@ from apps.services.views import (
     ServiceApplicationViewSet,
     ContactTypeViewSet,
 )
+from apps.services.vendor_views import (
+    VendorCategoryAttributesView,
+    VendorMeUpdateView,
+    VendorMeView,
+    VendorServiceImageViewSet,
+    VendorServiceProductImageViewSet,
+    VendorServiceProductViewSet,
+    VendorServiceVideoViewSet,
+    VendorServiceViewSet,
+)
 from apps.system.views import (
     SystemContactViewSet,
     SystemAboutView,
@@ -60,9 +70,26 @@ services_router = routers.NestedDefaultRouter(router, r'services', lookup='servi
 services_router.register(r'products', ServiceProductViewSet, basename='service-products')
 services_router.register(r'stories', ServiceStoryViewSet, basename='service-stories')
 
+vendor_router = routers.DefaultRouter()
+vendor_router.register(r'services', VendorServiceViewSet, basename='vendor-service')
+
+vendor_services_router = routers.NestedDefaultRouter(vendor_router, r'services', lookup='service')
+vendor_services_router.register(r'images', VendorServiceImageViewSet, basename='vendor-service-images')
+vendor_services_router.register(r'videos', VendorServiceVideoViewSet, basename='vendor-service-videos')
+vendor_services_router.register(r'products', VendorServiceProductViewSet, basename='vendor-service-products')
+
+vendor_products_router = routers.NestedDefaultRouter(vendor_services_router, r'products', lookup='product')
+vendor_products_router.register(r'images', VendorServiceProductImageViewSet, basename='vendor-service-product-images')
+
 api_patterns = [
     path('', include(router.urls)),
     path('', include(services_router.urls)),
+    path('vendor/me/', VendorMeView.as_view(), name='vendor-me'),
+    path('vendor/me/update/', VendorMeUpdateView.as_view(), name='vendor-me-update'),
+    path('vendor/categories/<int:category_id>/attributes/', VendorCategoryAttributesView.as_view(), name='vendor-category-attributes'),
+    path('vendor/', include(vendor_router.urls)),
+    path('vendor/', include(vendor_services_router.urls)),
+    path('vendor/', include(vendor_products_router.urls)),
     path('auth/', include('apps.users.urls')),
     path('devices/', include('apps.devices.urls')),
     path('home/', HomeViewSet.as_view({'get': 'list'})),
