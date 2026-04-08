@@ -155,11 +155,13 @@ class ServiceContact(models.Model):
 class ServiceImage(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
     image = WebPImageField(upload_to="services/images", verbose_name=_("Image"), null=True)
+    position = models.PositiveIntegerField(default=100, verbose_name=_("Position"))
     aspect_ratio = models.FloatField(null=True, blank=True, verbose_name=_("Aspect Ratio"))
 
     class Meta:
         verbose_name = _("Service Image")
         verbose_name_plural = _("Service Images")
+        ordering = ("position", "id")
 
     def __str__(self):
         return self.service.title_tm
@@ -202,6 +204,7 @@ class ServiceImage(models.Model):
 
 class ServiceVideo(models.Model):
     service = models.ForeignKey(Service, on_delete=models.CASCADE, verbose_name=_("Service"))
+    position = models.PositiveIntegerField(default=100, verbose_name=_("Position"))
     file = models.FileField(
         upload_to="services/videos/",
         verbose_name=_("Video file"),
@@ -228,6 +231,7 @@ class ServiceVideo(models.Model):
     class Meta:
         verbose_name = _("Service Video")
         verbose_name_plural = _("Service Videos")
+        ordering = ("position", "id")
 
     def __str__(self):
         if self.file:
@@ -444,10 +448,12 @@ class ServiceProductImage(models.Model):
         verbose_name=_("Product")
     )
     image = WebPImageField(upload_to="services/product_images", verbose_name=_("Image"))
+    position = models.PositiveIntegerField(default=100, verbose_name=_("Position"))
 
     class Meta:
         verbose_name = _("Service Product Image")
         verbose_name_plural = _("Service Product Images")
+        ordering = ("position", "id")
 
     def __str__(self):
         return self.image.url if self.image else str(self.pk)
