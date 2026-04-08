@@ -324,9 +324,6 @@ class ServiceTag(models.Model):
 
 
 class Attribute(models.Model):
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name="attribute_definitions", verbose_name=_("Category")
-    )
     name_tm = models.CharField(max_length=100, verbose_name=_("Attribute Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Attribute Name (RU)"))
 
@@ -338,49 +335,148 @@ class Attribute(models.Model):
             ('number', _('Number')),
             ('boolean', _('Boolean')),
             ('choice', _('Choice')),
+            ('multiselect', _('Multi Select')),
         ],
         db_index=True,
         verbose_name=_("Input Type")
     )
+    unit_tm = models.CharField(max_length=32, blank=True, default="", verbose_name=_("Unit (TM)"))
+    unit_ru = models.CharField(max_length=32, blank=True, default="", verbose_name=_("Unit (RU)"))
+    placeholder_tm = models.CharField(max_length=150, blank=True, default="", verbose_name=_("Placeholder (TM)"))
+    placeholder_ru = models.CharField(max_length=150, blank=True, default="", verbose_name=_("Placeholder (RU)"))
+    help_text_tm = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Help Text (TM)"))
+    help_text_ru = models.CharField(max_length=255, blank=True, default="", verbose_name=_("Help Text (RU)"))
+    min_value = models.FloatField(null=True, blank=True, verbose_name=_("Min Value"))
+    max_value = models.FloatField(null=True, blank=True, verbose_name=_("Max Value"))
+    step = models.FloatField(null=True, blank=True, verbose_name=_("Step"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Active"))
     is_required = models.BooleanField(default=False, verbose_name=_("Is Required"))
 
     class Meta:
         verbose_name = _("Attribute")
         verbose_name_plural = _("Attributes")
-        unique_together = ('category', 'slug')
+        ordering = ("name_tm", "id")
 
     def __str__(self):
-        return f"{self.category.name_tm} → {self.name_tm}"
+        return self.name_tm
+
+    @property
+    def supports_options(self):
+        return self.input_type in {"choice", "multiselect"}
 
 
-class AttributeValue(models.Model):
-    product = models.ForeignKey(
-        'ServiceProduct',
+class AttributeOption(models.Model):
+    attribute = models.ForeignKey(
+        Attribute,
         on_delete=models.CASCADE,
-        related_name="values",
-        verbose_name=_("Product"),
+        related_name="options",
+        verbose_name=_("Attribute"),
+    )
+    value = models.SlugField(max_length=100, verbose_name=_("Value"))
+    label_tm = models.CharField(max_length=100, verbose_name=_("Label (TM)"))
+    label_ru = models.CharField(max_length=100, verbose_name=_("Label (RU)"))
+    sort_order = models.PositiveIntegerField(default=100, verbose_name=_("Sort Order"))
+    is_active = models.BooleanField(default=True, verbose_name=_("Is Active"))
+
+    class Meta:
+        verbose_name = _("Attribute Option")
+        verbose_name_plural = _("Attribute Options")
+        ordering = ("sort_order", "id")
+        constraints = [
+            models.UniqueConstraint(fields=("attribute", "value"), name="uniq_attribute_option_value"),
+        ]
+
+    def __str__(self):
+        return f"{self.attribute.name_tm} → {self.label_tm}"
+
+
+class CategoryAttribute(models.Model):
+    class Scope(models.TextChoices):
+        SERVICE = "service", _("Service")
+        PRODUCT = "product", _("Product")
+
+    class FilterType(models.TextChoices):
+        AUTO = "auto", _("Auto")
+        CHECKBOX = "checkbox", _("Checkbox")
+        SELECT = "select", _("Select")
+        MULTISELECT = "multiselect", _("Multi Select")
+        RANGE = "range", _("Range")
+
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="category_attributes",
+        verbose_name=_("Category"),
     )
     attribute = models.ForeignKey(
-        Attribute, on_delete=models.CASCADE, verbose_name=_("Attribute")
+        Attribute,
+        on_delete=models.CASCADE,
+        related_name="category_links",
+        verbose_name=_("Attribute"),
     )
+    scope = models.CharField(max_length=16, choices=Scope.choices, verbose_name=_("Scope"))
+    is_required = models.BooleanField(default=False, verbose_name=_("Is Required"))
+    is_filterable = models.BooleanField(default=False, verbose_name=_("Is Filterable"))
+    is_highlighted = models.BooleanField(default=False, verbose_name=_("Is Highlighted"))
+    section_tm = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Section (TM)"))
+    section_ru = models.CharField(max_length=100, blank=True, default="", verbose_name=_("Section (RU)"))
+    show_in_filters = models.BooleanField(default=False, verbose_name=_("Show in Filters"))
+    show_in_card = models.BooleanField(default=False, verbose_name=_("Show in Card"))
+    show_in_detail = models.BooleanField(default=True, verbose_name=_("Show in Detail"))
+    filter_type = models.CharField(
+        max_length=20,
+        choices=FilterType.choices,
+        default=FilterType.AUTO,
+        verbose_name=_("Filter Type"),
+    )
+    filter_order = models.PositiveIntegerField(default=100, verbose_name=_("Filter Order"))
+    sort_order = models.PositiveIntegerField(default=100, verbose_name=_("Sort Order"))
 
-    value_text_tm = models.CharField(max_length=100, verbose_name=_("Text Value (TM)"))
-    value_text_ru = models.CharField(max_length=100, verbose_name=_("Text Value (RU)"))
+    class Meta:
+        verbose_name = _("Category Attribute")
+        verbose_name_plural = _("Category Attributes")
+        ordering = ("sort_order", "id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("category", "attribute", "scope"),
+                name="uniq_category_attribute_scope",
+            ),
+        ]
 
+    def __str__(self):
+        return f"{self.category.name_tm} → {self.attribute.name_tm} ({self.scope})"
+
+
+class BaseAttributeValue(models.Model):
+    attribute = models.ForeignKey(
+        Attribute,
+        on_delete=models.CASCADE,
+        verbose_name=_("Attribute"),
+    )
+    option = models.ForeignKey(
+        AttributeOption,
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name=_("Option"),
+    )
+    value_text_tm = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Text Value (TM)"))
+    value_text_ru = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Text Value (RU)"))
     value_number = models.FloatField(null=True, blank=True, verbose_name=_("Number Value"))
     value_boolean = models.BooleanField(null=True, blank=True, verbose_name=_("Boolean Value"))
 
     class Meta:
-        verbose_name = _("Attribute Value")
-        verbose_name_plural = _("Attribute Values")
-        unique_together = ('product', 'attribute')
-
-    def __str__(self):
-        return f"{self.product.title_tm} – {self.attribute.name_tm}"
+        abstract = True
 
     @property
     def value(self):
         input_type = self.attribute.input_type
+
+        if input_type in {"choice", "multiselect"} and self.option_id:
+            lang = translation.get_language()
+            if lang == "ru":
+                return self.option.label_ru
+            return self.option.label_tm
 
         if input_type == 'text':
             lang = translation.get_language()
@@ -388,14 +484,15 @@ class AttributeValue(models.Model):
                 return self.value_text_ru
             return self.value_text_tm
 
-        elif input_type == 'number':
+        if input_type == 'number':
             return self.value_number
-        elif input_type == 'boolean':
+        if input_type == 'boolean':
             return self.value_boolean
         return None
 
     @value.setter
     def value(self, val):
+        self.option = None
         self.value_text_tm = None
         self.value_text_ru = None
         self.value_number = None
@@ -414,6 +511,62 @@ class AttributeValue(models.Model):
             self.value_number = float(val)
         elif input_type == 'boolean':
             self.value_boolean = bool(val)
+
+
+class ServiceAttributeValue(BaseAttributeValue):
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="service_attribute_values",
+        verbose_name=_("Service"),
+    )
+
+    class Meta:
+        verbose_name = _("Service Attribute Value")
+        verbose_name_plural = _("Service Attribute Values")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("service", "attribute"),
+                condition=Q(option__isnull=True),
+                name="uniq_service_attr_without_option",
+            ),
+            models.UniqueConstraint(
+                fields=("service", "attribute", "option"),
+                condition=Q(option__isnull=False),
+                name="uniq_service_attr_with_option",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.service.title_tm} – {self.attribute.name_tm}"
+
+
+class ProductAttributeValue(BaseAttributeValue):
+    product = models.ForeignKey(
+        'ServiceProduct',
+        on_delete=models.CASCADE,
+        related_name="values",
+        verbose_name=_("Product"),
+    )
+
+    class Meta:
+        verbose_name = _("Product Attribute Value")
+        verbose_name_plural = _("Product Attribute Values")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("product", "attribute"),
+                condition=Q(option__isnull=True),
+                name="uniq_product_attr_without_option",
+            ),
+            models.UniqueConstraint(
+                fields=("product", "attribute", "option"),
+                condition=Q(option__isnull=False),
+                name="uniq_product_attr_with_option",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.product.title_tm} – {self.attribute.name_tm}"
 
 
 class ServiceProduct(models.Model):

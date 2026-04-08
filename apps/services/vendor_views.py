@@ -9,14 +9,20 @@ from rest_framework.views import APIView
 
 from apps.services.filters import ServiceProductFilter
 from apps.services.mixins import FavoriteAnnotateMixin
-from apps.services.models import Attribute, Service, ServiceImage, ServiceProduct, ServiceProductImage, ServiceVideo
+from apps.categories.models import Category
+from apps.services.models import Attribute, CategoryAttribute, Service, ServiceAttributeValue, ServiceImage, ServiceProduct, ServiceProductImage, ServiceVideo
 from apps.services.permissions import IsVendor
-from apps.services.serializers import ServiceDetailSerializer
+from apps.services.serializers import CategorySchemaSerializer, ServiceDetailSerializer
 from apps.services.vendor_serializers import (
     ReorderSerializer,
     VendorCategoryAttributeSerializer,
+    VendorCategorySchemaSerializer,
     VendorMeSerializer,
     VendorMeUpdateSerializer,
+    VendorProductAttributeValueBulkSerializer,
+    VendorServiceAttributeValueBulkSerializer,
+    VendorServiceAttributeValueSerializer,
+    VendorServiceAttributeValueWriteSerializer,
     VendorServiceContactSerializer,
     VendorServiceContactWriteSerializer,
     VendorServiceDetailSerializer,
@@ -103,9 +109,21 @@ class VendorServiceViewSet(FavoriteAnnotateMixin,
             .order_by("-created_at")
         )
         if self.action in {"retrieve", "update", "partial_update"}:
-            qs = qs.prefetch_related("tags", "available_cities", "contacts__type")
+            qs = qs.prefetch_related(
+                "tags",
+                "available_cities",
+                "contacts__type",
+                "service_attribute_values__attribute",
+                "service_attribute_values__option",
+            )
         if self.action == "retrieve":
-            qs = qs.prefetch_related("products__values__attribute", "products__images", "serviceimage_set", "servicevideo_set")
+            qs = qs.prefetch_related(
+                "products__values__attribute",
+                "products__values__option",
+                "products__images",
+                "serviceimage_set",
+                "servicevideo_set",
+            )
         return self.annotate_is_favorite(qs)
 
     def get_serializer_class(self):
@@ -170,6 +188,60 @@ class VendorServiceContactViewSet(VendorOwnedServiceMixin,
         serializer.is_valid(raise_exception=True)
         contact = serializer.save()
         return Response(VendorServiceContactSerializer(contact, context={"request": request}).data)
+
+
+class VendorServiceAttributeValueViewSet(VendorOwnedServiceMixin,
+                                         mixins.ListModelMixin,
+                                         mixins.CreateModelMixin,
+                                         mixins.UpdateModelMixin,
+                                         mixins.DestroyModelMixin,
+                                         viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated, IsVendor]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    pagination_class = None
+
+    def get_queryset(self):
+        return ServiceAttributeValue.objects.filter(
+            service_id=self.kwargs["service_pk"],
+            service__vendor=self.request.user,
+        ).select_related("attribute", "option").order_by("id")
+
+    def get_serializer_class(self):
+        if self.action in {"create", "update", "partial_update"}:
+            return VendorServiceAttributeValueWriteSerializer
+        return VendorServiceAttributeValueSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        context["service"] = self.get_vendor_service()
+        return context
+
+    def create(self, request, *args, **kwargs):
+        service = self.get_vendor_service()
+        serializer = self.get_serializer(data=request.data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        value = serializer.save(service=service)
+        return Response(VendorServiceAttributeValueSerializer(value, context={"request": request}).data, status=201)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        value = serializer.save()
+        return Response(VendorServiceAttributeValueSerializer(value, context={"request": request}).data)
+
+    @action(detail=False, methods=["put"], url_path="bulk")
+    def bulk(self, request, service_pk=None):
+        service = self.get_vendor_service()
+        serializer = VendorServiceAttributeValueBulkSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        values = serializer.save(service=service)
+        return Response(VendorServiceAttributeValueSerializer(values, many=True, context={"request": request}).data)
 
 class VendorServiceImageViewSet(VendorOwnedServiceMixin,
                                 mixins.ListModelMixin,
@@ -292,7 +364,7 @@ class VendorServiceProductViewSet(FavoriteAnnotateMixin,
                 service__vendor=self.request.user,
             )
             .select_related("service")
-            .prefetch_related("images", "values__attribute", "service__contacts__type")
+            .prefetch_related("images", "values__attribute", "values__option", "service__contacts__type")
             .order_by("priority", "-created_at")
         )
         return self.annotate_is_favorite(qs)
@@ -338,6 +410,17 @@ class VendorServiceProductViewSet(FavoriteAnnotateMixin,
                 product.priority = item["position"]
                 product.save(update_fields=["priority"])
         return Response(VendorServiceProductListSerializer(self.get_queryset(), many=True, context={"request": request}).data)
+
+    @action(detail=True, methods=["put"], url_path="attributes/bulk")
+    def bulk_attributes(self, request, service_pk=None, pk=None):
+        product = self.get_object()
+        serializer = VendorProductAttributeValueBulkSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        values = serializer.save(product=product)
+        return Response(VendorServiceProductDetailSerializer(product, context={"request": request}).data)
 
 
 class VendorServiceProductImageViewSet(VendorOwnedProductMixin,
@@ -391,10 +474,23 @@ class VendorServiceProductImageViewSet(VendorOwnedProductMixin,
         return Response(VendorServiceProductImageSerializer(self.get_queryset(), many=True, context={"request": request}).data)
 
 
-class VendorCategoryAttributesView(generics.ListAPIView):
+class VendorCategoryAttributesView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsVendor]
-    serializer_class = VendorCategoryAttributeSerializer
-    pagination_class = None
 
-    def get_queryset(self):
-        return Attribute.objects.filter(category_id=self.kwargs["category_id"]).order_by("id")
+    def get(self, request, category_id):
+        category_attributes = (
+            CategoryAttribute.objects.select_related("attribute")
+            .filter(category_id=category_id, scope=CategoryAttribute.Scope.PRODUCT, attribute__is_active=True)
+            .order_by("sort_order", "id")
+        )
+        payload = [item.attribute for item in category_attributes]
+        return Response(VendorCategoryAttributeSerializer(payload, many=True, context={"request": request}).data)
+
+
+class VendorCategorySchemaView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsVendor]
+
+    def get(self, request, category_id):
+        category = get_object_or_404(Category, pk=category_id)
+        serializer = VendorCategorySchemaSerializer(category, context={"request": request})
+        return Response(serializer.data)

@@ -7,7 +7,11 @@ from rest_framework import serializers
 
 from core.utils import format_price_text
 from apps.services.serializers import (
+    AttributeSerializer,
+    CategorySchemaSerializer,
+    CategorySchemaAttributeSerializer,
     ServiceApplicationSerializer,
+    ServiceDetailSerializer,
     ServiceBaseSerializer,
     ServiceShowcaseSerializer,
     ServiceUpdateSerializer,
@@ -140,8 +144,93 @@ class ServiceSerializerFieldTests(SimpleTestCase):
     def test_service_base_serializer_includes_show_location(self):
         self.assertIn("show_location", ServiceBaseSerializer.Meta.fields)
 
+    def test_service_detail_serializer_includes_attributes(self):
+        self.assertIn("attributes", ServiceDetailSerializer.Meta.fields)
+
     def test_service_update_serializer_includes_show_location(self):
         self.assertIn("show_location", ServiceUpdateSerializer.Meta.fields)
+
+    def test_category_schema_serializer_exposes_service_and_product_attributes(self):
+        serializer = CategorySchemaSerializer()
+
+        self.assertIn("service_attributes", serializer.fields)
+        self.assertIn("product_attributes", serializer.fields)
+
+    def test_category_schema_attribute_serializer_exposes_ui_metadata(self):
+        serializer = CategorySchemaAttributeSerializer()
+
+        self.assertIn("section", serializer.fields)
+        self.assertIn("unit", serializer.fields)
+        self.assertIn("unit_tm", serializer.fields)
+        self.assertIn("unit_ru", serializer.fields)
+        self.assertIn("placeholder", serializer.fields)
+        self.assertIn("help_text", serializer.fields)
+        self.assertIn("show_in_filters", serializer.fields)
+        self.assertIn("show_in_card", serializer.fields)
+        self.assertIn("show_in_detail", serializer.fields)
+        self.assertIn("filter_type", serializer.fields)
+        self.assertIn("filter_order", serializer.fields)
+
+    def test_attribute_serializer_localizes_unit(self):
+        request = RequestFactory().get("/api/v1/categories/1/schema/", HTTP_ACCEPT_LANGUAGE="ru")
+        serializer = AttributeSerializer(
+            instance=SimpleNamespace(
+                id=1,
+                name_tm="Sygymdarlyk",
+                name_ru="Вместимость",
+                slug="capacity",
+                input_type="number",
+                unit_tm="myhman",
+                unit_ru="гостей",
+                placeholder_tm="",
+                placeholder_ru="",
+                help_text_tm="",
+                help_text_ru="",
+                min_value=None,
+                max_value=None,
+                step=None,
+            ),
+            context={"request": request},
+        )
+
+        self.assertEqual(serializer.data["unit"], "гостей")
+
+    def test_category_schema_attribute_serializer_localizes_unit(self):
+        request = RequestFactory().get("/api/v1/categories/1/schema/", HTTP_ACCEPT_LANGUAGE="ru")
+        serializer = CategorySchemaAttributeSerializer(
+            instance={
+                "id": 1,
+                "slug": "capacity",
+                "name_tm": "Sygymdarlyk",
+                "name_ru": "Вместимость",
+                "input_type": "number",
+                "unit_tm": "myhman",
+                "unit_ru": "гостей",
+                "placeholder_tm": "",
+                "placeholder_ru": "",
+                "help_text_tm": "",
+                "help_text_ru": "",
+                "min_value": None,
+                "max_value": None,
+                "step": None,
+                "scope": "product",
+                "section_tm": "",
+                "section_ru": "",
+                "is_required": True,
+                "is_filterable": True,
+                "is_highlighted": True,
+                "show_in_filters": True,
+                "show_in_card": True,
+                "show_in_detail": True,
+                "filter_type": "range",
+                "filter_order": 100,
+                "sort_order": 100,
+                "options": [],
+            },
+            context={"request": request},
+        )
+
+        self.assertEqual(serializer.data["unit"], "гостей")
 
     def test_has_location_is_true_when_address_present(self):
         serializer = ServiceBaseSerializer()

@@ -192,3 +192,7 @@ cython_debug/
 .idea/
 
 staticfiles/
+
+# Local export artifacts
+vendor_category_attribute_matrix*.csv
+vendor_category_attribute_matrix*.xlsx

@@ -8,7 +8,7 @@ from core.serializers import LangMixin
 from core.utils import format_price_text, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceApplication, ServiceApplicationImage, ServiceApplicationLink, Attribute, AttributeValue
+    ServiceProductImage, ServiceApplication, ServiceApplicationImage, ServiceApplicationLink, Attribute, AttributeOption, ProductAttributeValue, CategoryAttribute, ServiceAttributeValue
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
@@ -63,32 +63,263 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
 
 class AttributeSerializer(LangMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
+    unit = serializers.SerializerMethodField()
+    placeholder = serializers.SerializerMethodField()
+    help_text = serializers.SerializerMethodField()
 
     class Meta:
         model = Attribute
-        fields = ['id', 'name_tm', 'name_ru', 'name', 'slug', 'input_type']
+        fields = [
+            'id', 'name_tm', 'name_ru', 'name',
+            'slug', 'input_type', 'unit_tm', 'unit_ru', 'unit',
+            'placeholder_tm', 'placeholder_ru', 'placeholder',
+            'help_text_tm', 'help_text_ru', 'help_text',
+            'min_value', 'max_value', 'step',
+        ]
 
     def get_name(self, obj):
         return localized_value(obj, "name", lang=self._lang())
 
+    def get_unit(self, obj):
+        return localized_value(obj, "unit", lang=self._lang())
+
+    def get_placeholder(self, obj):
+        return localized_value(obj, "placeholder", lang=self._lang())
+
+    def get_help_text(self, obj):
+        return localized_value(obj, "help_text", lang=self._lang())
+
+
+class AttributeOptionSerializer(LangMixin, serializers.ModelSerializer):
+    label = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AttributeOption
+        fields = ["id", "value", "label_tm", "label_ru", "label"]
+
+    def get_label(self, obj):
+        return localized_value(obj, "label", lang=self._lang())
+
+
+class CategorySchemaAttributeSerializer(LangMixin, serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    slug = serializers.CharField(read_only=True)
+    name_tm = serializers.CharField(read_only=True)
+    name_ru = serializers.CharField(read_only=True)
+    name = serializers.SerializerMethodField()
+    section = serializers.SerializerMethodField()
+    unit = serializers.SerializerMethodField()
+    placeholder = serializers.SerializerMethodField()
+    help_text = serializers.SerializerMethodField()
+    input_type = serializers.CharField(read_only=True)
+    unit_tm = serializers.CharField(read_only=True)
+    unit_ru = serializers.CharField(read_only=True)
+    placeholder_tm = serializers.CharField(read_only=True)
+    placeholder_ru = serializers.CharField(read_only=True)
+    help_text_tm = serializers.CharField(read_only=True)
+    help_text_ru = serializers.CharField(read_only=True)
+    min_value = serializers.FloatField(read_only=True, allow_null=True)
+    max_value = serializers.FloatField(read_only=True, allow_null=True)
+    step = serializers.FloatField(read_only=True, allow_null=True)
+    scope = serializers.CharField(read_only=True)
+    section_tm = serializers.CharField(read_only=True)
+    section_ru = serializers.CharField(read_only=True)
+    is_required = serializers.BooleanField(read_only=True)
+    is_filterable = serializers.BooleanField(read_only=True)
+    is_highlighted = serializers.BooleanField(read_only=True)
+    show_in_filters = serializers.BooleanField(read_only=True)
+    show_in_card = serializers.BooleanField(read_only=True)
+    show_in_detail = serializers.BooleanField(read_only=True)
+    filter_type = serializers.CharField(read_only=True)
+    filter_order = serializers.IntegerField(read_only=True)
+    sort_order = serializers.IntegerField(read_only=True)
+    options = serializers.SerializerMethodField()
+
+    def to_representation(self, instance):
+        if isinstance(instance, CategoryAttribute):
+            attribute = instance.attribute
+            data = {
+                "id": attribute.id,
+                "slug": attribute.slug,
+                "name_tm": attribute.name_tm,
+                "name_ru": attribute.name_ru,
+                "input_type": attribute.input_type,
+                "unit_tm": attribute.unit_tm,
+                "unit_ru": attribute.unit_ru,
+                "placeholder_tm": attribute.placeholder_tm,
+                "placeholder_ru": attribute.placeholder_ru,
+                "help_text_tm": attribute.help_text_tm,
+                "help_text_ru": attribute.help_text_ru,
+                "min_value": attribute.min_value,
+                "max_value": attribute.max_value,
+                "step": attribute.step,
+                "scope": instance.scope,
+                "section_tm": instance.section_tm,
+                "section_ru": instance.section_ru,
+                "is_required": instance.is_required,
+                "is_filterable": instance.is_filterable,
+                "is_highlighted": instance.is_highlighted,
+                "show_in_filters": instance.show_in_filters,
+                "show_in_card": instance.show_in_card,
+                "show_in_detail": instance.show_in_detail,
+                "filter_type": instance.filter_type,
+                "filter_order": instance.filter_order,
+                "sort_order": instance.sort_order,
+                "options": instance,
+            }
+            return super().to_representation(data)
+        return super().to_representation(instance)
+
+    def get_name(self, obj):
+        source = obj.get("options") if isinstance(obj, dict) else obj
+        attribute = source.attribute if isinstance(source, CategoryAttribute) else source
+        return localized_value(attribute, "name", lang=self._lang())
+
+    def get_section(self, obj):
+        source = obj.get("section_tm") if isinstance(obj, dict) else obj
+        if isinstance(obj, dict):
+            if self._lang() == "ru":
+                return obj.get("section_ru") or obj.get("section_tm") or ""
+            return obj.get("section_tm") or obj.get("section_ru") or ""
+        return ""
+
+    def get_unit(self, obj):
+        if isinstance(obj, dict):
+            if self._lang() == "ru":
+                return obj.get("unit_ru") or obj.get("unit_tm") or ""
+            return obj.get("unit_tm") or obj.get("unit_ru") or ""
+        return ""
+
+    def get_placeholder(self, obj):
+        if isinstance(obj, dict):
+            if self._lang() == "ru":
+                return obj.get("placeholder_ru") or obj.get("placeholder_tm") or ""
+            return obj.get("placeholder_tm") or obj.get("placeholder_ru") or ""
+        return ""
+
+    def get_help_text(self, obj):
+        if isinstance(obj, dict):
+            if self._lang() == "ru":
+                return obj.get("help_text_ru") or obj.get("help_text_tm") or ""
+            return obj.get("help_text_tm") or obj.get("help_text_ru") or ""
+        return ""
+
+    def get_options(self, obj):
+        source = obj.get("options") if isinstance(obj, dict) else obj
+        if isinstance(source, CategoryAttribute):
+            attribute = source.attribute
+        elif isinstance(source, (list, tuple)):
+            return AttributeOptionSerializer(source, many=True, context=self.context).data
+        else:
+            attribute = source
+        options = getattr(attribute, "prefetched_options", None)
+        if options is None:
+            options = attribute.options.filter(is_active=True).order_by("sort_order", "id")
+        return AttributeOptionSerializer(options, many=True, context=self.context).data
+
+
+class CategorySchemaSerializer(serializers.Serializer):
+    service_attributes = serializers.SerializerMethodField()
+    product_attributes = serializers.SerializerMethodField()
+
+    def _schema_qs(self, category):
+        return (
+            category.category_attributes.select_related("attribute")
+            .prefetch_related("attribute__options")
+            .filter(attribute__is_active=True)
+            .order_by("sort_order", "id")
+        )
+
+    def _serialize_scope(self, category, scope):
+        items = self._schema_qs(category).filter(scope=scope)
+        return CategorySchemaAttributeSerializer(items, many=True, context=self.context).data
+
+    def get_service_attributes(self, obj):
+        return self._serialize_scope(obj, CategoryAttribute.Scope.SERVICE)
+
+    def get_product_attributes(self, obj):
+        return self._serialize_scope(obj, CategoryAttribute.Scope.PRODUCT)
+
 
 class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
+    attribute_id = serializers.IntegerField(source="attribute.id", read_only=True)
     attribute = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="attribute.slug", read_only=True)
+    input_type = serializers.CharField(source="attribute.input_type", read_only=True)
+    unit_tm = serializers.CharField(source="attribute.unit_tm", read_only=True)
+    unit_ru = serializers.CharField(source="attribute.unit_ru", read_only=True)
+    unit = serializers.SerializerMethodField()
+    option_id = serializers.IntegerField(source="option.id", read_only=True, allow_null=True)
     value = serializers.SerializerMethodField()
 
     class Meta:
-        model = AttributeValue
+        model = ProductAttributeValue
         fields = [
+            'attribute_id',
             'attribute',
+            'slug',
+            'input_type',
+            'unit_tm',
+            'unit_ru',
+            'unit',
+            'option_id',
             'value',
         ]
 
     def get_attribute(self, obj):
         return localized_value(obj.attribute, "name", lang=self._lang())
 
+    def get_unit(self, obj):
+        return localized_value(obj.attribute, "unit", lang=self._lang())
+
     def get_value(self, obj):
         input_type = getattr(obj.attribute, "input_type", None)
-        if input_type in ("text", "choice"):
+        if input_type in ("choice", "multiselect") and getattr(obj, "option_id", None):
+            return localized_value(obj.option, "label", lang=self._lang())
+        if input_type == "text":
+            return localized_value(obj, "value_text", lang=self._lang())
+        if input_type == "number":
+            return obj.value_number
+        if input_type == "boolean":
+            return obj.value_boolean
+        return localized_value(obj, "value_text", lang=self._lang())
+
+
+class ServiceAttributeValueSerializer(LangMixin, serializers.ModelSerializer):
+    attribute_id = serializers.IntegerField(source="attribute.id", read_only=True)
+    attribute = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="attribute.slug", read_only=True)
+    input_type = serializers.CharField(source="attribute.input_type", read_only=True)
+    unit_tm = serializers.CharField(source="attribute.unit_tm", read_only=True)
+    unit_ru = serializers.CharField(source="attribute.unit_ru", read_only=True)
+    unit = serializers.SerializerMethodField()
+    value = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceAttributeValue
+        fields = [
+            "id",
+            "attribute_id",
+            "attribute",
+            "slug",
+            "input_type",
+            "unit_tm",
+            "unit_ru",
+            "unit",
+            "value",
+        ]
+
+    def get_attribute(self, obj):
+        return localized_value(obj.attribute, "name", lang=self._lang())
+
+    def get_unit(self, obj):
+        return localized_value(obj.attribute, "unit", lang=self._lang())
+
+    def get_value(self, obj):
+        input_type = getattr(obj.attribute, "input_type", None)
+        if input_type in ("choice", "multiselect") and getattr(obj, "option_id", None):
+            return localized_value(obj.option, "label", lang=self._lang())
+        if input_type == "text":
             return localized_value(obj, "value_text", lang=self._lang())
         if input_type == "number":
             return obj.value_number
@@ -365,6 +596,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = serializers.SerializerMethodField()
     contacts = ServiceContactSerializer(many=True, read_only=True)
+    attributes = ServiceAttributeValueSerializer(many=True, source="service_attribute_values", read_only=True)
     products = ServiceProductInServiceSerializer(many=True, read_only=True)
     tags = serializers.SerializerMethodField()
     available_cities = CitySerializer(many=True, read_only=True)
@@ -377,7 +609,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
-            'images', 'videos', 'contacts', 'products',
+            'images', 'videos', 'contacts', 'attributes', 'products',
             'is_grid_gallery',
         ]
 

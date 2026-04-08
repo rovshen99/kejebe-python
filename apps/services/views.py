@@ -2,7 +2,9 @@ from django.core.exceptions import PermissionDenied
 from django.core.files.storage import default_storage
 from django.db.models import Avg, Case, Count, IntegerField, Prefetch, Q, OuterRef, Subquery, Value, When
 from django.db.models.functions import Round
+from django.shortcuts import get_object_or_404
 from rest_framework import mixins, viewsets, permissions
+from rest_framework.views import APIView
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
@@ -13,11 +15,13 @@ from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 from core.pagination import CustomPagination
+from apps.categories.models import Category
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter, parse_int_list
 from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, ContactType
 from .models import ServiceVideo
 from .serializers import (
+    CategorySchemaSerializer,
     ServiceDetailSerializer,
     ServiceShowcaseSerializer,
     ReviewSerializer,
@@ -82,11 +86,13 @@ class ServiceViewSet(FavoriteAnnotateMixin,
             qs = qs.defer("description_tm", "description_ru")
         if getattr(self, "action", None) == "retrieve":
             products_qs = ServiceProduct.objects.prefetch_related(
-                "images", "values__attribute"
+                "images", "values__attribute", "values__option"
             ).order_by("priority", "-created_at")
             qs = qs.prefetch_related(
                 Prefetch("products", queryset=products_qs),
                 "contacts__type",
+                "service_attribute_values__attribute",
+                "service_attribute_values__option",
             )
         return self.annotate_is_favorite(qs)
 
@@ -490,7 +496,7 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
                             mixins.UpdateModelMixin,
                             viewsets.GenericViewSet):
     queryset = ServiceProduct.objects.select_related('service').prefetch_related(
-        'images', 'values__attribute', 'service__contacts__type'
+        'images', 'values__attribute', 'values__option', 'service__contacts__type'
     )
     serializer_class = ServiceProductSerializer
     pagination_class = CustomPagination
@@ -557,6 +563,15 @@ class ServiceProductViewSet(FavoriteAnnotateMixin,
         page = self.paginate_queryset(qs)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+
+class CategorySchemaView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, category_id):
+        category = get_object_or_404(Category, pk=category_id)
+        serializer = CategorySchemaSerializer(category, context={"request": request})
+        return Response(serializer.data)
 
 
 @extend_schema(tags=["Service Applications"])

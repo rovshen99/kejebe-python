@@ -5,8 +5,28 @@ from django.db import IntegrityError, transaction
 from image_cropping import ImageCroppingMixin
 from mptt.admin import DraggableMPTTAdmin
 from mptt.exceptions import InvalidMove
+from apps.services.models import CategoryAttribute
 from .models import Category
 from django.utils.translation import gettext_lazy as _
+
+
+class CategoryAttributeInline(admin.TabularInline):
+    model = CategoryAttribute
+    extra = 0
+    autocomplete_fields = ("attribute",)
+    fields = (
+        "attribute",
+        "scope",
+        "section_tm",
+        "section_ru",
+        "is_required",
+        "show_in_card",
+        "show_in_detail",
+        "show_in_filters",
+        "filter_type",
+        "filter_order",
+        "sort_order",
+    )
 
 
 @admin.register(Category)
@@ -26,6 +46,7 @@ class CategoryAdmin(ImageCroppingMixin, DraggableMPTTAdmin):
     search_fields = ('name_tm', 'name_ru', 'slug')
     prepopulated_fields = {'slug': ('name_tm',)}
     ordering = ('priority',)
+    inlines = [CategoryAttributeInline]
 
     def indented_title(self, instance):
         return instance.name_tm
