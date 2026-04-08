@@ -199,6 +199,9 @@ class VendorServiceProductDetailSerializer(ServiceProductDetailSerializer):
 
 class VendorServiceProductWriteSerializer(serializers.ModelSerializer):
     values = VendorAttributeValueWriteSerializer(many=True, required=False)
+    images = serializers.ListField(
+        child=serializers.ImageField(), write_only=True, required=False, allow_empty=True
+    )
 
     class Meta:
         model = ServiceProduct
@@ -210,6 +213,7 @@ class VendorServiceProductWriteSerializer(serializers.ModelSerializer):
             "price",
             "priority",
             "values",
+            "images",
         ]
 
     def _save_values(self, product, values_data):
@@ -220,11 +224,29 @@ class VendorServiceProductWriteSerializer(serializers.ModelSerializer):
             [AttributeValue(product=product, **value_data) for value_data in values_data]
         )
 
+    def _save_images(self, product, uploaded_images):
+        if not uploaded_images:
+            return
+        ServiceProductImage.objects.bulk_create(
+            [
+                ServiceProductImage(product=product, image=image, position=index)
+                for index, image in enumerate(uploaded_images)
+                if image
+            ]
+        )
+
     def create(self, validated_data):
         service = self.context["service"]
         values_data = validated_data.pop("values", None)
+        uploaded_images = validated_data.pop("images", [])
+        request = self.context.get("request")
+        if request is not None:
+            request_images = list(request.FILES.getlist("images"))
+            if request_images:
+                uploaded_images = request_images
         product = ServiceProduct.objects.create(service=service, **validated_data)
         self._save_values(product, values_data)
+        self._save_images(product, uploaded_images)
         return product
 
     def update(self, instance, validated_data):
