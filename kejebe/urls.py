@@ -23,6 +23,7 @@ from apps.categories.views import CategoryViewSet
 from apps.regions.views import RegionViewSet, CityViewSet
 from apps.accounts.views import InboundSMSWebhookView, InitReverseSMSView, ConfirmReverseSMSView
 from apps.services.views import (
+    CategorySchemaView,
     ServiceViewSet,
     ReviewViewSet,
     FavoriteViewSet,
@@ -32,8 +33,10 @@ from apps.services.views import (
 )
 from apps.services.vendor_views import (
     VendorCategoryAttributesView,
+    VendorCategorySchemaView,
     VendorMeUpdateView,
     VendorMeView,
+    VendorServiceAttributeValueViewSet,
     VendorServiceContactViewSet,
     VendorServiceImageViewSet,
     VendorServiceProductImageViewSet,
@@ -75,6 +78,7 @@ vendor_router = routers.DefaultRouter()
 vendor_router.register(r'services', VendorServiceViewSet, basename='vendor-service')
 
 vendor_services_router = routers.NestedDefaultRouter(vendor_router, r'services', lookup='service')
+vendor_services_router.register(r'attributes', VendorServiceAttributeValueViewSet, basename='vendor-service-attributes')
 vendor_services_router.register(r'contacts', VendorServiceContactViewSet, basename='vendor-service-contacts')
 vendor_services_router.register(r'images', VendorServiceImageViewSet, basename='vendor-service-images')
 vendor_services_router.register(r'videos', VendorServiceVideoViewSet, basename='vendor-service-videos')
@@ -86,9 +90,11 @@ vendor_products_router.register(r'images', VendorServiceProductImageViewSet, bas
 api_patterns = [
     path('', include(router.urls)),
     path('', include(services_router.urls)),
+    path('categories/<int:category_id>/schema/', CategorySchemaView.as_view(), name='category-schema'),
     path('vendor/me/', VendorMeView.as_view(), name='vendor-me'),
     path('vendor/me/update/', VendorMeUpdateView.as_view(), name='vendor-me-update'),
     path('vendor/categories/<int:category_id>/attributes/', VendorCategoryAttributesView.as_view(), name='vendor-category-attributes'),
+    path('vendor/categories/<int:category_id>/schema/', VendorCategorySchemaView.as_view(), name='vendor-category-schema'),
     path('vendor/', include(vendor_router.urls)),
     path('vendor/', include(vendor_services_router.urls)),
     path('vendor/', include(vendor_products_router.urls)),

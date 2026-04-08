@@ -1,12 +1,16 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from apps.categories.models import Category
 from apps.regions.models import City, Region
 from apps.services.models import (
     Attribute,
-    AttributeValue,
+    AttributeOption,
+    CategoryAttribute,
+    ProductAttributeValue,
     Service,
     ServiceContact,
+    ServiceAttributeValue,
     ServiceImage,
     ServiceProduct,
     ServiceProductImage,
@@ -15,6 +19,7 @@ from apps.services.models import (
 )
 from apps.services.serializers import (
     AttributeSerializer,
+    CategorySchemaSerializer,
     ServiceContactSerializer,
     ServiceContactWriteSerializer,
     ServiceDetailSerializer,
@@ -22,6 +27,7 @@ from apps.services.serializers import (
     ServiceListSerializer,
     ServiceProductDetailSerializer,
     ServiceProductListSerializer,
+    ServiceAttributeValueSerializer,
     ServiceVideoSerializer,
 )
 from apps.users.models import User
@@ -175,18 +181,170 @@ class VendorServiceVideoWriteSerializer(serializers.ModelSerializer):
         fields = ["file", "preview", "position"]
 
 
+def _attribute_allowed_for_category(category, attribute, scope):
+    return CategoryAttribute.objects.filter(category=category, attribute=attribute, scope=scope).exists()
+
+
+def _schema_links_map(category, scope):
+    return {
+        link.attribute_id: link
+        for link in CategoryAttribute.objects.select_related("attribute").filter(
+            category=category,
+            scope=scope,
+            attribute__is_active=True,
+        )
+    }
+
+
+def _validate_attribute_entries(category, scope, entries, require_complete):
+    link_map = _schema_links_map(category, scope)
+    seen_ids = set()
+    seen_pairs = set()
+
+    for index, attrs in enumerate(entries):
+        try:
+            _validate_attribute_value_payload(category, scope, attrs)
+        except serializers.ValidationError as exc:
+            raise serializers.ValidationError({"items": {index: exc.detail}})
+
+        attribute = attrs["attribute"]
+        option = attrs.get("option")
+
+        if attribute.input_type == "multiselect":
+            pair = (attribute.id, getattr(option, "id", None))
+            if pair in seen_pairs:
+                raise serializers.ValidationError(
+                    {"items": {index: {"option": "Duplicate multiselect option for the same attribute."}}}
+                )
+            seen_pairs.add(pair)
+        else:
+            if attribute.id in seen_ids:
+                raise serializers.ValidationError(
+                    {"items": {index: {"attribute": "Duplicate attribute in payload."}}}
+                )
+            seen_ids.add(attribute.id)
+
+    if require_complete:
+        missing_links = [
+            link for link in link_map.values()
+            if link.is_required and link.attribute_id not in seen_ids and link.attribute_id not in {pair[0] for pair in seen_pairs}
+        ]
+        if missing_links:
+            raise serializers.ValidationError(
+                {
+                    "items": {
+                        "required": [
+                            link.attribute.slug for link in sorted(missing_links, key=lambda item: item.sort_order)
+                        ]
+                    }
+                }
+            )
+
+
+def _persist_service_attribute_values(service, entries):
+    rows = [ServiceAttributeValue(service=service, **item) for item in entries]
+    service.service_attribute_values.all().delete()
+    if rows:
+        ServiceAttributeValue.objects.bulk_create(rows)
+
+
+def _persist_product_attribute_values(product, entries):
+    rows = [ProductAttributeValue(product=product, **item) for item in entries]
+    product.values.all().delete()
+    if rows:
+        ProductAttributeValue.objects.bulk_create(rows)
+
+
+def _validate_attribute_value_payload(category, scope, attrs):
+    attribute = attrs["attribute"]
+    option = attrs.get("option")
+
+    if not _attribute_allowed_for_category(category, attribute, scope):
+        raise serializers.ValidationError(
+            {"attribute": "This attribute is not allowed for the selected category and scope."}
+        )
+
+    if option and option.attribute_id != attribute.id:
+        raise serializers.ValidationError({"option": "This option does not belong to the selected attribute."})
+
+    if attribute.input_type in {"choice", "multiselect"} and not option:
+        raise serializers.ValidationError({"option": "Option is required for choice and multiselect attributes."})
+
+    if attribute.input_type not in {"choice", "multiselect"} and option:
+        raise serializers.ValidationError({"option": "Option can only be used for choice and multiselect attributes."})
+
+    if attribute.input_type == "text" and not (attrs.get("value_text_tm") or attrs.get("value_text_ru")):
+        raise serializers.ValidationError(
+            {"value_text_tm": "Provide localized text value for text attributes."}
+        )
+
+    if attribute.input_type == "number" and attrs.get("value_number") is None:
+        raise serializers.ValidationError({"value_number": "Provide number value for numeric attributes."})
+
+    if attribute.input_type == "boolean" and attrs.get("value_boolean") is None:
+        raise serializers.ValidationError({"value_boolean": "Provide boolean value for boolean attributes."})
+
+    return attrs
+
+
 class VendorAttributeValueWriteSerializer(serializers.ModelSerializer):
     attribute = serializers.PrimaryKeyRelatedField(queryset=Attribute.objects.all())
+    option = serializers.PrimaryKeyRelatedField(queryset=AttributeOption.objects.all(), allow_null=True, required=False)
 
     class Meta:
-        model = AttributeValue
+        model = ProductAttributeValue
         fields = [
             "attribute",
+            "option",
             "value_text_tm",
             "value_text_ru",
             "value_number",
             "value_boolean",
         ]
+
+    def validate(self, attrs):
+        service = self.context["service"]
+        return _validate_attribute_value_payload(service.category, CategoryAttribute.Scope.PRODUCT, attrs)
+
+
+class VendorServiceAttributeValueSerializer(ServiceAttributeValueSerializer):
+    pass
+
+
+class VendorServiceAttributeValueWriteSerializer(serializers.ModelSerializer):
+    attribute = serializers.PrimaryKeyRelatedField(queryset=Attribute.objects.all())
+    option = serializers.PrimaryKeyRelatedField(queryset=AttributeOption.objects.all(), allow_null=True, required=False)
+
+    class Meta:
+        model = ServiceAttributeValue
+        fields = [
+            "attribute",
+            "option",
+            "value_text_tm",
+            "value_text_ru",
+            "value_number",
+            "value_boolean",
+        ]
+
+    def validate(self, attrs):
+        service = self.context["service"]
+        return _validate_attribute_value_payload(service.category, CategoryAttribute.Scope.SERVICE, attrs)
+
+
+class VendorServiceAttributeValueBulkSerializer(serializers.Serializer):
+    items = VendorServiceAttributeValueWriteSerializer(many=True)
+
+    def validate(self, attrs):
+        service = self.context["service"]
+        _validate_attribute_entries(service.category, CategoryAttribute.Scope.SERVICE, attrs["items"], require_complete=True)
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs):
+        service = kwargs["service"]
+        items = self.validated_data["items"]
+        _persist_service_attribute_values(service, items)
+        return service.service_attribute_values.select_related("attribute", "option").order_by("id")
 
 
 class VendorServiceProductListSerializer(ServiceProductListSerializer):
@@ -216,13 +374,18 @@ class VendorServiceProductWriteSerializer(serializers.ModelSerializer):
             "images",
         ]
 
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        values_data = attrs.get("values")
+        if values_data is not None:
+            service = self.context["service"]
+            _validate_attribute_entries(service.category, CategoryAttribute.Scope.PRODUCT, values_data, require_complete=True)
+        return attrs
+
     def _save_values(self, product, values_data):
         if values_data is None:
             return
-        product.values.all().delete()
-        AttributeValue.objects.bulk_create(
-            [AttributeValue(product=product, **value_data) for value_data in values_data]
-        )
+        _persist_product_attribute_values(product, values_data)
 
     def _save_images(self, product, uploaded_images):
         if not uploaded_images:
@@ -281,3 +444,23 @@ class ReorderSerializer(serializers.Serializer):
 
 class VendorCategoryAttributeSerializer(AttributeSerializer):
     pass
+
+
+class VendorCategorySchemaSerializer(CategorySchemaSerializer):
+    pass
+
+
+class VendorProductAttributeValueBulkSerializer(serializers.Serializer):
+    items = VendorAttributeValueWriteSerializer(many=True)
+
+    def validate(self, attrs):
+        service = self.context["service"]
+        _validate_attribute_entries(service.category, CategoryAttribute.Scope.PRODUCT, attrs["items"], require_complete=True)
+        return attrs
+
+    @transaction.atomic
+    def save(self, **kwargs):
+        product = kwargs["product"]
+        items = self.validated_data["items"]
+        _persist_product_attribute_values(product, items)
+        return product.values.select_related("attribute", "option").order_by("id")

@@ -5,7 +5,9 @@ from django.contrib import admin
 
 from core.mixins import IconPreviewMixin
 from .models import (
+    AttributeOption,
     Service,
+    ServiceAttributeValue,
     ServiceContact,
     ServiceImage,
     ServiceVideo,
@@ -13,8 +15,9 @@ from .models import (
     Favorite,
     ServiceTag,
     Attribute,
-    AttributeValue,
+    CategoryAttribute,
     ContactType,
+    ProductAttributeValue,
     ServiceProductImage,
     ServiceProduct,
     ServiceApplication,
@@ -44,10 +47,22 @@ class ServiceVideoInline(IconPreviewMixin, nested_admin.NestedTabularInline):
 
 
 class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
-    model = AttributeValue
+    model = ServiceAttributeValue
     extra = 0
     fields = (
         'attribute',
+        'option',
+        'value_text_tm', 'value_text_ru',
+        'value_number', 'value_boolean',
+    )
+
+
+class ServiceProductAttributeValueInline(nested_admin.NestedTabularInline):
+    model = ProductAttributeValue
+    extra = 0
+    fields = (
+        'attribute',
+        'option',
         'value_text_tm', 'value_text_ru',
         'value_number', 'value_boolean',
     )
@@ -61,7 +76,7 @@ class ServiceProductImageInline(nested_admin.NestedTabularInline):
 class ServiceProductInline(nested_admin.NestedStackedInline):
     model = ServiceProduct
     extra = 0
-    inlines = [ServiceAttributeValueInline, ServiceProductImageInline]
+    inlines = [ServiceProductAttributeValueInline, ServiceProductImageInline]
 
 
 class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
@@ -108,6 +123,7 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
         ServiceContactInline,
         ServiceImageInline,
         ServiceVideoInline,
+        ServiceAttributeValueInline,
         ServiceAvailableCityInline,
         ServiceProductInline,
     ]
@@ -171,14 +187,36 @@ class ServiceTagAdmin(admin.ModelAdmin):
     search_fields = ('name_tm', 'name_ru')
 
 
+class AttributeOptionInline(admin.TabularInline):
+    model = AttributeOption
+    extra = 0
+    fields = ("value", "label_tm", "label_ru", "sort_order", "is_active")
+
+
 @admin.register(Attribute)
 class ServiceAttributeAdmin(admin.ModelAdmin):
-    list_display = ('name_tm', 'category', 'slug', 'input_type', 'is_required')
-    list_filter = ('category', 'input_type')
+    list_display = (
+        'name_tm', 'slug', 'input_type', 'unit_tm', 'unit_ru',
+        'min_value', 'max_value', 'step',
+        'is_required', 'is_active',
+    )
+    list_filter = ('input_type', 'is_active')
     search_fields = ('name_tm', 'name_ru', 'slug')
+    inlines = [AttributeOptionInline]
+
+
+@admin.register(CategoryAttribute)
+class CategoryAttributeAdmin(admin.ModelAdmin):
+    list_display = (
+        'category', 'attribute', 'scope', 'section_tm',
+        'is_required', 'show_in_card', 'show_in_detail', 'show_in_filters',
+        'filter_type', 'filter_order', 'sort_order'
+    )
+    list_filter = ('scope', 'is_required', 'show_in_card', 'show_in_detail', 'show_in_filters', 'category')
+    search_fields = ('category__name_tm', 'category__name_ru', 'attribute__name_tm', 'attribute__name_ru', 'attribute__slug')
 #
 #
-# @admin.register(AttributeValue)
+# @admin.register(ProductAttributeValue)
 # class ServiceAttributeValueAdmin(admin.ModelAdmin):
 #     list_display = ('product', 'attribute', 'get_display_value')
 #     list_filter = ('attribute__category', 'attribute__input_type')
