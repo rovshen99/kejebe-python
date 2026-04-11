@@ -2,6 +2,7 @@ import nested_admin
 from django import forms
 from django.conf import settings
 from django.contrib import admin
+from django.forms.models import BaseInlineFormSet
 
 from core.mixins import IconPreviewMixin
 from .models import (
@@ -26,6 +27,130 @@ from .models import (
 )
 
 
+def _allowed_attribute_queryset(category_id, scope):
+    if not category_id:
+        return Attribute.objects.none()
+    return (
+        Attribute.objects.filter(
+            is_active=True,
+            category_links__category_id=category_id,
+            category_links__scope=scope,
+        )
+        .distinct()
+        .order_by("name_tm", "id")
+    )
+
+
+class ScopedAttributeValueAdminForm(forms.ModelForm):
+    scope = None
+
+    def __init__(self, *args, parent_instance=None, scope=None, **kwargs):
+        self.parent_instance = parent_instance
+        self.scope = scope or self.scope
+        super().__init__(*args, **kwargs)
+        self._configure_attribute_queryset()
+        self._configure_option_queryset()
+
+    def _get_service(self):
+        if isinstance(self.parent_instance, Service):
+            return self.parent_instance
+        if isinstance(self.parent_instance, ServiceProduct):
+            return getattr(self.parent_instance, "service", None)
+        if getattr(self.instance, "service_id", None):
+            return self.instance.service
+        product = getattr(self.instance, "product", None)
+        if product is not None:
+            return getattr(product, "service", None)
+        return None
+
+    def _configure_attribute_queryset(self):
+        service = self._get_service()
+        category_id = getattr(service, "category_id", None)
+        if category_id and self.scope:
+            queryset = _allowed_attribute_queryset(category_id, self.scope)
+        elif getattr(self.instance, "attribute_id", None):
+            queryset = Attribute.objects.filter(pk=self.instance.attribute_id)
+        else:
+            queryset = Attribute.objects.none()
+        self.fields["attribute"].queryset = queryset
+
+    def _configure_option_queryset(self):
+        attribute_id = None
+        if self.is_bound:
+            attribute_id = self.data.get(self.add_prefix("attribute")) or None
+        elif getattr(self.instance, "attribute_id", None):
+            attribute_id = self.instance.attribute_id
+
+        if attribute_id:
+            queryset = AttributeOption.objects.filter(
+                attribute_id=attribute_id,
+                is_active=True,
+            ).order_by("sort_order", "id")
+        elif getattr(self.instance, "option_id", None):
+            queryset = AttributeOption.objects.filter(pk=self.instance.option_id)
+        else:
+            queryset = AttributeOption.objects.none()
+        self.fields["option"].queryset = queryset
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("DELETE"):
+            return cleaned_data
+
+        attribute = cleaned_data.get("attribute")
+        option = cleaned_data.get("option")
+        service = self._get_service()
+        category_id = getattr(service, "category_id", None)
+
+        if attribute and (
+            not category_id
+            or not CategoryAttribute.objects.filter(
+                category_id=category_id,
+                attribute=attribute,
+                scope=self.scope,
+            ).exists()
+        ):
+            self.add_error("attribute", "This attribute is not allowed for the selected category and scope.")
+
+        if option and attribute and option.attribute_id != attribute.id:
+            self.add_error("option", "This option does not belong to the selected attribute.")
+
+        return cleaned_data
+
+
+class ScopedAttributeValueInlineFormSet(BaseInlineFormSet):
+    scope = None
+
+    def _construct_form(self, i, **kwargs):
+        kwargs["parent_instance"] = self.instance
+        kwargs["scope"] = self.scope
+        return super()._construct_form(i, **kwargs)
+
+
+class ServiceAttributeValueAdminForm(ScopedAttributeValueAdminForm):
+    scope = CategoryAttribute.Scope.SERVICE
+
+    class Meta:
+        model = ServiceAttributeValue
+        fields = "__all__"
+
+
+class ServiceAttributeValueInlineFormSet(ScopedAttributeValueInlineFormSet):
+    scope = CategoryAttribute.Scope.SERVICE
+
+
+class ProductAttributeValueAdminForm(ScopedAttributeValueAdminForm):
+    scope = CategoryAttribute.Scope.PRODUCT
+
+    class Meta:
+        model = ProductAttributeValue
+        fields = "__all__"
+
+
+class ProductAttributeValueInlineFormSet(ScopedAttributeValueInlineFormSet):
+    scope = CategoryAttribute.Scope.PRODUCT
+
+
 class ServiceContactInline(nested_admin.NestedTabularInline):
     model = ServiceContact
     extra = 1
@@ -48,6 +173,8 @@ class ServiceVideoInline(IconPreviewMixin, nested_admin.NestedTabularInline):
 
 class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
     model = ServiceAttributeValue
+    form = ServiceAttributeValueAdminForm
+    formset = ServiceAttributeValueInlineFormSet
     extra = 0
     fields = (
         'attribute',
@@ -59,6 +186,8 @@ class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
 
 class ServiceProductAttributeValueInline(nested_admin.NestedTabularInline):
     model = ProductAttributeValue
+    form = ProductAttributeValueAdminForm
+    formset = ProductAttributeValueInlineFormSet
     extra = 0
     fields = (
         'attribute',
