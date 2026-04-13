@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Delete Account - {{ app_name }}</title>
+  <title>{{ app_name }} Support</title>
   <style>
     :root {
       color-scheme: light;
@@ -75,7 +75,7 @@
       margin-bottom: 6px;
       font-weight: 600;
     }
-    input[type="text"] {
+    input[type="text"], textarea {
       width: 100%;
       padding: 11px 12px;
       border: 1px solid #cbd5e1;
@@ -84,6 +84,7 @@
       color: var(--text);
       font: inherit;
     }
+    textarea { resize: vertical; min-height: 140px; }
     button {
       border: 0;
       border-radius: 8px;
@@ -114,33 +115,41 @@
 </head>
 <body>
   <div class="container">
-    <h1>Delete Account</h1>
-    <p>This page applies to <strong>{{ app_name }}</strong> by <strong>{{ developer_name }}</strong>.</p>
+    <h1>{{ app_name }} Support</h1>
+    <p>This page is the official support page for <strong>{{ app_name }}</strong> by <strong>{{ developer_name }}</strong>.</p>
 
-{#    <div class="notice">#}
-{#      <strong>Important:</strong> If you still have access to the app, deletion is fastest from inside the app.#}
-{#    </div>#}
+    <div class="notice">
+      Use the form below to ask a question, report a problem, or request help with your account. We review support requests within <strong>2 business days</strong>.
+    </div>
 
     <div class="grid">
       <div class="card">
-        <h2>Need Support?</h2>
-        <p>If you have a question before deleting your account, use the <a href="{% url 'support' %}">support page</a>.</p>
+        <h2>Email Support</h2>
+        <p>If you prefer email, contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
       </div>
       <div class="card">
-        <h2>Email Support</h2>
-        <p>If you cannot access the app or your phone number, contact us at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+        <h2>Account Issues</h2>
+        <p>If you need to delete your account, use the dedicated <a href="{% url 'delete-account' %}">account deletion page</a>.</p>
       </div>
     </div>
 
-    <h2>Delete via this page</h2>
-    <p>Enter the phone number linked to your account. We will review and process the request within <strong>7 days</strong>.</p>
+    <h2>Send a Support Request</h2>
+    <p>Please provide your name, phone number, and a clear description of your question or issue.</p>
 
     {% if success %}
-      <div class="success">Your request has been received. We will process it within the stated timeframe.</div>
+      <div class="success">Your support request has been received. We will contact you as soon as possible.</div>
     {% endif %}
 
     <form method="post">
       {% csrf_token %}
+      <div class="field">
+        <label for="id_name">Your name</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div class="error">{{ form.name.errors.0 }}</div>
+        {% endif %}
+      </div>
+
       <div class="field">
         <label for="id_phone">Phone number</label>
         {{ form.phone }}
@@ -149,26 +158,21 @@
         {% endif %}
         <div class="help">Example: +99361111111</div>
       </div>
-      <button type="submit">Submit deletion request</button>
+
+      <div class="field">
+        <label for="id_message">How can we help?</label>
+        {{ form.message }}
+        {% if form.message.errors %}
+          <div class="error">{{ form.message.errors.0 }}</div>
+        {% endif %}
+        <div class="help">Include the problem, the action you were trying to perform, and any useful details.</div>
+      </div>
+
+      <button type="submit">Submit support request</button>
     </form>
 
-    <h2>Data deleted</h2>
-    <ul>
-      <li>Account profile data (name, phone, email, avatar)</li>
-      <li>Saved services, favorites, and user-generated content</li>
-      <li>Uploaded images and media related to the account</li>
-      <li>Device bindings and session tokens</li>
-    </ul>
-
-    <h2>Data retained and retention periods</h2>
-    <ul>
-      <li>Legal or compliance records required by law (retained up to <strong>5 years</strong>)</li>
-      <li>Security and fraud-prevention logs (retained up to <strong>90 days</strong>)</li>
-      <li>Backups (purged within <strong>30 days</strong>)</li>
-    </ul>
-
     <div class="footnote">
-      <p>Use the same phone number that is linked to your account so we can process the request faster.</p>
+      <p>For faster help, include your phone number exactly as it is used in the app.</p>
     </div>
   </div>
 </body>

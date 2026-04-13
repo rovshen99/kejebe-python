@@ -1,4 +1,6 @@
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+
+from apps.system.models import ClientFeedback
 
 
 @override_settings(
@@ -30,3 +32,32 @@ class SystemMapConfigTests(SimpleTestCase):
         cache_control = response.headers.get("Cache-Control", "")
         self.assertIn("max-age=3600", cache_control)
         self.assertIn("public", cache_control)
+
+
+@override_settings(SUPPORT_EMAIL="support@example.com")
+class SupportPageTests(TestCase):
+    def test_support_page_is_public(self):
+        response = self.client.get("/support/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Kejebe Support")
+        self.assertContains(response, "support@example.com")
+
+    def test_support_page_creates_feedback_request(self):
+        response = self.client.post(
+            "/support/",
+            {
+                "name": "Test User",
+                "phone": "61111111",
+                "message": "I need help with my account.",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your support request has been received")
+        self.assertEqual(ClientFeedback.objects.count(), 1)
+
+        feedback = ClientFeedback.objects.get()
+        self.assertEqual(feedback.name, "Test User")
+        self.assertEqual(feedback.phone, "+99361111111")
+        self.assertEqual(feedback.message, "I need help with my account.")

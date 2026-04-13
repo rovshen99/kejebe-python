@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
 from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer, MapConfigSerializer
-from .forms import DeleteAccountForm
+from .forms import DeleteAccountForm, SupportRequestForm
 from .throttles import FeedbackIPThrottle
 
 
@@ -46,6 +46,35 @@ def delete_account_view(request):
             "success": success,
             "app_name": "Kejebe",
             "developer_name": "Rovshen Berdimyradov",
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "berdimuradowr@gmail.com"),
+        },
+    )
+
+
+def support_view(request):
+    success = False
+    if request.method == "POST":
+        form = SupportRequestForm(request.POST)
+        if form.is_valid():
+            ClientFeedback.objects.create(
+                name=form.cleaned_data["name"],
+                phone=form.cleaned_data["phone"],
+                message=form.cleaned_data["message"],
+            )
+            success = True
+            form = SupportRequestForm()
+    else:
+        form = SupportRequestForm()
+
+    return render(
+        request,
+        "support.html",
+        {
+            "form": form,
+            "success": success,
+            "app_name": "Kejebe",
+            "developer_name": "Rovshen Berdimyradov",
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "berdimuradowr@gmail.com"),
         },
     )
 
