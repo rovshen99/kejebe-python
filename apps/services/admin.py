@@ -168,7 +168,7 @@ class ServiceVideoInline(IconPreviewMixin, nested_admin.NestedTabularInline):
     icon_width = 80
     icon_height = 80
     readonly_fields = ("icon_preview", "hls_ready", "hls_playlist")
-    fields = ("file", "preview", "icon_preview", "hls_ready", "hls_playlist")
+    fields = ("file", "preview", "icon_preview", "position", "hls_ready", "hls_playlist")
 
 
 class ServiceAttributeValueInline(nested_admin.NestedTabularInline):
