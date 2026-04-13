@@ -2,9 +2,19 @@ from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
-from django.test import RequestFactory, SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from rest_framework import serializers
 
+from apps.categories.models import Category
+from apps.services.models import (
+    Attribute,
+    AttributeOption,
+    CategoryAttribute,
+    ProductAttributeValue,
+    Service,
+    ServiceAttributeValue,
+    ServiceProduct,
+)
 from core.utils import format_price_text
 from apps.services.serializers import (
     AttributeSerializer,
@@ -17,6 +27,7 @@ from apps.services.serializers import (
     ServiceUpdateSerializer,
 )
 from apps.services.throttles import ServiceApplicationIPThrottle
+from apps.users.models import RoleEnum, User
 
 
 class FormatPriceTextTests(SimpleTestCase):
@@ -159,6 +170,7 @@ class ServiceSerializerFieldTests(SimpleTestCase):
     def test_category_schema_attribute_serializer_exposes_ui_metadata(self):
         serializer = CategorySchemaAttributeSerializer()
 
+        self.assertIn("icon", serializer.fields)
         self.assertIn("section", serializer.fields)
         self.assertIn("unit", serializer.fields)
         self.assertIn("unit_tm", serializer.fields)
@@ -178,6 +190,7 @@ class ServiceSerializerFieldTests(SimpleTestCase):
                 id=1,
                 name_tm="Sygymdarlyk",
                 name_ru="Вместимость",
+                icon=SimpleNamespace(url="https://cdn.example.com/capacity.svg"),
                 slug="capacity",
                 input_type="number",
                 unit_tm="myhman",
@@ -194,6 +207,7 @@ class ServiceSerializerFieldTests(SimpleTestCase):
         )
 
         self.assertEqual(serializer.data["unit"], "гостей")
+        self.assertEqual(serializer.data["icon"], "https://cdn.example.com/capacity.svg")
 
     def test_category_schema_attribute_serializer_localizes_unit(self):
         request = RequestFactory().get("/api/v1/categories/1/schema/", HTTP_ACCEPT_LANGUAGE="ru")
@@ -203,6 +217,7 @@ class ServiceSerializerFieldTests(SimpleTestCase):
                 "slug": "capacity",
                 "name_tm": "Sygymdarlyk",
                 "name_ru": "Вместимость",
+                "icon": SimpleNamespace(url="https://cdn.example.com/capacity.svg"),
                 "input_type": "number",
                 "unit_tm": "myhman",
                 "unit_ru": "гостей",
@@ -231,6 +246,7 @@ class ServiceSerializerFieldTests(SimpleTestCase):
         )
 
         self.assertEqual(serializer.data["unit"], "гостей")
+        self.assertEqual(serializer.data["icon"], "https://cdn.example.com/capacity.svg")
 
     def test_has_location_is_true_when_address_present(self):
         serializer = ServiceBaseSerializer()
@@ -249,3 +265,141 @@ class ServiceSerializerFieldTests(SimpleTestCase):
         service = SimpleNamespace(address=" ", latitude=37.95, longitude=None)
 
         self.assertFalse(serializer.get_has_location(service))
+
+
+class ServiceAttributeFilterTests(TestCase):
+    def setUp(self):
+        self.vendor = User.objects.create(phone="+99361000001", password="x", role=RoleEnum.VENDOR)
+        self.category = Category.objects.create(name_tm="Toý mekany", name_ru="Ресторан", slug="restaurant")
+
+        self.service_a = Service.objects.create(
+            vendor=self.vendor,
+            category=self.category,
+            title_tm="A",
+            title_ru="A",
+            description_tm="A",
+            description_ru="A",
+            is_active=True,
+        )
+        self.service_b = Service.objects.create(
+            vendor=self.vendor,
+            category=self.category,
+            title_tm="B",
+            title_ru="B",
+            description_tm="B",
+            description_ru="B",
+            is_active=True,
+        )
+        self.service_c = Service.objects.create(
+            vendor=self.vendor,
+            category=self.category,
+            title_tm="C",
+            title_ru="C",
+            description_tm="C",
+            description_ru="C",
+            is_active=True,
+        )
+
+        self.parking = Attribute.objects.create(
+            name_tm="Awtoulag duralgasy",
+            name_ru="Парковка",
+            slug="parking",
+            input_type="boolean",
+            is_active=True,
+        )
+        self.capacity = Attribute.objects.create(
+            name_tm="Sygymdarlyk",
+            name_ru="Вместимость",
+            slug="capacity",
+            input_type="number",
+            unit_tm="myhman",
+            unit_ru="гостей",
+            is_active=True,
+        )
+        self.hall_shape = Attribute.objects.create(
+            name_tm="Zalyň görnüşi",
+            name_ru="Форма зала",
+            slug="hall_shape",
+            input_type="choice",
+            is_active=True,
+        )
+        self.round_option = AttributeOption.objects.create(
+            attribute=self.hall_shape,
+            value="round",
+            label_tm="Tegelek",
+            label_ru="Круглый",
+        )
+        self.square_option = AttributeOption.objects.create(
+            attribute=self.hall_shape,
+            value="square",
+            label_tm="Kwadrat",
+            label_ru="Квадратный",
+        )
+
+        CategoryAttribute.objects.create(
+            category=self.category,
+            attribute=self.parking,
+            scope=CategoryAttribute.Scope.SERVICE,
+            is_filterable=True,
+        )
+        CategoryAttribute.objects.create(
+            category=self.category,
+            attribute=self.capacity,
+            scope=CategoryAttribute.Scope.PRODUCT,
+            is_filterable=True,
+        )
+        CategoryAttribute.objects.create(
+            category=self.category,
+            attribute=self.hall_shape,
+            scope=CategoryAttribute.Scope.PRODUCT,
+            is_filterable=True,
+        )
+
+        ServiceAttributeValue.objects.create(
+            service=self.service_a,
+            attribute=self.parking,
+            value_boolean=True,
+        )
+        ServiceAttributeValue.objects.create(
+            service=self.service_b,
+            attribute=self.parking,
+            value_boolean=False,
+        )
+
+        hall_a = ServiceProduct.objects.create(service=self.service_a, title_tm="A1", title_ru="A1", price=1000)
+        ProductAttributeValue.objects.create(product=hall_a, attribute=self.capacity, value_number=320)
+        ProductAttributeValue.objects.create(product=hall_a, attribute=self.hall_shape, option=self.round_option)
+
+        hall_b1 = ServiceProduct.objects.create(service=self.service_b, title_tm="B1", title_ru="B1", price=1000)
+        ProductAttributeValue.objects.create(product=hall_b1, attribute=self.capacity, value_number=350)
+        ProductAttributeValue.objects.create(product=hall_b1, attribute=self.hall_shape, option=self.square_option)
+
+        hall_b2 = ServiceProduct.objects.create(service=self.service_b, title_tm="B2", title_ru="B2", price=1000)
+        ProductAttributeValue.objects.create(product=hall_b2, attribute=self.capacity, value_number=120)
+        ProductAttributeValue.objects.create(product=hall_b2, attribute=self.hall_shape, option=self.round_option)
+
+    def _service_ids(self, response):
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        return {item["id"] for item in payload["results"]}
+
+    def test_service_attribute_boolean_filter_works(self):
+        response = self.client.get("/api/v1/services/", {"service_attr.parking": "true"})
+
+        self.assertEqual(self._service_ids(response), {self.service_a.id})
+
+    def test_product_attribute_filters_apply_to_same_product(self):
+        response = self.client.get(
+            "/api/v1/services/",
+            {
+                "product_attr.capacity_min": "300",
+                "product_attr.hall_shape": "round",
+            },
+        )
+
+        self.assertEqual(self._service_ids(response), {self.service_a.id})
+
+    def test_product_choice_filter_supports_csv_or_semantics(self):
+        response = self.client.get("/api/v1/services/", {"product_attr.hall_shape": "round,square"})
+
+        self.assertEqual(self._service_ids(response), {self.service_a.id, self.service_b.id})

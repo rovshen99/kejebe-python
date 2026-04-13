@@ -17,7 +17,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from core.pagination import CustomPagination
 from apps.categories.models import Category
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
-from .filters import ServiceFilter, ServiceProductFilter, parse_int_list
+from .filters import ServiceFilter, ServiceProductFilter, apply_attribute_filters, parse_int_list
 from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, ContactType
 from .models import ServiceVideo
 from .serializers import (
@@ -98,6 +98,7 @@ class ServiceViewSet(FavoriteAnnotateMixin,
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
+        queryset = apply_attribute_filters(queryset, self.request.query_params)
 
         category_ids = parse_int_list(self.request.query_params.get("category"))
         explicit_ordering = self.request.query_params.get("ordering")
@@ -198,7 +199,9 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         summary='List services',
         description=(
             'Supports filtering by multiple cities, regions, and categories. '
-            'For multi-select filters provide comma-separated IDs.'
+            'For multi-select filters provide comma-separated IDs. '
+            'Dynamic attribute filters use service_attr.<slug>, product_attr.<slug>, '
+            'and numeric suffixes _min / _max.'
         ),
         parameters=[
             OpenApiParameter(

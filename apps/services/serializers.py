@@ -63,6 +63,7 @@ class ServiceProductImageSerializer(serializers.ModelSerializer):
 
 class AttributeSerializer(LangMixin, serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     unit = serializers.SerializerMethodField()
     placeholder = serializers.SerializerMethodField()
     help_text = serializers.SerializerMethodField()
@@ -71,6 +72,7 @@ class AttributeSerializer(LangMixin, serializers.ModelSerializer):
         model = Attribute
         fields = [
             'id', 'name_tm', 'name_ru', 'name',
+            'icon',
             'slug', 'input_type', 'unit_tm', 'unit_ru', 'unit',
             'placeholder_tm', 'placeholder_ru', 'placeholder',
             'help_text_tm', 'help_text_ru', 'help_text',
@@ -79,6 +81,10 @@ class AttributeSerializer(LangMixin, serializers.ModelSerializer):
 
     def get_name(self, obj):
         return localized_value(obj, "name", lang=self._lang())
+
+    def get_icon(self, obj):
+        icon = getattr(obj, "icon", None)
+        return getattr(icon, "url", None) if icon else None
 
     def get_unit(self, obj):
         return localized_value(obj, "unit", lang=self._lang())
@@ -107,6 +113,7 @@ class CategorySchemaAttributeSerializer(LangMixin, serializers.Serializer):
     name_tm = serializers.CharField(read_only=True)
     name_ru = serializers.CharField(read_only=True)
     name = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     section = serializers.SerializerMethodField()
     unit = serializers.SerializerMethodField()
     placeholder = serializers.SerializerMethodField()
@@ -143,6 +150,7 @@ class CategorySchemaAttributeSerializer(LangMixin, serializers.Serializer):
                 "slug": attribute.slug,
                 "name_tm": attribute.name_tm,
                 "name_ru": attribute.name_ru,
+                "icon": attribute.icon,
                 "input_type": attribute.input_type,
                 "unit_tm": attribute.unit_tm,
                 "unit_ru": attribute.unit_ru,
@@ -174,6 +182,15 @@ class CategorySchemaAttributeSerializer(LangMixin, serializers.Serializer):
         source = obj.get("options") if isinstance(obj, dict) else obj
         attribute = source.attribute if isinstance(source, CategoryAttribute) else source
         return localized_value(attribute, "name", lang=self._lang())
+
+    def get_icon(self, obj):
+        if isinstance(obj, dict):
+            icon = obj.get("icon")
+            return getattr(icon, "url", None) if icon else None
+        source = obj.get("options") if isinstance(obj, dict) else obj
+        attribute = source.attribute if isinstance(source, CategoryAttribute) else source
+        icon = getattr(attribute, "icon", None)
+        return getattr(icon, "url", None) if icon else None
 
     def get_section(self, obj):
         source = obj.get("section_tm") if isinstance(obj, dict) else obj
@@ -244,6 +261,7 @@ class CategorySchemaSerializer(serializers.Serializer):
 class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
     attribute_id = serializers.IntegerField(source="attribute.id", read_only=True)
     attribute = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     slug = serializers.CharField(source="attribute.slug", read_only=True)
     input_type = serializers.CharField(source="attribute.input_type", read_only=True)
     unit_tm = serializers.CharField(source="attribute.unit_tm", read_only=True)
@@ -257,6 +275,7 @@ class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
         fields = [
             'attribute_id',
             'attribute',
+            'icon',
             'slug',
             'input_type',
             'unit_tm',
@@ -268,6 +287,10 @@ class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
 
     def get_attribute(self, obj):
         return localized_value(obj.attribute, "name", lang=self._lang())
+
+    def get_icon(self, obj):
+        icon = getattr(obj.attribute, "icon", None)
+        return getattr(icon, "url", None) if icon else None
 
     def get_unit(self, obj):
         return localized_value(obj.attribute, "unit", lang=self._lang())
@@ -288,6 +311,7 @@ class AttributeValueSerializer(LangMixin, serializers.ModelSerializer):
 class ServiceAttributeValueSerializer(LangMixin, serializers.ModelSerializer):
     attribute_id = serializers.IntegerField(source="attribute.id", read_only=True)
     attribute = serializers.SerializerMethodField()
+    icon = serializers.SerializerMethodField()
     slug = serializers.CharField(source="attribute.slug", read_only=True)
     input_type = serializers.CharField(source="attribute.input_type", read_only=True)
     unit_tm = serializers.CharField(source="attribute.unit_tm", read_only=True)
@@ -301,6 +325,7 @@ class ServiceAttributeValueSerializer(LangMixin, serializers.ModelSerializer):
             "id",
             "attribute_id",
             "attribute",
+            "icon",
             "slug",
             "input_type",
             "unit_tm",
@@ -311,6 +336,10 @@ class ServiceAttributeValueSerializer(LangMixin, serializers.ModelSerializer):
 
     def get_attribute(self, obj):
         return localized_value(obj.attribute, "name", lang=self._lang())
+
+    def get_icon(self, obj):
+        icon = getattr(obj.attribute, "icon", None)
+        return getattr(icon, "url", None) if icon else None
 
     def get_unit(self, obj):
         return localized_value(obj.attribute, "unit", lang=self._lang())
