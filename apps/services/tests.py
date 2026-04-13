@@ -158,6 +158,9 @@ class ServiceSerializerFieldTests(SimpleTestCase):
     def test_service_detail_serializer_includes_attributes(self):
         self.assertIn("attributes", ServiceDetailSerializer.Meta.fields)
 
+    def test_service_detail_serializer_includes_media(self):
+        self.assertIn("media", ServiceDetailSerializer.Meta.fields)
+
     def test_service_update_serializer_includes_show_location(self):
         self.assertIn("show_location", ServiceUpdateSerializer.Meta.fields)
 
