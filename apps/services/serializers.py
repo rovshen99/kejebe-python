@@ -33,6 +33,27 @@ class FavoriteStatusMixin(serializers.Serializer):
         return False
 
 
+def _get_field_dimensions(file_field):
+    if not file_field:
+        return None, None
+    try:
+        from PIL import Image
+    except Exception:
+        return None, None
+    try:
+        file_field.open()
+        with Image.open(file_field) as img:
+            width, height = img.size
+            return width, height
+    except Exception:
+        return None, None
+    finally:
+        try:
+            file_field.close()
+        except Exception:
+            pass
+
+
 class ServiceImageSerializer(serializers.ModelSerializer):
     aspect_ratio = serializers.SerializerMethodField()
 
@@ -624,6 +645,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
     description = serializers.SerializerMethodField()
     images = ServiceImageSerializer(many=True, source='serviceimage_set', read_only=True)
     videos = serializers.SerializerMethodField()
+    media = serializers.SerializerMethodField()
     contacts = ServiceContactSerializer(many=True, read_only=True)
     attributes = ServiceAttributeValueSerializer(many=True, source="service_attribute_values", read_only=True)
     products = ServiceProductInServiceSerializer(many=True, read_only=True)
@@ -638,7 +660,7 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
             'price_min', 'price_max', 'is_catalog',
             'latitude', 'longitude', 'is_active', 'active_until',
             'tags', 'priority', 'created_at', 'updated_at',
-            'images', 'videos', 'contacts', 'attributes', 'products',
+            'images', 'videos', 'media', 'contacts', 'attributes', 'products',
             'is_grid_gallery',
         ]
 
@@ -651,6 +673,57 @@ class ServiceDetailSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBas
         if videos is None:
             videos = obj.servicevideo_set.filter(hls_ready=True)
         return ServiceVideoSerializer(videos, many=True, context=self.context).data
+
+    def get_media(self, obj):
+        images = list(getattr(obj, "serviceimage_set", None).all()) if hasattr(obj, "serviceimage_set") else []
+        videos = getattr(obj, "hls_videos", None)
+        if videos is None:
+            videos = obj.servicevideo_set.filter(hls_ready=True) if hasattr(obj, "servicevideo_set") else []
+
+        media = []
+
+        for image in images:
+            image_field = getattr(image, "image", None)
+            url = getattr(image_field, "url", None) if image_field else None
+            if not url:
+                continue
+            width, height = _get_field_dimensions(image_field)
+            aspect_ratio = image.get_or_set_aspect_ratio()
+            media.append(
+                {
+                    "id": image.id,
+                    "type": "image",
+                    "url": url,
+                    "width": width,
+                    "height": height,
+                    "aspect_ratio": aspect_ratio,
+                    "sort_order": image.position,
+                }
+            )
+
+        for video in videos:
+            preview_field = getattr(video, "preview", None)
+            preview_url = getattr(preview_field, "url", None) if preview_field else None
+            playback_url = video.get_hls_url()
+            if not preview_url or not playback_url:
+                continue
+            width, height = _get_field_dimensions(preview_field)
+            aspect_ratio = round(width / height, 3) if width and height else None
+            media.append(
+                {
+                    "id": video.id,
+                    "type": "video",
+                    "preview": preview_url,
+                    "playback_url": playback_url,
+                    "width": width,
+                    "height": height,
+                    "aspect_ratio": aspect_ratio,
+                    "sort_order": video.position,
+                }
+            )
+
+        media.sort(key=lambda item: (item["sort_order"], 0 if item["type"] == "image" else 1, item["id"]))
+        return media
 
 
 class ServiceShowcaseSerializer(ServiceCoverUrlMixin, ServiceTagsMixin, ServiceBaseSerializer):
