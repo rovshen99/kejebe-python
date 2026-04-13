@@ -326,6 +326,14 @@ class ServiceTag(models.Model):
 class Attribute(models.Model):
     name_tm = models.CharField(max_length=100, verbose_name=_("Attribute Name (TM)"))
     name_ru = models.CharField(max_length=100, verbose_name=_("Attribute Name (RU)"))
+    icon = models.FileField(
+        upload_to="service_attributes/icons/",
+        verbose_name=_("Icon"),
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["svg", "png", "jpg", "jpeg", "webp"])],
+        help_text=_("Upload an icon image (SVG/PNG/JPG/WebP recommended)"),
+    )
 
     slug = models.SlugField(db_index=True, verbose_name=_("Attribute Slug"))
     input_type = models.CharField(

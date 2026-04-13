@@ -146,6 +146,18 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="attribute",
+            name="icon",
+            field=models.FileField(
+                blank=True,
+                help_text="Upload an icon image (SVG/PNG/JPG/WebP recommended)",
+                null=True,
+                upload_to="service_attributes/icons/",
+                validators=[django.core.validators.FileExtensionValidator(allowed_extensions=["svg", "png", "jpg", "jpeg", "webp"])],
+                verbose_name="Icon",
+            ),
+        ),
+        migrations.AddField(
+            model_name="attribute",
             name="help_text_tm",
             field=models.CharField(blank=True, default="", max_length=255, verbose_name="Help Text (TM)"),
         ),

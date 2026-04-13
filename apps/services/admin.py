@@ -323,14 +323,15 @@ class AttributeOptionInline(admin.TabularInline):
 
 
 @admin.register(Attribute)
-class ServiceAttributeAdmin(admin.ModelAdmin):
+class ServiceAttributeAdmin(IconPreviewMixin, admin.ModelAdmin):
     list_display = (
-        'name_tm', 'slug', 'input_type', 'unit_tm', 'unit_ru',
+        'name_tm', 'slug', 'icon_preview', 'input_type', 'unit_tm', 'unit_ru',
         'min_value', 'max_value', 'step',
         'is_required', 'is_active',
     )
     list_filter = ('input_type', 'is_active')
     search_fields = ('name_tm', 'name_ru', 'slug')
+    readonly_fields = ('icon_preview',)
     inlines = [AttributeOptionInline]
 
 
