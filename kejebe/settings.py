@@ -99,6 +99,7 @@ MAP_ATTRIBUTION = os.getenv("MAP_ATTRIBUTION", "© OpenStreetMap contributors").
 MAP_MIN_ZOOM = int(os.getenv("MAP_MIN_ZOOM", "0"))
 MAP_MAX_ZOOM = int(os.getenv("MAP_MAX_ZOOM", "19"))
 MAP_CONFIG_CACHE_MAX_AGE = int(os.getenv("MAP_CONFIG_CACHE_MAX_AGE", "3600"))
+SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "berdimuradowr@gmail.com").strip()
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
 CORS_ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")

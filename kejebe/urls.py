@@ -50,6 +50,7 @@ from apps.system.views import (
     ClientFeedbackCreateView,
     SystemMapConfigView,
     delete_account_view,
+    support_view,
 )
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
@@ -112,6 +113,7 @@ api_patterns = [
 urlpatterns = [
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
+    path('support/', support_view, name='support'),
     path('delete-account/', delete_account_view, name='delete-account'),
     path('summernote/', include('django_summernote.urls')),
     path('api/', include(api_patterns)),
