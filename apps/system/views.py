@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema
+from html import unescape
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.conf import settings
@@ -161,7 +162,7 @@ def service_deep_link_view(request, service_id: int):
     lang = get_lang_code(request=request, default="tm")
     title = localized_value(service, "title", lang=lang) or service.title_tm
     raw_description = localized_value(service, "description", lang=lang) or ""
-    description = Truncator(strip_tags(raw_description)).chars(200)
+    description = Truncator(strip_tags(unescape(raw_description))).chars(200)
     price_text = format_price_text(service.price_min, service.price_max, lang=lang)
     city_title = localized_value(getattr(service, "city", None), "name", lang=lang)
     category_title = localized_value(getattr(service, "category", None), "name", lang=lang)
