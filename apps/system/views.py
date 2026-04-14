@@ -1,15 +1,20 @@
 from drf_spectacular.utils import extend_schema
+from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.conf import settings
 from django.utils.cache import patch_cache_control, patch_response_headers
+from django.utils.html import strip_tags
+from django.utils.text import Truncator
 from rest_framework import mixins, permissions, viewsets, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.services.models import Service
 from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
 from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer, MapConfigSerializer
 from .forms import DeleteAccountForm, SupportRequestForm
 from .throttles import FeedbackIPThrottle
+from core.utils import format_price_text, get_lang_code, localized_value
 
 
 @extend_schema(tags=["System"])
@@ -121,3 +126,87 @@ class ClientFeedbackCreateView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     throttle_classes = [FeedbackIPThrottle]
+
+
+def service_deep_link_view(request, service_id: int):
+    try:
+        service = (
+            Service.objects.filter(is_active=True)
+            .select_related("city", "city__region", "category")
+            .prefetch_related("serviceimage_set")
+            .get(pk=service_id)
+        )
+    except Service.DoesNotExist as exc:
+        raise Http404("Service not found.") from exc
+
+    lang = get_lang_code(request=request, default="tm")
+    title = localized_value(service, "title", lang=lang) or service.title_tm
+    raw_description = localized_value(service, "description", lang=lang) or ""
+    description = Truncator(strip_tags(raw_description)).chars(200)
+    price_text = format_price_text(service.price_min, service.price_max, lang=lang)
+    city_title = localized_value(getattr(service, "city", None), "name", lang=lang)
+    category_title = localized_value(getattr(service, "category", None), "name", lang=lang)
+
+    image_url = None
+    if getattr(service, "avatar", None) and getattr(service.avatar, "url", None):
+        image_url = service.avatar.url
+    elif getattr(service, "background", None) and getattr(service.background, "url", None):
+        image_url = service.background.url
+    else:
+        first_image = next(iter(service.serviceimage_set.all()), None)
+        if first_image and getattr(first_image, "image", None) and getattr(first_image.image, "url", None):
+            image_url = first_image.image.url
+
+    service_url = request.build_absolute_uri()
+    app_scheme = getattr(settings, "DEEPLINK_APP_SCHEME", "kejebe").strip() or "kejebe"
+    app_link = f"{app_scheme}://service/{service.id}"
+
+    context = {
+        "app_name": "Kejebe",
+        "service": service,
+        "service_id": service.id,
+        "title": title,
+        "description": description,
+        "price_text": price_text,
+        "city_title": city_title,
+        "category_title": category_title,
+        "image_url": image_url,
+        "service_url": service_url,
+        "app_link": app_link,
+        "ios_app_store_url": getattr(settings, "IOS_APP_STORE_URL", ""),
+        "android_play_store_url": getattr(settings, "ANDROID_PLAY_STORE_URL", ""),
+    }
+    return render(request, "service_deep_link.html", context)
+
+
+def apple_app_site_association_view(request):
+    app_ids = getattr(settings, "IOS_ASSOCIATED_APP_IDS", [])
+    if not app_ids:
+        raise Http404("AASA is not configured.")
+
+    payload = {
+        "applinks": {
+            "apps": [],
+            "details": [
+                {
+                    "appID": app_id,
+                    "paths": ["/s/*"],
+                }
+                for app_id in app_ids
+            ],
+        }
+    }
+    response = JsonResponse(payload)
+    response["Content-Type"] = "application/json"
+    patch_cache_control(response, public=True, max_age=3600)
+    return response
+
+
+def android_asset_links_view(request):
+    asset_links = getattr(settings, "ANDROID_ASSET_LINKS", [])
+    if not asset_links:
+        raise Http404("Asset links are not configured.")
+
+    response = JsonResponse(asset_links, safe=False)
+    patch_cache_control(response, public=True, max_age=3600)
+    return response
