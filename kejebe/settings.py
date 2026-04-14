@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+import json
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -26,6 +27,16 @@ for env_path in (BASE_DIR / ".env.local", BASE_DIR / ".env"):
 
 if "hr" not in summernote_settings.ALLOWED_TAGS:
     summernote_settings.ALLOWED_TAGS.append("hr")
+
+
+def _load_json_env(name: str, default):
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return default
 
 
 # Quick-start development settings - unsuitable for production
@@ -100,6 +111,15 @@ MAP_MIN_ZOOM = int(os.getenv("MAP_MIN_ZOOM", "0"))
 MAP_MAX_ZOOM = int(os.getenv("MAP_MAX_ZOOM", "19"))
 MAP_CONFIG_CACHE_MAX_AGE = int(os.getenv("MAP_CONFIG_CACHE_MAX_AGE", "3600"))
 SUPPORT_EMAIL = os.getenv("SUPPORT_EMAIL", "berdimuradowr@gmail.com").strip()
+DEEPLINK_APP_SCHEME = os.getenv("DEEPLINK_APP_SCHEME", "kejebe").strip() or "kejebe"
+IOS_APP_STORE_URL = os.getenv("IOS_APP_STORE_URL", "").strip()
+ANDROID_PLAY_STORE_URL = os.getenv("ANDROID_PLAY_STORE_URL", "").strip()
+IOS_ASSOCIATED_APP_IDS = [
+    item.strip()
+    for item in os.getenv("IOS_ASSOCIATED_APP_IDS", "").split(",")
+    if item.strip()
+]
+ANDROID_ASSET_LINKS = _load_json_env("ANDROID_ASSET_LINKS", [])
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
 CORS_ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")

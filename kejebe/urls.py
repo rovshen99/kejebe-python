@@ -49,7 +49,10 @@ from apps.system.views import (
     SystemAboutView,
     ClientFeedbackCreateView,
     SystemMapConfigView,
+    android_asset_links_view,
+    apple_app_site_association_view,
     delete_account_view,
+    service_deep_link_view,
     support_view,
 )
 from apps.stories.views import ServiceStoryViewSet
@@ -111,6 +114,9 @@ api_patterns = [
 ]
 
 urlpatterns = [
+    path(".well-known/assetlinks.json", android_asset_links_view, name="android-asset-links"),
+    path("apple-app-site-association", apple_app_site_association_view, name="apple-app-site-association"),
+    path("s/<int:service_id>", service_deep_link_view, name="service-deep-link"),
     path('_nested_admin/', include('nested_admin.urls')),
     path('admin/', admin.site.urls),
     path('support/', support_view, name='support'),
