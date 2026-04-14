@@ -129,6 +129,16 @@ class ClientFeedbackCreateView(generics.CreateAPIView):
 
 
 def service_deep_link_view(request, service_id: int):
+    app_scheme = getattr(settings, "DEEPLINK_APP_SCHEME", "kejebe").strip() or "kejebe"
+    app_link = f"{app_scheme}://service/{service_id}"
+    common_context = {
+        "app_name": "Kejebe",
+        "service_id": service_id,
+        "service_url": request.build_absolute_uri(),
+        "app_link": app_link,
+        "ios_app_store_url": getattr(settings, "IOS_APP_STORE_URL", ""),
+        "android_play_store_url": getattr(settings, "ANDROID_PLAY_STORE_URL", ""),
+    }
     try:
         service = (
             Service.objects.filter(is_active=True)
@@ -136,8 +146,17 @@ def service_deep_link_view(request, service_id: int):
             .prefetch_related("serviceimage_set")
             .get(pk=service_id)
         )
-    except Service.DoesNotExist as exc:
-        raise Http404("Service not found.") from exc
+    except Service.DoesNotExist:
+        response = render(
+            request,
+            "service_deep_link_not_found.html",
+            {
+                **common_context,
+                "title": "Service not found",
+            },
+            status=404,
+        )
+        return response
 
     lang = get_lang_code(request=request, default="tm")
     title = localized_value(service, "title", lang=lang) or service.title_tm
@@ -157,12 +176,8 @@ def service_deep_link_view(request, service_id: int):
         if first_image and getattr(first_image, "image", None) and getattr(first_image.image, "url", None):
             image_url = first_image.image.url
 
-    service_url = request.build_absolute_uri()
-    app_scheme = getattr(settings, "DEEPLINK_APP_SCHEME", "kejebe").strip() or "kejebe"
-    app_link = f"{app_scheme}://service/{service.id}"
-
     context = {
-        "app_name": "Kejebe",
+        **common_context,
         "service": service,
         "service_id": service.id,
         "title": title,
@@ -171,10 +186,6 @@ def service_deep_link_view(request, service_id: int):
         "city_title": city_title,
         "category_title": category_title,
         "image_url": image_url,
-        "service_url": service_url,
-        "app_link": app_link,
-        "ios_app_store_url": getattr(settings, "IOS_APP_STORE_URL", ""),
-        "android_play_store_url": getattr(settings, "ANDROID_PLAY_STORE_URL", ""),
     }
     return render(request, "service_deep_link.html", context)
 

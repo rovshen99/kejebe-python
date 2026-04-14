@@ -112,13 +112,15 @@ class ServiceDeepLinkPageTests(TestCase):
         self.assertContains(response, "App Store")
         self.assertContains(response, "Google Play")
 
-    def test_service_deep_link_page_returns_404_for_inactive_service(self):
+    def test_service_deep_link_page_returns_fallback_page_for_inactive_service(self):
         self.service.is_active = False
         self.service.save(update_fields=["is_active"])
 
         response = self.client.get(f"/s/{self.service.id}")
 
         self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Service not found", status_code=404)
+        self.assertContains(response, "kejebe://service/", status_code=404)
 
 
 @override_settings(
