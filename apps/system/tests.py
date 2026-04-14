@@ -112,6 +112,17 @@ class ServiceDeepLinkPageTests(TestCase):
         self.assertContains(response, "App Store")
         self.assertContains(response, "Google Play")
 
+    def test_service_deep_link_page_strips_html_from_description(self):
+        self.service.description_ru = "&lt;p&gt;Описание <strong>сервиса</strong>&lt;/p&gt;"
+        self.service.save(update_fields=["description_ru"])
+
+        response = self.client.get(f"/s/{self.service.id}", HTTP_ACCEPT_LANGUAGE="ru")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Описание сервиса")
+        self.assertNotContains(response, "&lt;p&gt;")
+        self.assertNotContains(response, "<strong>")
+
     def test_service_deep_link_page_returns_fallback_page_for_inactive_service(self):
         self.service.is_active = False
         self.service.save(update_fields=["is_active"])
