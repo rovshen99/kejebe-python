@@ -161,8 +161,30 @@ class ServiceImageInline(nested_admin.NestedTabularInline):
     extra = 1
 
 
+class ServiceVideoAdminForm(forms.ModelForm):
+    class Meta:
+        model = ServiceVideo
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Existing rows must remain editable even when the original upload was deleted after HLS generation.
+        self.fields["file"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get("DELETE"):
+            return cleaned_data
+
+        uploaded_file = cleaned_data.get("file")
+        if not getattr(self.instance, "pk", None) and not uploaded_file:
+            self.add_error("file", "This field is required.")
+        return cleaned_data
+
+
 class ServiceVideoInline(IconPreviewMixin, nested_admin.NestedTabularInline):
     model = ServiceVideo
+    form = ServiceVideoAdminForm
     extra = 1
     icon_field_name = "preview"
     icon_width = 80

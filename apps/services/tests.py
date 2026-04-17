@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
 
+from apps.services.admin import ServiceVideoAdminForm
 from apps.services.management.commands.generate_hls import Command as GenerateHLSCommand
 from apps.categories.models import Category
 from apps.services.models import (
@@ -15,6 +16,7 @@ from apps.services.models import (
     Service,
     ServiceAttributeValue,
     ServiceProduct,
+    ServiceVideo,
 )
 from core.utils import format_price_text
 from apps.services.serializers import (
@@ -185,6 +187,22 @@ class GenerateHLSCommandTests(SimpleTestCase):
             command.handle(cleanup_originals=True, video_id=None, force=False, limit=0, ffmpeg_bin="")
 
         resolve_mock.assert_not_called()
+
+
+class ServiceVideoAdminFormTests(SimpleTestCase):
+    def test_existing_video_does_not_require_file_field(self):
+        form = ServiceVideoAdminForm(instance=ServiceVideo(pk=5))
+
+        self.assertFalse(form.fields["file"].required)
+
+    def test_new_video_without_file_still_requires_upload(self):
+        form = ServiceVideoAdminForm(
+            data={"position": 1},
+            instance=ServiceVideo(),
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("file", form.errors)
 
 
 class ServiceSerializerFieldTests(SimpleTestCase):
