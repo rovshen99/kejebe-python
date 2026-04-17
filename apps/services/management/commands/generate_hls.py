@@ -19,6 +19,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--id", type=int, dest="video_id", help="Process one ServiceVideo by id")
         parser.add_argument("--force", action="store_true", help="Re-generate HLS even if already ready")
+        parser.add_argument(
+            "--cleanup-originals",
+            action="store_true",
+            help="Delete original source files for videos where HLS is already ready.",
+        )
         parser.add_argument("--limit", type=int, default=0, help="Limit number of videos")
         parser.add_argument(
             "--ffmpeg-bin",
@@ -30,7 +35,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         video_id = options.get("video_id")
         force = options.get("force", False)
+        cleanup_originals = options.get("cleanup_originals", False)
         limit = options.get("limit", 0)
+
+        if cleanup_originals:
+            self._cleanup_originals(video_id=video_id, limit=limit)
+            return
+
         ffmpeg_bin = self._resolve_ffmpeg_bin(options.get("ffmpeg_bin"))
 
         qs = ServiceVideo.objects.exclude(file="").exclude(file=None)
@@ -47,6 +58,24 @@ class Command(BaseCommand):
 
         for video in qs:
             self._process_video(video, force, ffmpeg_bin)
+
+    def _cleanup_originals(self, video_id=None, limit=0):
+        qs = (
+            ServiceVideo.objects.filter(hls_ready=True)
+            .exclude(file="")
+            .exclude(file=None)
+        )
+        if video_id:
+            qs = qs.filter(pk=video_id)
+        if limit:
+            qs = qs[:limit]
+
+        if not qs.exists():
+            self.stdout.write(self.style.WARNING("No original files to clean up."))
+            return
+
+        for video in qs:
+            self._delete_original_file_if_configured(video)
 
     def _resolve_ffmpeg_bin(self, cli_value):
         candidate = (cli_value or getattr(settings, "FFMPEG_BIN", "") or "ffmpeg").strip()
@@ -160,12 +189,37 @@ class Command(BaseCommand):
 
                 if update_fields:
                     video.save(update_fields=update_fields)
+                self._delete_original_file_if_configured(video)
         except Exception as exc:
             video.hls_ready = False
             video.hls_error = str(exc)[:1000]
             video.hls_updated_at = timezone.now()
             video.save(update_fields=["hls_ready", "hls_error", "hls_updated_at"])
             self.stdout.write(self.style.ERROR(f"Failed for ServiceVideo #{video.pk}: {exc}"))
+
+    def _delete_original_file_if_configured(self, video):
+        if not getattr(settings, "DELETE_ORIGINAL_VIDEO_AFTER_HLS", True):
+            return
+        if not getattr(video, "hls_ready", False):
+            return
+
+        source_name = getattr(getattr(video, "file", None), "name", "") or ""
+        if not source_name:
+            return
+
+        try:
+            default_storage.delete(source_name)
+            video.file = None
+            video.save(update_fields=["file"])
+            self.stdout.write(
+                self.style.SUCCESS(f"Deleted original source for ServiceVideo #{video.pk}.")
+            )
+        except Exception as exc:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Could not delete original source for ServiceVideo #{video.pk}: {exc}"
+                )
+            )
 
     def _generate_preview(self, source_path, preview_path, ffmpeg_bin):
         candidates = ("1", "0.3")
