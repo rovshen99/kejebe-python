@@ -2,9 +2,10 @@ from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
-from django.test import RequestFactory, SimpleTestCase, TestCase
+from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
 
+from apps.services.management.commands.generate_hls import Command as GenerateHLSCommand
 from apps.categories.models import Category
 from apps.services.models import (
     Attribute,
@@ -121,6 +122,69 @@ class ServiceApplicationIPThrottleTests(SimpleTestCase):
         throttle = ServiceApplicationIPThrottle()
 
         self.assertIsNone(throttle.get_cache_key(request, view=None))
+
+
+class GenerateHLSCommandTests(SimpleTestCase):
+    @override_settings(DELETE_ORIGINAL_VIDEO_AFTER_HLS=True)
+    @patch("apps.services.management.commands.generate_hls.default_storage.delete")
+    def test_deletes_original_source_after_hls_ready(self, delete_mock):
+        command = GenerateHLSCommand()
+        video = Mock()
+        video.pk = 7
+        video.hls_ready = True
+        video.file.name = "services/videos/source.mov"
+
+        command._delete_original_file_if_configured(video)
+
+        delete_mock.assert_called_once_with("services/videos/source.mov")
+        self.assertIsNone(video.file)
+        video.save.assert_called_once_with(update_fields=["file"])
+
+    @override_settings(DELETE_ORIGINAL_VIDEO_AFTER_HLS=False)
+    @patch("apps.services.management.commands.generate_hls.default_storage.delete")
+    def test_keeps_original_source_when_setting_disabled(self, delete_mock):
+        command = GenerateHLSCommand()
+        video = Mock()
+        video.pk = 7
+        video.hls_ready = True
+        video.file.name = "services/videos/source.mov"
+
+        command._delete_original_file_if_configured(video)
+
+        delete_mock.assert_not_called()
+        video.save.assert_not_called()
+
+    @patch("apps.services.management.commands.generate_hls.ServiceVideo.objects")
+    def test_cleanup_originals_only_targets_hls_ready_videos(self, objects_mock):
+        command = GenerateHLSCommand()
+        video = Mock()
+        queryset = Mock()
+        queryset.exclude.return_value = queryset
+        queryset.filter.return_value = queryset
+        queryset.exists.return_value = True
+        queryset.__iter__ = Mock(return_value=iter([video]))
+        objects_mock.filter.return_value = queryset
+
+        with patch.object(command, "_delete_original_file_if_configured") as delete_original_mock:
+            command._cleanup_originals(video_id=11, limit=0)
+
+        objects_mock.filter.assert_called_once_with(hls_ready=True)
+        queryset.filter.assert_called_once_with(pk=11)
+        delete_original_mock.assert_called_once_with(video)
+
+    @patch("apps.services.management.commands.generate_hls.ServiceVideo.objects")
+    def test_handle_cleanup_originals_does_not_resolve_ffmpeg(self, objects_mock):
+        command = GenerateHLSCommand()
+        queryset = Mock()
+        queryset.exclude.return_value = queryset
+        queryset.filter.return_value = queryset
+        queryset.exists.return_value = False
+        objects_mock.filter.return_value = queryset
+
+        with patch.object(command, "_resolve_ffmpeg_bin") as resolve_mock:
+            command.handle(cleanup_originals=True, video_id=None, force=False, limit=0, ffmpeg_bin="")
+
+        resolve_mock.assert_not_called()
 
 
 class ServiceSerializerFieldTests(SimpleTestCase):
