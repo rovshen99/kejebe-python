@@ -160,7 +160,21 @@ class ServiceContactInline(nested_admin.NestedTabularInline):
 
 class ServiceImageInline(nested_admin.NestedTabularInline):
     model = ServiceImage
+    form = None
     extra = 1
+
+
+class ServiceImageAdminForm(forms.ModelForm):
+    class Meta:
+        model = ServiceImage
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["image"].widget.attrs.setdefault("accept", "image/*,.jpg,.jpeg,.png,.webp")
+
+
+ServiceImageInline.form = ServiceImageAdminForm
 
 
 class ServiceVideoAdminForm(forms.ModelForm):
@@ -172,6 +186,8 @@ class ServiceVideoAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Existing rows must remain editable even when the original upload was deleted after HLS generation.
         self.fields["file"].required = False
+        self.fields["file"].widget.attrs.setdefault("accept", "video/*,.mp4,.mov,.webm,.mkv")
+        self.fields["preview"].widget.attrs.setdefault("accept", "image/*,.jpg,.jpeg,.png,.webp")
 
     def clean(self):
         cleaned_data = super().clean()
@@ -265,11 +281,13 @@ class ServiceAdminForm(forms.ModelForm):
         required=False,
         label="Upload images (multiple)",
         help_text="You can upload multiple service images at once.",
+        widget=MultipleFileInput(attrs={"accept": "image/*,.jpg,.jpeg,.png,.webp"}),
     )
     bulk_videos = MultipleFileField(
         required=False,
         label="Upload videos (multiple)",
         help_text="You can upload multiple service videos at once.",
+        widget=MultipleFileInput(attrs={"accept": "video/*,.mp4,.mov,.webm,.mkv"}),
     )
 
     class Meta:

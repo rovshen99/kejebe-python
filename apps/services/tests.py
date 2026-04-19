@@ -6,7 +6,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
 
-from apps.services.admin import MultipleFileField, ServiceAdminForm, ServiceVideoAdminForm
+from apps.services.admin import (
+    MultipleFileField,
+    ServiceAdminForm,
+    ServiceImageAdminForm,
+    ServiceVideoAdminForm,
+)
 from apps.services.management.commands.generate_hls import Command as GenerateHLSCommand
 from apps.categories.models import Category
 from apps.services.models import (
@@ -205,6 +210,18 @@ class ServiceVideoAdminFormTests(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("file", form.errors)
 
+    def test_video_field_accepts_only_video_types_in_picker(self):
+        form = ServiceVideoAdminForm(instance=ServiceVideo(pk=5))
+
+        self.assertIn("video/*", form.fields["file"].widget.attrs.get("accept", ""))
+
+
+class ServiceImageAdminFormTests(SimpleTestCase):
+    def test_image_field_accepts_only_image_types_in_picker(self):
+        form = ServiceImageAdminForm()
+
+        self.assertIn("image/*", form.fields["image"].widget.attrs.get("accept", ""))
+
 
 class MultipleFileFieldTests(SimpleTestCase):
     def test_clean_returns_list_for_multiple_files(self):
@@ -225,6 +242,8 @@ class MultipleFileFieldTests(SimpleTestCase):
 
         self.assertIn("bulk_images", form.fields)
         self.assertIn("bulk_videos", form.fields)
+        self.assertIn("image/*", form.fields["bulk_images"].widget.attrs.get("accept", ""))
+        self.assertIn("video/*", form.fields["bulk_videos"].widget.attrs.get("accept", ""))
 
 
 class ServiceSerializerFieldTests(SimpleTestCase):
