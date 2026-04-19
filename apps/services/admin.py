@@ -2,7 +2,9 @@ import nested_admin
 from django import forms
 from django.conf import settings
 from django.contrib import admin
+from django.db.models import Max
 from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
 
 from core.mixins import IconPreviewMixin
 from .models import (
@@ -240,7 +242,36 @@ class ServiceAvailableCityInline(nested_admin.NestedTabularInline):
     can_delete = True
 
 
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        if not data:
+            return []
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            return [single_file_clean(item, initial) for item in data]
+        return [single_file_clean(data, initial)]
+
+
 class ServiceAdminForm(forms.ModelForm):
+    bulk_images = MultipleFileField(
+        required=False,
+        label="Upload images (multiple)",
+        help_text="You can upload multiple service images at once.",
+    )
+    bulk_videos = MultipleFileField(
+        required=False,
+        label="Upload videos (multiple)",
+        help_text="You can upload multiple service videos at once.",
+    )
+
     class Meta:
         model = Service
         fields = "__all__"
@@ -255,6 +286,17 @@ class ServiceAdminForm(forms.ModelForm):
 
         if additional_categories and additional_categories.count() > 3:
             self.add_error("additional_categories", "No more than 3 additional categories are allowed.")
+
+        video_files = cleaned_data.get("bulk_videos") or []
+        if video_files:
+            validators = ServiceVideo._meta.get_field("file").validators
+            for video_file in video_files:
+                for validator in validators:
+                    try:
+                        validator(video_file)
+                    except ValidationError as exc:
+                        self.add_error("bulk_videos", exc.messages)
+                        break
 
         return cleaned_data
 
@@ -308,6 +350,45 @@ class ServiceAdmin(nested_admin.NestedModelAdmin):
         extra_context = extra_context or {}
         extra_context["osm_tile_url"] = getattr(settings, "OSM_TILE_URL", "")
         return super().add_view(request, form_url, extra_context=extra_context)
+
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+        service = form.instance
+        image_files = form.cleaned_data.get("bulk_images") or []
+        video_files = form.cleaned_data.get("bulk_videos") or []
+        self._save_bulk_images(service, image_files)
+        self._save_bulk_videos(service, video_files)
+
+    @staticmethod
+    def _next_position(model, service):
+        max_position = (
+            model.objects.filter(service=service).aggregate(max_position=Max("position")).get("max_position") or 0
+        )
+        return int(max_position) + 1
+
+    def _save_bulk_images(self, service, image_files):
+        if not image_files:
+            return
+        next_position = self._next_position(ServiceImage, service)
+        for image_file in image_files:
+            ServiceImage.objects.create(
+                service=service,
+                image=image_file,
+                position=next_position,
+            )
+            next_position += 1
+
+    def _save_bulk_videos(self, service, video_files):
+        if not video_files:
+            return
+        next_position = self._next_position(ServiceVideo, service)
+        for video_file in video_files:
+            ServiceVideo.objects.create(
+                service=service,
+                file=video_file,
+                position=next_position,
+            )
+            next_position += 1
 
 
 @admin.register(Review)
