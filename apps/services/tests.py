@@ -2,10 +2,11 @@ from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
 
-from apps.services.admin import ServiceVideoAdminForm
+from apps.services.admin import MultipleFileField, ServiceAdminForm, ServiceVideoAdminForm
 from apps.services.management.commands.generate_hls import Command as GenerateHLSCommand
 from apps.categories.models import Category
 from apps.services.models import (
@@ -203,6 +204,27 @@ class ServiceVideoAdminFormTests(SimpleTestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("file", form.errors)
+
+
+class MultipleFileFieldTests(SimpleTestCase):
+    def test_clean_returns_list_for_multiple_files(self):
+        field = MultipleFileField(required=False)
+        files = [
+            SimpleUploadedFile("a.jpg", b"a", content_type="image/jpeg"),
+            SimpleUploadedFile("b.jpg", b"b", content_type="image/jpeg"),
+        ]
+
+        cleaned = field.clean(files)
+
+        self.assertEqual(len(cleaned), 2)
+        self.assertEqual(cleaned[0].name, "a.jpg")
+        self.assertEqual(cleaned[1].name, "b.jpg")
+
+    def test_service_admin_form_has_bulk_upload_fields(self):
+        form = ServiceAdminForm()
+
+        self.assertIn("bulk_images", form.fields)
+        self.assertIn("bulk_videos", form.fields)
 
 
 class ServiceSerializerFieldTests(SimpleTestCase):
