@@ -135,6 +135,20 @@ class ServiceApplicationIPThrottleTests(SimpleTestCase):
 
 
 class GenerateHLSCommandTests(SimpleTestCase):
+    def test_hls_command_forces_8bit_pixel_format(self):
+        command = GenerateHLSCommand()
+
+        ffmpeg_cmd = command._build_hls_cmd(
+            ffmpeg_bin="ffmpeg",
+            source_path="/tmp/source.mp4",
+            segment_pattern="/tmp/hls/seg_%03d.ts",
+            playlist_path="/tmp/hls/index.m3u8",
+        )
+
+        self.assertIn("-pix_fmt", ffmpeg_cmd)
+        pix_fmt_index = ffmpeg_cmd.index("-pix_fmt")
+        self.assertEqual(ffmpeg_cmd[pix_fmt_index + 1], "yuv420p")
+
     @override_settings(DELETE_ORIGINAL_VIDEO_AFTER_HLS=True)
     @patch("apps.services.management.commands.generate_hls.default_storage.delete")
     def test_deletes_original_source_after_hls_ready(self, delete_mock):

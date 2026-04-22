@@ -113,39 +113,12 @@ class Command(BaseCommand):
                 update_fields = []
 
                 if needs_hls:
-                    cmd = [
-                        ffmpeg_bin,
-                        "-y",
-                        "-i",
-                        str(source_path),
-                        "-c:v",
-                        "h264",
-                        "-profile:v",
-                        "main",
-                        "-preset",
-                        "veryfast",
-                        "-crf",
-                        "22",
-                        "-c:a",
-                        "aac",
-                        "-b:a",
-                        "128k",
-                        "-ac",
-                        "2",
-                        "-g",
-                        "48",
-                        "-keyint_min",
-                        "48",
-                        "-sc_threshold",
-                        "0",
-                        "-hls_time",
-                        "4",
-                        "-hls_playlist_type",
-                        "vod",
-                        "-hls_segment_filename",
-                        segment_pattern,
-                        str(playlist_path),
-                    ]
+                    cmd = self._build_hls_cmd(
+                        ffmpeg_bin=ffmpeg_bin,
+                        source_path=source_path,
+                        segment_pattern=segment_pattern,
+                        playlist_path=playlist_path,
+                    )
 
                     result = subprocess.run(cmd, capture_output=True, text=True)
                     if result.returncode != 0:
@@ -220,6 +193,45 @@ class Command(BaseCommand):
                     f"Could not delete original source for ServiceVideo #{video.pk}: {exc}"
                 )
             )
+
+    @staticmethod
+    def _build_hls_cmd(ffmpeg_bin, source_path, segment_pattern, playlist_path):
+        return [
+            ffmpeg_bin,
+            "-y",
+            "-i",
+            str(source_path),
+            "-c:v",
+            "h264",
+            # Normalize HDR/10-bit and other high-bit-depth sources for broad HLS compatibility.
+            "-pix_fmt",
+            "yuv420p",
+            "-profile:v",
+            "main",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "22",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "128k",
+            "-ac",
+            "2",
+            "-g",
+            "48",
+            "-keyint_min",
+            "48",
+            "-sc_threshold",
+            "0",
+            "-hls_time",
+            "4",
+            "-hls_playlist_type",
+            "vod",
+            "-hls_segment_filename",
+            segment_pattern,
+            str(playlist_path),
+        ]
 
     def _generate_preview(self, source_path, preview_path, ffmpeg_bin):
         candidates = ("1", "0.3")
