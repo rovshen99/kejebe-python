@@ -122,6 +122,7 @@ IOS_ASSOCIATED_APP_IDS = [
 ANDROID_ASSET_LINKS = _load_json_env("ANDROID_ASSET_LINKS", [])
 FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
 DELETE_ORIGINAL_VIDEO_AFTER_HLS = os.getenv("DELETE_ORIGINAL_VIDEO_AFTER_HLS", "true").lower() == "true"
+SERVICE_VIDEO_MAX_FILE_SIZE_MB = int(os.getenv("SERVICE_VIDEO_MAX_FILE_SIZE_MB", "500"))
 CORS_ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")
     for origin in os.getenv(

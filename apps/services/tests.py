@@ -2,6 +2,7 @@ from unittest.mock import Mock, patch
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
@@ -36,6 +37,7 @@ from apps.services.serializers import (
     ServiceUpdateSerializer,
 )
 from apps.services.throttles import ServiceApplicationIPThrottle
+from apps.services.validators import validate_file_size
 from apps.users.models import RoleEnum, User
 
 
@@ -214,6 +216,29 @@ class ServiceVideoAdminFormTests(SimpleTestCase):
         form = ServiceVideoAdminForm(instance=ServiceVideo(pk=5))
 
         self.assertIn("video/*", form.fields["file"].widget.attrs.get("accept", ""))
+
+
+class ServiceVideoSizeValidatorTests(SimpleTestCase):
+    @override_settings(SERVICE_VIDEO_MAX_FILE_SIZE_MB=1)
+    def test_validate_file_size_rejects_file_over_limit(self):
+        video_file = SimpleUploadedFile(
+            "video.mp4",
+            b"0" * (1024 * 1024 + 1),
+            content_type="video/mp4",
+        )
+
+        with self.assertRaisesMessage(ValidationError, "File's weight more than 1 MB."):
+            validate_file_size(video_file)
+
+    @override_settings(SERVICE_VIDEO_MAX_FILE_SIZE_MB=1)
+    def test_validate_file_size_accepts_file_within_limit(self):
+        video_file = SimpleUploadedFile(
+            "video.mp4",
+            b"0" * (1024 * 1024),
+            content_type="video/mp4",
+        )
+
+        validate_file_size(video_file)
 
 
 class ServiceImageAdminFormTests(SimpleTestCase):
