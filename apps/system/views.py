@@ -1,9 +1,12 @@
 from drf_spectacular.utils import extend_schema
 from html import unescape
+from datetime import datetime, timezone
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
 from django.conf import settings
+from django.urls import reverse
 from django.utils.cache import patch_cache_control, patch_response_headers
+from django.utils.dateparse import parse_datetime
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
 from rest_framework import mixins, permissions, viewsets, generics
@@ -12,10 +15,95 @@ from rest_framework.views import APIView
 
 from apps.services.models import Service
 from .models import SystemContact, AccountDeletionRequest, SystemAbout, ClientFeedback
-from .serializers import SystemContactSerializer, SystemAboutSerializer, ClientFeedbackSerializer, MapConfigSerializer
+from .serializers import (
+    SystemContactSerializer,
+    SystemAboutSerializer,
+    ClientFeedbackSerializer,
+    MapConfigSerializer,
+    TermsInfoSerializer,
+)
 from .forms import DeleteAccountForm, SupportRequestForm
 from .throttles import FeedbackIPThrottle
 from core.utils import format_price_text, get_lang_code, localized_value
+
+
+LEGAL_TEXTS = {
+    "en": {
+        "title": "Terms of Use",
+        "last_updated_label": "Last updated",
+        "privacy_policy_label": "Privacy Policy",
+        "report_email": "Support and appeals",
+        "content": [
+            "By using Kejebe, you agree not to post, upload, or share objectionable, abusive, hateful, illegal, sexually explicit, violent, fraudulent, or otherwise harmful content.",
+            "Users must behave respectfully. Harassment, threats, scams, impersonation, and repeated abusive behavior are prohibited.",
+            "Kejebe moderators may remove content, restrict features, suspend, or permanently ban accounts that violate these Terms.",
+            "If you see violating content, use the in-app report flow (for example, report a review) or contact support.",
+            "All reports are reviewed within 24 hours. Repeated or severe violations can result in content removal and user ejection/ban.",
+            "If your content or account is moderated, you may submit an appeal via support email.",
+            "You are responsible for content you publish and for compliance with applicable law in your jurisdiction.",
+            "Your use of Kejebe is also governed by our Privacy Policy.",
+        ],
+    },
+    "ru": {
+        "title": "Условия использования",
+        "last_updated_label": "Последнее обновление",
+        "privacy_policy_label": "Политика конфиденциальности",
+        "report_email": "Поддержка и апелляции",
+        "content": [
+            "Используя Kejebe, вы обязуетесь не публиковать недопустимый, оскорбительный, незаконный, экстремистский, сексуально-явный, насильственный, мошеннический или иной вредоносный контент.",
+            "Пользователь обязан соблюдать уважительное поведение. Запрещены травля, угрозы, обман, выдача себя за другого и повторяющееся агрессивное поведение.",
+            "Модераторы Kejebe вправе удалять контент, ограничивать функции, временно блокировать или полностью блокировать аккаунты за нарушения.",
+            "Если вы обнаружили нарушение, используйте in-app flow жалобы (например, жалоба на отзыв) или свяжитесь с поддержкой.",
+            "Все жалобы рассматриваются в течение 24 часов. Повторные и тяжёлые нарушения приводят к удалению контента и блокировке пользователя.",
+            "Если ваш контент или аккаунт был ограничен, вы можете подать апелляцию через email поддержки.",
+            "Вы несёте ответственность за публикуемый контент и соблюдение применимого законодательства вашей юрисдикции.",
+            "Использование Kejebe также регулируется нашей Политикой конфиденциальности.",
+        ],
+    },
+    "tm": {
+        "title": "Ulanyş Şertleri",
+        "last_updated_label": "Soňky täzelenme",
+        "privacy_policy_label": "Gizlinlik Syýasaty",
+        "report_email": "Goldaw we şikaýat/appeal",
+        "content": [
+            "Kejebe ulanan wagtyňyzda, garşylykly, gödek, bikanun, ýigrenç döredýän, aç-açan seksual, zorlukly, galplyk ýa-da zyýanly kontent ýerleşdirmek gadagan.",
+            "Ulanyjylar hormat bilen gatnaşmaly. Gorkuzma, haýbat, aldaw, başga adamyň ornuna çykyş etmek we gaýtalanýan gödek hereketler gadagan.",
+            "Kejebe moderatorlary bu şertler bozulsa, kontenti aýyrmaga, mümkinçilikleri çäklendirmäge, wagtlaýyn ýa-da hemişelik bloklamaga haklydyr.",
+            "Eger bozulan kontent görseňiz, programmanyň içindäki report flow ulanyň (mysal: review report) ýa-da goldaw bilen habarlaşyň.",
+            "Ähli reportlar 24 sagadyň dowamynda gözden geçirilýär. Gaýtalanýan ýa-da agyr bozmalarda kontent aýrylýar we ulanyjy ban edilýär.",
+            "Kontentiňiz ýa-da akkauntyňyz boýunça çäre görülen bolsa, goldaw email arkaly appeal iberip bilersiňiz.",
+            "Siz öz ýerleşdirýän kontentiňiz we öz ýurisdiksiýaňyzdaky kanunlara laýyklyk üçin jogapkärsiňiz.",
+            "Kejebe ulanylyşy Gizlinlik Syýasaty bilen hem düzgünleşdirilýär.",
+        ],
+    },
+}
+
+
+def _resolve_legal_lang(request) -> str:
+    qp_lang = request.GET.get("lang", "") if hasattr(request, "GET") else ""
+    qp_short = qp_lang.split("-")[0].lower() if qp_lang else ""
+    if qp_short in LEGAL_TEXTS:
+        return qp_short
+    lang = get_lang_code(request=request, supported=("ru", "en", "tm"), default="en")
+    return lang if lang in LEGAL_TEXTS else "en"
+
+
+def _parse_terms_last_updated():
+    raw = getattr(settings, "TERMS_LAST_UPDATED", "2026-04-23T00:00:00Z")
+    parsed = parse_datetime(raw)
+    if parsed is not None:
+        return parsed
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except Exception:
+        dt = datetime(2026, 4, 23, tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _terms_url(request) -> str:
+    return request.build_absolute_uri(reverse("terms-of-use"))
 
 
 @extend_schema(tags=["System"])
@@ -83,6 +171,70 @@ def support_view(request):
             "support_email": getattr(settings, "SUPPORT_EMAIL", "berdimuradowr@gmail.com"),
         },
     )
+
+
+def terms_of_use_view(request):
+    lang = _resolve_legal_lang(request)
+    text = LEGAL_TEXTS[lang]
+    return render(
+        request,
+        "terms_of_use.html",
+        {
+            "lang": lang,
+            "title": text["title"],
+            "terms_items": text["content"],
+            "last_updated_label": text["last_updated_label"],
+            "last_updated": getattr(settings, "TERMS_VERSION", "2026-04-23"),
+            "privacy_policy_label": text["privacy_policy_label"],
+            "report_email_label": text["report_email"],
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+            "privacy_url": reverse("privacy-policy"),
+        },
+    )
+
+
+def privacy_policy_view(request):
+    lang = _resolve_legal_lang(request)
+    text_map = {
+        "en": {
+            "title": "Privacy Policy",
+            "description": "Kejebe collects and processes personal data to provide app functionality, moderation, and support.",
+        },
+        "ru": {
+            "title": "Политика конфиденциальности",
+            "description": "Kejebe обрабатывает персональные данные для работы приложения, модерации и поддержки.",
+        },
+        "tm": {
+            "title": "Gizlinlik Syýasaty",
+            "description": "Kejebe şahsy maglumatlary programmanyň işi, moderasiýa we goldaw üçin işleýär.",
+        },
+    }
+    text = text_map[lang]
+    return render(
+        request,
+        "privacy_policy.html",
+        {
+            "lang": lang,
+            "title": text["title"],
+            "description": text["description"],
+            "last_updated": getattr(settings, "TERMS_VERSION", "2026-04-23"),
+            "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
+        },
+    )
+
+
+class TermsInfoView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    @extend_schema(tags=["System"], responses=TermsInfoSerializer)
+    def get(self, request):
+        payload = {
+            "url": _terms_url(request),
+            "version": getattr(settings, "TERMS_VERSION", "2026-04-23"),
+            "last_updated": _parse_terms_last_updated(),
+        }
+        return Response(TermsInfoSerializer(payload).data)
 
 
 class SystemAboutView(APIView):

@@ -26,6 +26,12 @@ class MapConfigSerializer(serializers.Serializer):
     max_zoom = serializers.IntegerField()
 
 
+class TermsInfoSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    version = serializers.CharField()
+    last_updated = serializers.DateTimeField()
+
+
 class ClientFeedbackSerializer(serializers.ModelSerializer):
     text = serializers.CharField(source="message")
 

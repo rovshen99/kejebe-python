@@ -272,6 +272,11 @@ class ReviewReport(models.Model):
     class Source(models.TextChoices):
         APP = "app", _("App")
 
+    class ResolutionAction(models.TextChoices):
+        REMOVE_CONTENT = "remove_content", _("Remove Content")
+        BAN_USER = "ban_user", _("Ban User")
+        DISMISS = "dismiss", _("Dismiss")
+
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
@@ -297,6 +302,22 @@ class ReviewReport(models.Model):
         default=Status.PENDING,
         verbose_name=_("Status"),
     )
+    resolution_action = models.CharField(
+        max_length=30,
+        choices=ResolutionAction.choices,
+        blank=True,
+        default="",
+        verbose_name=_("Resolution Action"),
+    )
+    moderator = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="review_reports_moderated",
+        verbose_name=_("Moderator"),
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name=_("Reviewed At"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
 
     class Meta:

@@ -188,3 +188,36 @@ class DeepLinkAssociationFileTests(SimpleTestCase):
                 }
             ],
         )
+
+
+@override_settings(
+    TERMS_VERSION="2026-04-23",
+    TERMS_LAST_UPDATED="2026-04-23T00:00:00Z",
+    SUPPORT_EMAIL="support@example.com",
+)
+class TermsAndLegalEndpointTests(SimpleTestCase):
+    def test_terms_page_is_public(self):
+        response = self.client.get("/terms-of-use")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Last updated")
+        self.assertContains(response, "support@example.com")
+        self.assertContains(response, "/privacy-policy")
+
+    def test_terms_page_supports_ru_and_tm_language(self):
+        response_ru = self.client.get("/terms-of-use?lang=ru")
+        response_tm = self.client.get("/terms-of-use?lang=tm")
+
+        self.assertEqual(response_ru.status_code, 200)
+        self.assertEqual(response_tm.status_code, 200)
+        self.assertContains(response_ru, "Условия использования")
+        self.assertContains(response_tm, "Ulanyş Şertleri")
+
+    def test_legal_terms_endpoint_returns_url_and_version(self):
+        response = self.client.get("/api/v1/legal/terms")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["version"], "2026-04-23")
+        self.assertIn("/terms-of-use", payload["url"])
+        self.assertTrue(payload["last_updated"].startswith("2026-04-23T00:00:00"))
