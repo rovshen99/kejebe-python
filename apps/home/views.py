@@ -21,6 +21,7 @@ from apps.regions.serializers import CitySerializer
 from apps.services.serializers import ServiceCarouselSerializer, ServiceListSerializer
 from apps.services.models import Favorite, Service, ServiceImage
 from apps.stories.models import ServiceStory
+from apps.users.blocking import get_blocked_user_ids
 from core.image_assets import build_image_asset
 from core.utils import get_lang_code, localized_value
 
@@ -247,6 +248,7 @@ class HomeViewSet(viewsets.GenericViewSet):
     ) -> List[Dict[str, Any]]:
         lang = get_lang_code(request)
         now = timezone.now()
+        blocked_user_ids = get_blocked_user_ids(getattr(request, "user", None))
         stories_qs = (
             ServiceStory.objects.filter(
                 Q(is_active=True),
@@ -257,6 +259,8 @@ class HomeViewSet(viewsets.GenericViewSet):
             .prefetch_related("service__available_cities")
             .order_by("service_id", "priority", "-starts_at", "-created_at")
         )
+        if blocked_user_ids:
+            stories_qs = stories_qs.exclude(service__vendor_id__in=blocked_user_ids)
 
         items_map: Dict[int, Dict[str, Any]] = {}
         order_counter = 0
@@ -644,6 +648,11 @@ class HomeViewSet(viewsets.GenericViewSet):
         include_images: bool = False,
         include_tags: bool = True,
     ):
+        blocked_user_ids = get_blocked_user_ids(user)
+        review_filter = Q(reviews__is_approved=True)
+        if blocked_user_ids:
+            review_filter &= ~Q(reviews__user_id__in=blocked_user_ids)
+
         prefetches = ["tags"] if include_tags else []
         prefetches.append("additional_categories")
         if include_images:
@@ -659,8 +668,8 @@ class HomeViewSet(viewsets.GenericViewSet):
             .select_related("category", "city__region")
             .prefetch_related(*prefetches)
             .annotate(
-                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
-                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                rating=Round(Avg("reviews__rating", filter=review_filter), 2),
+                reviews_count=Count("reviews", filter=review_filter),
                 cover_image_path=Subquery(
                     ServiceImage.objects.filter(service_id=OuterRef("pk"))
                     .order_by("id")

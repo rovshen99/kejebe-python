@@ -58,6 +58,7 @@ from apps.system.views import (
 from apps.stories.views import ServiceStoryViewSet
 from apps.banners.views import BannerViewSet
 from apps.home.views import HomeViewSet
+from apps.users.views import BlockedUsersListView, UserBlockView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -103,6 +104,8 @@ api_patterns = [
     path('vendor/', include(vendor_services_router.urls)),
     path('vendor/', include(vendor_products_router.urls)),
     path('auth/', include('apps.users.urls')),
+    path("users/blocked/", BlockedUsersListView.as_view(), name="users-blocked-list"),
+    path("users/<str:user_id>/block/", UserBlockView.as_view(), name="users-block"),
     path('devices/', include('apps.devices.urls')),
     path('home/', HomeViewSet.as_view({'get': 'list'})),
     path('system/contacts', SystemContactViewSet.as_view({'get': 'list'}), name='system-contacts'),

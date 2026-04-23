@@ -8,7 +8,7 @@ from core.serializers import LangMixin
 from core.utils import format_price_text, localized_value
 from drf_spectacular.utils import extend_schema_field, PolymorphicProxySerializer
 from .models import Service, ServiceImage, ServiceVideo, Review, Favorite, ContactType, ServiceContact, ServiceProduct, \
-    ServiceProductImage, ServiceApplication, ServiceApplicationImage, ServiceApplicationLink, Attribute, AttributeOption, ProductAttributeValue, CategoryAttribute, ServiceAttributeValue
+    ServiceProductImage, ServiceApplication, ServiceApplicationImage, ServiceApplicationLink, Attribute, AttributeOption, ProductAttributeValue, CategoryAttribute, ServiceAttributeValue, ReviewReport
 from apps.users.models import User
 from apps.accounts.services.phone import normalize_phone
 from apps.regions.serializers import CitySerializer
@@ -17,7 +17,6 @@ from apps.regions.models import City
 SERVICE_APPLICATION_DUPLICATE_WINDOW = timedelta(hours=12)
 SERVICE_APPLICATION_LOCAL_PHONE_LENGTH = 8
 SERVICE_APPLICATION_MAX_LINKS = 5
-
 
 class FavoriteStatusMixin(serializers.Serializer):
     is_favorite = serializers.SerializerMethodField()
@@ -803,6 +802,23 @@ class ReviewSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class ReviewReportRequestSerializer(serializers.Serializer):
+    reason = serializers.CharField(required=False, allow_blank=True, max_length=2000)
+
+
+class ReviewReportResponseSerializer(serializers.ModelSerializer):
+    review_id = serializers.IntegerField(read_only=True)
+    sla_due_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReviewReport
+        fields = ["review_id", "status", "source", "created_at", "sla_due_at"]
+
+    def get_sla_due_at(self, obj):
+        sla_hours = int(getattr(settings, "REVIEW_REPORT_SLA_HOURS", 24))
+        return obj.created_at + timedelta(hours=sla_hours)
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

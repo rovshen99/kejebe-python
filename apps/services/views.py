@@ -18,7 +18,7 @@ from core.pagination import CustomPagination
 from apps.categories.models import Category
 from .permissions import IsVendor, IsServiceVendorOwner, IsServiceProductVendorOwner
 from .filters import ServiceFilter, ServiceProductFilter, apply_attribute_filters, parse_int_list
-from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, ContactType
+from .models import Service, Review, Favorite, ServiceProduct, ServiceImage, ContactType, ReviewReport
 from .models import ServiceVideo
 from .serializers import (
     CategorySchemaSerializer,
@@ -34,10 +34,13 @@ from .serializers import (
     ServiceUpdateSerializer,
     ServiceProductUpdateSerializer,
     ContactTypeSerializer,
+    ReviewReportRequestSerializer,
+    ReviewReportResponseSerializer,
 )
 from .mixins import FavoriteAnnotateMixin
 from .throttles import ServiceApplicationIPThrottle
 from apps.system.models import WebsiteShowcaseConfig
+from apps.users.blocking import get_blocked_user_ids
 
 
 @extend_schema(tags=["Services"])
@@ -64,6 +67,11 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         return ServiceDetailSerializer
 
     def get_queryset(self):
+        blocked_user_ids = get_blocked_user_ids(getattr(self.request, "user", None))
+        review_filter = Q(reviews__is_approved=True)
+        if blocked_user_ids:
+            review_filter &= ~Q(reviews__user_id__in=blocked_user_ids)
+
         prefetches = ["additional_categories"]
         if getattr(self, "action", None) == "retrieve":
             prefetches.extend(['tags', 'available_cities'])
@@ -72,8 +80,8 @@ class ServiceViewSet(FavoriteAnnotateMixin,
             .select_related('vendor', 'category', 'city', 'city__region')
             .prefetch_related(*prefetches)
             .annotate(
-                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
-                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                rating=Round(Avg("reviews__rating", filter=review_filter), 2),
+                reviews_count=Count("reviews", filter=review_filter),
                 cover_image_path=Subquery(
                     ServiceImage.objects.filter(service_id=OuterRef("pk"))
                     .order_by("id")
@@ -263,6 +271,11 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         pagination_class=None,
     )
     def showcase(self, request, *args, **kwargs):
+        blocked_user_ids = get_blocked_user_ids(getattr(request, "user", None))
+        review_filter = Q(reviews__is_approved=True)
+        if blocked_user_ids:
+            review_filter &= ~Q(reviews__user_id__in=blocked_user_ids)
+
         config = (
             WebsiteShowcaseConfig.objects.filter(is_active=True)
             .prefetch_related("items")
@@ -288,8 +301,8 @@ class ServiceViewSet(FavoriteAnnotateMixin,
                 "serviceimage_set",
             )
             .annotate(
-                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
-                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                rating=Round(Avg("reviews__rating", filter=review_filter), 2),
+                reviews_count=Count("reviews", filter=review_filter),
                 cover_image_path=Subquery(
                     ServiceImage.objects.filter(service_id=OuterRef("pk"))
                     .order_by("id")
@@ -315,13 +328,18 @@ class ServiceViewSet(FavoriteAnnotateMixin,
         permission_classes=[permissions.IsAuthenticated, IsVendor],
     )
     def my(self, request, *args, **kwargs):
+        blocked_user_ids = get_blocked_user_ids(getattr(request, "user", None))
+        review_filter = Q(reviews__is_approved=True)
+        if blocked_user_ids:
+            review_filter &= ~Q(reviews__user_id__in=blocked_user_ids)
+
         qs = (
             Service.objects.filter(is_active=True, vendor=request.user)
             .select_related("vendor", "category", "city")
             .prefetch_related("additional_categories")
             .annotate(
-                rating=Round(Avg("reviews__rating", filter=Q(reviews__is_approved=True)), 2),
-                reviews_count=Count("reviews", filter=Q(reviews__is_approved=True)),
+                rating=Round(Avg("reviews__rating", filter=review_filter), 2),
+                reviews_count=Count("reviews", filter=review_filter),
                 cover_image_path=Subquery(
                     ServiceImage.objects.filter(service_id=OuterRef("pk"))
                     .order_by("id")
@@ -359,12 +377,58 @@ class ReviewViewSet(mixins.ListModelMixin,
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        return Review.objects.filter(is_approved=True).select_related('user', 'service')
+        queryset = Review.objects.filter(is_approved=True).select_related('user', 'service')
+        blocked_user_ids = get_blocked_user_ids(getattr(self.request, "user", None))
+        if blocked_user_ids:
+            queryset = queryset.exclude(user_id__in=blocked_user_ids)
+        return queryset
 
     def perform_destroy(self, instance):
         if instance.user != self.request.user:
             raise PermissionDenied("You can only delete your own review.")
         instance.delete()
+
+    @extend_schema(
+        summary="Report review",
+        description="Creates a moderation report for a review. SLA target: 24 hours.",
+        request=ReviewReportRequestSerializer,
+        responses={
+            200: ReviewReportResponseSerializer,
+            201: ReviewReportResponseSerializer,
+            401: OpenApiResponse(description="Authentication required."),
+            404: OpenApiResponse(description="Review not found."),
+        },
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="report",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def report(self, request, pk=None, *args, **kwargs):
+        review = self.get_object()
+        payload = ReviewReportRequestSerializer(data=request.data)
+        payload.is_valid(raise_exception=True)
+
+        report_obj, created = ReviewReport.objects.get_or_create(
+            review=review,
+            reporter=request.user,
+            defaults={
+                "reason": payload.validated_data.get("reason", "").strip(),
+                "source": ReviewReport.Source.APP,
+            },
+        )
+        if not created:
+            incoming_reason = payload.validated_data.get("reason", "").strip()
+            if incoming_reason and incoming_reason != report_obj.reason:
+                report_obj.reason = incoming_reason
+                report_obj.save(update_fields=["reason"])
+
+        output = ReviewReportResponseSerializer(report_obj)
+        return Response(
+            output.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["Favorites"])
@@ -398,6 +462,11 @@ class FavoriteViewSet(mixins.ListModelMixin,
         return super().list(request, *args, **kwargs)
 
     def get_queryset(self):
+        blocked_user_ids = get_blocked_user_ids(getattr(self.request, "user", None))
+        service_review_filter = Q(service__reviews__is_approved=True)
+        if blocked_user_ids:
+            service_review_filter &= ~Q(service__reviews__user_id__in=blocked_user_ids)
+
         qs = (
             Favorite.objects.filter(user=self.request.user)
             .select_related(
@@ -413,13 +482,13 @@ class FavoriteViewSet(mixins.ListModelMixin,
                 service_rating=Round(
                     Avg(
                     "service__reviews__rating",
-                    filter=Q(service__reviews__is_approved=True),
+                    filter=service_review_filter,
                     ),
                     2,
                 ),
                 service_reviews_count=Count(
                     "service__reviews",
-                    filter=Q(service__reviews__is_approved=True),
+                    filter=service_review_filter,
                 ),
                 service_cover_image_path=Subquery(
                     ServiceImage.objects.filter(service_id=OuterRef("service_id"))

@@ -134,3 +134,75 @@ class UserPhoneHistory(models.Model):
         verbose_name = _("User Phone History")
         verbose_name_plural = _("User Phone History")
         ordering = ("-revoked_at",)
+
+
+class UserBlock(models.Model):
+    blocker = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="blocks_created",
+        verbose_name=_("Blocker"),
+    )
+    blocked = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="blocks_received",
+        verbose_name=_("Blocked User"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("User Block")
+        verbose_name_plural = _("User Blocks")
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("blocker", "blocked"),
+                name="unique_user_block_pair",
+            ),
+            models.CheckConstraint(
+                check=~models.Q(blocker=models.F("blocked")),
+                name="user_block_no_self_block",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.blocker_id} -> {self.blocked_id}"
+
+
+class UserModerationEvent(models.Model):
+    class Action(models.TextChoices):
+        BLOCK = "block", _("Block")
+        UNBLOCK = "unblock", _("Unblock")
+
+    class Source(models.TextChoices):
+        APP = "app", _("App")
+
+    actor = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="moderation_events",
+        verbose_name=_("Actor"),
+    )
+    target = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="moderation_events_received",
+        verbose_name=_("Target"),
+    )
+    action = models.CharField(max_length=20, choices=Action.choices, verbose_name=_("Action"))
+    source = models.CharField(
+        max_length=20,
+        choices=Source.choices,
+        default=Source.APP,
+        verbose_name=_("Source"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("User Moderation Event")
+        verbose_name_plural = _("User Moderation Events")
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.actor_id} {self.action} {self.target_id}"
