@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, UserPhoneHistory
+from .models import User, UserPhoneHistory, UserBlock, UserModerationEvent
 
 
 @admin.register(User)
@@ -36,3 +36,19 @@ class UserPhoneHistoryAdmin(admin.ModelAdmin):
     search_fields = ("phone", "user__phone", "user__name", "user__email")
     list_filter = ("revoked_at",)
     ordering = ("-revoked_at",)
+
+
+@admin.register(UserBlock)
+class UserBlockAdmin(admin.ModelAdmin):
+    list_display = ("blocker", "blocked", "created_at")
+    search_fields = ("blocker__phone", "blocked__phone")
+    list_filter = ("created_at",)
+    ordering = ("-created_at",)
+
+
+@admin.register(UserModerationEvent)
+class UserModerationEventAdmin(admin.ModelAdmin):
+    list_display = ("actor", "target", "action", "source", "created_at")
+    search_fields = ("actor__phone", "target__phone", "action", "source")
+    list_filter = ("action", "source", "created_at")
+    ordering = ("-created_at",)

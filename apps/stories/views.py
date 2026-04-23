@@ -12,6 +12,7 @@ from apps.stories.serializers import ServiceStorySerializer
 from apps.stories.filters import ServiceStoryFilter
 from apps.services.permissions import IsVendor
 from apps.devices.models import Device
+from apps.users.blocking import get_blocked_user_ids
 from core.pagination import CustomPagination
 
 
@@ -31,6 +32,9 @@ class ServiceStoryViewSet(mixins.CreateModelMixin,
 
     def get_queryset(self):
         qs = ServiceStory.objects.select_related('service', 'service__vendor')
+        blocked_user_ids = get_blocked_user_ids(getattr(self.request, "user", None))
+        if blocked_user_ids:
+            qs = qs.exclude(service__vendor_id__in=blocked_user_ids)
         service_id = self.kwargs.get('service_id') or self.kwargs.get('service_pk')
         if service_id is not None:
             qs = qs.filter(service_id=service_id)

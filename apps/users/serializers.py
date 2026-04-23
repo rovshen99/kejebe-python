@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, UserBlock
 from apps.regions.models import City
 from apps.regions.serializers import CitySerializer, RegionSerializer
 
@@ -44,3 +44,25 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'surname', 'email', 'role', 'avatar', 'city']
+
+
+class BlockedUserListItemSerializer(serializers.ModelSerializer):
+    blocked_user_id = serializers.UUIDField(source="blocked.uuid", read_only=True)
+    name = serializers.CharField(source="blocked.name", read_only=True)
+    surname = serializers.CharField(source="blocked.surname", read_only=True)
+    avatar = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserBlock
+        fields = ["blocked_user_id", "name", "surname", "avatar", "created_at"]
+
+    def get_avatar(self, obj):
+        avatar_field = getattr(obj.blocked, "avatar", None)
+        if not avatar_field:
+            return None
+        try:
+            url = avatar_field.url
+        except Exception:
+            return None
+        request = self.context.get("request") if hasattr(self, "context") else None
+        return request.build_absolute_uri(url) if request else url

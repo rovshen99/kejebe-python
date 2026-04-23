@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
 from rest_framework import serializers
+from rest_framework.test import APIClient
 
 from apps.services.admin import (
     MultipleFileField,
@@ -20,6 +21,8 @@ from apps.services.models import (
     AttributeOption,
     CategoryAttribute,
     ProductAttributeValue,
+    Review,
+    ReviewReport,
     Service,
     ServiceAttributeValue,
     ServiceProduct,
@@ -568,3 +571,63 @@ class ServiceAttributeFilterTests(TestCase):
         response = self.client.get("/api/v1/services/", {"product_attr.hall_shape": "round,square"})
 
         self.assertEqual(self._service_ids(response), {self.service_a.id, self.service_b.id})
+
+
+class ReviewReportEndpointTests(TestCase):
+    def setUp(self):
+        self.bleach_clean_patcher = patch(
+            "django_summernote.fields.bleach.clean",
+            side_effect=lambda *args, **kwargs: args[0] if args else "",
+        )
+        self.bleach_clean_patcher.start()
+        self.addCleanup(self.bleach_clean_patcher.stop)
+
+        self.client = APIClient()
+        self.vendor = User.objects.create_user(
+            phone="+99369999000",
+            password="pass123",
+            role=RoleEnum.VENDOR,
+        )
+        self.reporter = User.objects.create_user(
+            phone="+99369999001",
+            password="pass123",
+            role=RoleEnum.CUSTOMER,
+        )
+        self.category = Category.objects.create(name_tm="Test", name_ru="Тест")
+        self.service = Service.objects.create(
+            vendor=self.vendor,
+            category=self.category,
+            title_tm="Service",
+            title_ru="Service",
+            description_tm="Desc",
+            description_ru="Desc",
+            is_active=True,
+        )
+        self.review = Review.objects.create(
+            user=self.vendor,
+            service=self.service,
+            rating=5,
+            comment="bad review",
+            is_approved=True,
+        )
+
+    def test_report_review_creates_and_is_idempotent(self):
+        self.client.force_authenticate(user=self.reporter)
+
+        first = self.client.post(
+            f"/api/v1/reviews/{self.review.id}/report/",
+            {"reason": "Spam"},
+            format="json",
+        )
+        second = self.client.post(
+            f"/api/v1/reviews/{self.review.id}/report/",
+            {"reason": "Still spam"},
+            format="json",
+        )
+
+        self.assertEqual(first.status_code, 201)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(ReviewReport.objects.count(), 1)
+        report = ReviewReport.objects.get()
+        self.assertEqual(report.reason, "Still spam")
+        self.assertEqual(first.data["status"], ReviewReport.Status.PENDING)

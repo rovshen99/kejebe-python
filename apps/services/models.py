@@ -264,6 +264,56 @@ class Review(models.Model):
         return f"{self.user} – {self.rating}★"
 
 
+class ReviewReport(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        RESOLVED = "resolved", _("Resolved")
+
+    class Source(models.TextChoices):
+        APP = "app", _("App")
+
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name="reports",
+        verbose_name=_("Review"),
+    )
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="review_reports",
+        verbose_name=_("Reporter"),
+    )
+    reason = models.TextField(blank=True, default="", verbose_name=_("Reason"))
+    source = models.CharField(
+        max_length=20,
+        choices=Source.choices,
+        default=Source.APP,
+        verbose_name=_("Source"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name=_("Status"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Created At"))
+
+    class Meta:
+        verbose_name = _("Review Report")
+        verbose_name_plural = _("Review Reports")
+        ordering = ("-created_at",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=("review", "reporter"),
+                name="unique_review_reporter_pair",
+            )
+        ]
+
+    def __str__(self):
+        return f"review={self.review_id}, reporter={self.reporter_id}"
+
+
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("User"))
     service = models.ForeignKey(

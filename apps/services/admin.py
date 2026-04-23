@@ -26,6 +26,7 @@ from .models import (
     ServiceApplication,
     ServiceApplicationImage,
     ServiceApplicationLink,
+    ReviewReport,
 )
 
 
@@ -429,6 +430,14 @@ class FavoriteAdmin(admin.ModelAdmin):
     def get_target(self, obj):
         return obj.service or obj.product
     get_target.short_description = 'Target'
+
+
+@admin.register(ReviewReport)
+class ReviewReportAdmin(admin.ModelAdmin):
+    list_display = ("review", "reporter", "status", "source", "created_at")
+    search_fields = ("review__comment", "reporter__phone", "reason")
+    list_filter = ("status", "source", "created_at")
+    ordering = ("-created_at",)
 
 
 @admin.register(ServiceTag)
