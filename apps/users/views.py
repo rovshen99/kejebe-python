@@ -132,7 +132,7 @@ class LogoutView(APIView):
             name="user_id",
             type=OpenApiTypes.STR,
             location=OpenApiParameter.PATH,
-            description="Target user identifier (numeric id or UUID).",
+            description="Target user UUID.",
         )
     ],
 )

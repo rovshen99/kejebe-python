@@ -11,11 +11,6 @@ def resolve_user_by_identifier(identifier: str) -> User:
         raise User.DoesNotExist
 
     try:
-        return User.objects.get(pk=int(value))
-    except (ValueError, TypeError, User.DoesNotExist):
-        pass
-
-    try:
         parsed_uuid = uuid.UUID(value)
     except (ValueError, TypeError, AttributeError):
         raise User.DoesNotExist

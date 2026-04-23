@@ -25,15 +25,15 @@ class UserBlockingApiTests(TestCase):
         self.third = User.objects.create_user(phone="+99363333333", password="pass123")
 
     def test_block_requires_authentication(self):
-        response = self.client.post(f"/api/v1/users/{self.blocked.id}/block/")
+        response = self.client.post(f"/api/v1/users/{self.blocked.uuid}/block/")
 
         self.assertEqual(response.status_code, 401)
 
     def test_block_user_is_idempotent_and_logs_event(self):
         self.client.force_authenticate(user=self.blocker)
 
-        first = self.client.post(f"/api/v1/users/{self.blocked.id}/block/")
-        second = self.client.post(f"/api/v1/users/{self.blocked.id}/block/")
+        first = self.client.post(f"/api/v1/users/{self.blocked.uuid}/block/")
+        second = self.client.post(f"/api/v1/users/{self.blocked.uuid}/block/")
 
         self.assertEqual(first.status_code, 201)
         self.assertEqual(second.status_code, 200)
@@ -48,7 +48,7 @@ class UserBlockingApiTests(TestCase):
     def test_block_self_returns_400(self):
         self.client.force_authenticate(user=self.blocker)
 
-        response = self.client.post(f"/api/v1/users/{self.blocker.id}/block/")
+        response = self.client.post(f"/api/v1/users/{self.blocker.uuid}/block/")
 
         self.assertEqual(response.status_code, 400)
 
@@ -57,7 +57,7 @@ class UserBlockingApiTests(TestCase):
         self.client.force_authenticate(user=self.blocker)
 
         listed = self.client.get("/api/v1/users/blocked/")
-        removed = self.client.delete(f"/api/v1/users/{self.blocked.id}/block/")
+        removed = self.client.delete(f"/api/v1/users/{self.blocked.uuid}/block/")
 
         self.assertEqual(listed.status_code, 200)
         self.assertEqual(len(listed.data), 1)
@@ -73,9 +73,19 @@ class UserBlockingApiTests(TestCase):
     def test_block_unknown_user_returns_404(self):
         self.client.force_authenticate(user=self.blocker)
 
-        response = self.client.post("/api/v1/users/999999/block/")
+        response = self.client.post("/api/v1/users/59689d89-23bd-4ac8-86f0-ea486e20a60b/block/")
 
         self.assertEqual(response.status_code, 404)
+
+    def test_block_without_body_and_without_content_type(self):
+        self.client.force_authenticate(user=self.blocker)
+
+        response = self.client.generic(
+            "POST",
+            f"/api/v1/users/{self.blocked.uuid}/block/",
+        )
+
+        self.assertIn(response.status_code, {200, 201})
 
 
 class BlockedUgcFilteringTests(TestCase):
