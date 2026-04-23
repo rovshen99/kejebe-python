@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.db.models import Max
 from django.forms.models import BaseInlineFormSet
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from core.mixins import IconPreviewMixin
 from .models import (
@@ -434,10 +435,53 @@ class FavoriteAdmin(admin.ModelAdmin):
 
 @admin.register(ReviewReport)
 class ReviewReportAdmin(admin.ModelAdmin):
-    list_display = ("review", "reporter", "status", "source", "created_at")
-    search_fields = ("review__comment", "reporter__phone", "reason")
-    list_filter = ("status", "source", "created_at")
+    list_display = (
+        "review",
+        "reporter",
+        "status",
+        "resolution_action",
+        "source",
+        "created_at",
+        "reviewed_at",
+        "moderator",
+    )
+    search_fields = ("review__comment", "reporter__phone", "reason", "review__user__phone")
+    list_filter = ("status", "resolution_action", "source", "created_at", "reviewed_at")
     ordering = ("-created_at",)
+    readonly_fields = ("created_at", "reviewed_at", "moderator")
+    actions = ("mark_dismissed", "remove_reported_content", "ban_reported_user")
+
+    def _resolve_reports(self, request, queryset, action):
+        now = timezone.now()
+        for report in queryset.select_related("review", "review__user"):
+            if action == ReviewReport.ResolutionAction.REMOVE_CONTENT:
+                review = report.review
+                if review and review.is_approved:
+                    review.is_approved = False
+                    review.save(update_fields=["is_approved"])
+            elif action == ReviewReport.ResolutionAction.BAN_USER:
+                review_user = getattr(report.review, "user", None)
+                if review_user and review_user.is_active:
+                    review_user.is_active = False
+                    review_user.save(update_fields=["is_active"])
+
+            report.status = ReviewReport.Status.RESOLVED
+            report.resolution_action = action
+            report.reviewed_at = now
+            report.moderator = request.user
+            report.save(update_fields=["status", "resolution_action", "reviewed_at", "moderator"])
+
+    @admin.action(description="Resolve as dismissed")
+    def mark_dismissed(self, request, queryset):
+        self._resolve_reports(request, queryset, ReviewReport.ResolutionAction.DISMISS)
+
+    @admin.action(description="Resolve and remove reported content")
+    def remove_reported_content(self, request, queryset):
+        self._resolve_reports(request, queryset, ReviewReport.ResolutionAction.REMOVE_CONTENT)
+
+    @admin.action(description="Resolve and ban reported user")
+    def ban_reported_user(self, request, queryset):
+        self._resolve_reports(request, queryset, ReviewReport.ResolutionAction.BAN_USER)
 
 
 @admin.register(ServiceTag)

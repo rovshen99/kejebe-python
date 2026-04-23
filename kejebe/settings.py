@@ -124,6 +124,8 @@ FFMPEG_BIN = os.getenv("FFMPEG_BIN", "ffmpeg").strip() or "ffmpeg"
 DELETE_ORIGINAL_VIDEO_AFTER_HLS = os.getenv("DELETE_ORIGINAL_VIDEO_AFTER_HLS", "true").lower() == "true"
 SERVICE_VIDEO_MAX_FILE_SIZE_MB = int(os.getenv("SERVICE_VIDEO_MAX_FILE_SIZE_MB", "500"))
 REVIEW_REPORT_SLA_HOURS = int(os.getenv("REVIEW_REPORT_SLA_HOURS", "24"))
+TERMS_VERSION = os.getenv("TERMS_VERSION", "2026-04-23").strip() or "2026-04-23"
+TERMS_LAST_UPDATED = os.getenv("TERMS_LAST_UPDATED", "2026-04-23T00:00:00Z").strip() or "2026-04-23T00:00:00Z"
 CORS_ALLOWED_ORIGINS = [
     origin.strip().rstrip("/")
     for origin in os.getenv(
