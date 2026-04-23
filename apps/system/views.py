@@ -78,6 +78,184 @@ LEGAL_TEXTS = {
     },
 }
 
+PRIVACY_TEXTS = {
+    "en": {
+        "title": "Privacy Policy",
+        "last_updated_label": "Last updated",
+        "intro": [
+            "This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.",
+            "We use Your Personal Data to provide and improve the Service. By using the Service, You agree to the collection and use of information in accordance with this Privacy Policy.",
+        ],
+        "sections": [
+            {
+                "heading": "Interpretation and Definitions",
+                "items": [
+                    "The words whose initial letters are capitalized have meanings defined under the following conditions.",
+                    "Account means a unique account created for You to access our Service or parts of our Service.",
+                    "Application refers to Kejebe, the software program provided by the Company.",
+                    "Company (referred to as either \"the Company\", \"We\", \"Us\" or \"Our\") refers to Kejebe.",
+                    "Country refers to: Turkmenistan.",
+                    "Device means any device that can access the Service such as a computer, a cell phone or a digital tablet.",
+                    "Personal Data is any information that relates to an identified or identifiable individual.",
+                    "Service refers to the Application.",
+                    "Service Provider means any natural or legal person who processes the data on behalf of the Company.",
+                    "Usage Data refers to data collected automatically from the use of the Service.",
+                ],
+            },
+            {
+                "heading": "Collecting and Using Your Personal Data",
+                "items": [
+                    "While using Our Service, We may ask You to provide personally identifiable information, including email address, first and last name, phone number, address and Usage Data.",
+                    "Usage Data may include IP address, browser type/version, visited pages, time and date of visit, time spent, unique device identifiers and diagnostic data.",
+                    "When You use a mobile device, We may collect device type, unique mobile ID, mobile OS, IP address and similar technical data.",
+                    "While using the Application, and with Your prior permission, We may collect pictures and other information from Your Device camera and photo library.",
+                ],
+            },
+            {
+                "heading": "Use of Your Personal Data",
+                "items": [
+                    "To provide and maintain the Service.",
+                    "To manage Your Account and Your registration.",
+                    "For performance of a contract and support of requested services.",
+                    "To contact You via email, phone, SMS, or similar communications.",
+                    "To provide news, offers and product/service updates (unless You opt out).",
+                    "For business transfers and reorganization scenarios.",
+                    "For analytics, improvement, security and fraud prevention.",
+                ],
+            },
+            {
+                "heading": "Sharing of Your Personal Data",
+                "items": [
+                    "With Service Providers to operate, analyze and support the Service.",
+                    "For business transfers such as merger, acquisition or asset sale.",
+                    "With Affiliates and business partners under applicable obligations.",
+                    "With other users when You post in public areas.",
+                    "With Your consent for other purposes.",
+                ],
+            },
+            {
+                "heading": "Retention, Transfer and Deletion",
+                "items": [
+                    "We retain Personal Data only as long as necessary for purposes in this Policy and legal obligations.",
+                    "Usage Data is generally retained for shorter periods unless needed for security or legal reasons.",
+                    "Your data may be transferred to and processed in jurisdictions outside Your location.",
+                    "You may request deletion, correction or access to Your Personal Data.",
+                    "We may retain some information where legally required.",
+                ],
+            },
+            {
+                "heading": "Disclosure and Security",
+                "items": [
+                    "We may disclose data for legal obligations, law enforcement, and protection of rights, users and public safety.",
+                    "No internet transmission or storage method is 100% secure, but We apply reasonable safeguards.",
+                ],
+            },
+            {
+                "heading": "Children's Privacy",
+                "items": [
+                    "Our Service does not address anyone under 13.",
+                    "If We learn We collected Personal Data from a child without required consent, We will take steps to remove such information.",
+                ],
+            },
+            {
+                "heading": "Third-Party Links and Changes",
+                "items": [
+                    "Our Service may contain links to third-party sites. We are not responsible for their privacy practices.",
+                    "We may update this Privacy Policy from time to time and will update the Last updated date.",
+                ],
+            },
+        ],
+        "contact_label": "Contact Us",
+        "contact_hint": "If You have any questions about this Privacy Policy, You can contact us by email:",
+    },
+    "ru": {
+        "title": "Политика конфиденциальности",
+        "last_updated_label": "Последнее обновление",
+        "intro": [
+            "Эта Политика конфиденциальности описывает, как Kejebe собирает, использует и раскрывает ваши данные при использовании сервиса.",
+            "Используя сервис, вы соглашаетесь с обработкой персональных данных в соответствии с этой Политикой.",
+        ],
+        "sections": [
+            {
+                "heading": "Какие данные мы собираем",
+                "items": [
+                    "Данные аккаунта: имя, email, телефон и иные данные, которые вы указываете.",
+                    "Технические данные: IP, устройство, ОС, идентификаторы и диагностические события.",
+                    "Медиа-данные: фото и контент, который вы загружаете с разрешения устройства.",
+                ],
+            },
+            {
+                "heading": "Как мы используем данные",
+                "items": [
+                    "Для предоставления и улучшения сервиса.",
+                    "Для модерации, безопасности и обработки жалоб.",
+                    "Для связи с вами по вопросам аккаунта и работы сервиса.",
+                ],
+            },
+            {
+                "heading": "Передача, хранение и удаление",
+                "items": [
+                    "Мы храним данные только столько, сколько необходимо для целей сервиса и закона.",
+                    "Вы можете запросить доступ, исправление или удаление персональных данных.",
+                    "Некоторые данные могут храниться дольше при наличии юридической обязанности.",
+                ],
+            },
+            {
+                "heading": "Ссылки и обновления",
+                "items": [
+                    "Мы не отвечаем за политику сторонних сайтов по внешним ссылкам.",
+                    "Политика может обновляться; актуальная версия публикуется на этой странице.",
+                ],
+            },
+        ],
+        "contact_label": "Связаться с нами",
+        "contact_hint": "Если у вас есть вопросы по Политике конфиденциальности, напишите нам:",
+    },
+    "tm": {
+        "title": "Gizlinlik Syýasaty",
+        "last_updated_label": "Soňky täzelenme",
+        "intro": [
+            "Bu Gizlinlik Syýasaty Kejebe tarapyndan maglumatlaryň nähili ýygnalýandygyny, ulanylýandygyny we paýlaşylýandygyny düşündirýär.",
+            "Servisi ulanmak bilen, siz bu syýasata laýyklykda maglumat işlenmegine razy bolýarsyňyz.",
+        ],
+        "sections": [
+            {
+                "heading": "Ýygnalýan maglumatlar",
+                "items": [
+                    "Akkaunt maglumatlary: adyňyz, email, telefon we girizen beýleki maglumatlar.",
+                    "Tehniki maglumatlar: IP, enjam, OS, enjam ID-lary we diagnostika maglumatlary.",
+                    "Media maglumatlar: enjam rugsady bilen ýüklän suratlaryňyz we kontentiňiz.",
+                ],
+            },
+            {
+                "heading": "Maglumatlaryň ulanylyşy",
+                "items": [
+                    "Servisi hödürlemek we gowulandyrmak üçin.",
+                    "Moderasiýa, howpsuzlyk we report işlemleri üçin.",
+                    "Akkaunt we hyzmat boýunça sizi habarly etmek üçin.",
+                ],
+            },
+            {
+                "heading": "Saklamak, geçirmek we pozmak",
+                "items": [
+                    "Maglumatlar diňe zerur möhletde saklanýar.",
+                    "Siz öz maglumatlaryňyza elýeterlilik, düzediş ýa-da pozmak talap edip bilersiňiz.",
+                    "Kanuny esaslar bolanda käbir maglumatlar uzak saklanyp bilner.",
+                ],
+            },
+            {
+                "heading": "Täzelenmeler",
+                "items": [
+                    "Daşarky sahypalaryň gizlinlik syýasaty üçin jogapkärçilik çekmeýäris.",
+                    "Syýasat täzelenip bilner, iň soňky görnüşi şu sahypada ýerleşdirilýär.",
+                ],
+            },
+        ],
+        "contact_label": "Biziň bilen habarlaşyň",
+        "contact_hint": "Gizlinlik Syýasaty barada soragyňyz bolsa, email arkaly habarlaşyň:",
+    },
+}
+
 
 def _resolve_legal_lang(request) -> str:
     qp_lang = request.GET.get("lang", "") if hasattr(request, "GET") else ""
@@ -195,28 +373,18 @@ def terms_of_use_view(request):
 
 def privacy_policy_view(request):
     lang = _resolve_legal_lang(request)
-    text_map = {
-        "en": {
-            "title": "Privacy Policy",
-            "description": "Kejebe collects and processes personal data to provide app functionality, moderation, and support.",
-        },
-        "ru": {
-            "title": "Политика конфиденциальности",
-            "description": "Kejebe обрабатывает персональные данные для работы приложения, модерации и поддержки.",
-        },
-        "tm": {
-            "title": "Gizlinlik Syýasaty",
-            "description": "Kejebe şahsy maglumatlary programmanyň işi, moderasiýa we goldaw üçin işleýär.",
-        },
-    }
-    text = text_map[lang]
+    text = PRIVACY_TEXTS[lang]
     return render(
         request,
         "privacy_policy.html",
         {
             "lang": lang,
             "title": text["title"],
-            "description": text["description"],
+            "intro": text["intro"],
+            "sections": text["sections"],
+            "last_updated_label": text["last_updated_label"],
+            "contact_label": text["contact_label"],
+            "contact_hint": text["contact_hint"],
             "last_updated": getattr(settings, "TERMS_VERSION", "2026-04-23"),
             "support_email": getattr(settings, "SUPPORT_EMAIL", "support@example.com"),
         },
